@@ -1,0 +1,34 @@
+		# Q_01
+
+	•P10
+
+- Un site = 1 pixel ? donc S = nombre de pixels ? ==== oui
+- qu'est ce qui limite le nombre de connexions ? ==== NON POSE
+- V ne fait que déterminer le nombre de connexités ? ====NP
+
+	•p11
+
+- La raison pour laquelle la def du champ de Markov de marche plus dans le cas d'un champ de probabilité continu, c'est parce que on ne pourrait plus définir éxactement les fontières des sites ? (=> pas compris différence entre proba et densité de proba)
+==== c'est pas le sujet, et trop compliqué.
+
+	•p12
+
+- quand on parle d'énergie (ici de fonction d'énergie U(x) pour la mesure de Gibbs), c'est quoi cette "énergie" ? Le niveau de gris? Quand l'image est blanche U est maximal, quand elle est noire U est minimal ?
+==== même question
+
+	•p12-13
+
+- quelle différence entre la mesure de Gibbs et le champ de Gibbs de potentiel associé à V ?? P(X=x) est noté exactement pareil pour les deux.
+==== question de vocabulaire
+
+	•p13-14
+
+- pour la proba condi local, c'est pas exp(-U(xs,x^s)/somme(exp(-U(x^s))  ?? au dénominateur devrait pas y avoir de xs puisque c'est P(X^s)
+====NP
+
+	•p16 Metropolis
+
+- expliquer pk quand on a écart énergie positif (donc quand nouvelle énergie plus grand que l'ancienne, donc quand le nouvelle état est moins probable), on ne refuse pas tout simplement.
+==== même question
+
+		# Q_02

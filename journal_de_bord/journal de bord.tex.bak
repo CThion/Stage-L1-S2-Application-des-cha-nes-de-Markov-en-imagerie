@@ -1,0 +1,45 @@
+\documentclass[fleqn]{article} %le fleqn c'est pour imposer que sauf indication contraire, tout soit bien alligné sur la gauche (notament \begin{align*}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+
+
+\usepackage{amssymb,mathrsfs}
+\usepackage{a4}
+\usepackage{babel}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{mathptmx}
+
+
+\usepackage{graphicx}%pour insérer des images
+\usepackage{tabto} % pour les tabulations
+\usepackage{amsmath,amsfonts,amssymb} %pour les limites
+\usepackage{amsmath}
+
+\usepackage{hyperref}
+\newcounter{exercice}
+\newcounter{question}
+
+\newcommand\exercice{\setcounter{question}{0}\addtocounter{exercice}{1}\vskip 4truemm\noindent\textbf{Exercice \theexercice .} }
+\newcommand\quest{\setcounter{sousquestion}{0}\addtocounter{question}{1}\hfill\break\textbf{\thequestion .} }
+\newcommand\sousquest{\addtocounter{sousquestion}{1}\hfill\break\hbox{\ \ \ }\textbf{\alph{sousquestion}.} }
+
+
+\newcommand{\ssi}{\Leftrightarrow} %équivalence
+\newcommand{\imp}{\Rightarrow} %implication
+\newcommand{\R}{\mathbb{R}} %pour écrir le corps des réels
+\newcommand{\N}{\mathbb{N}} %pour écrir le corps des entiers naturels
+\newcommand{\ffi}{\varphi}
+\newcommand{\Cs}{\mathcal{C}^S}% pour faire un beau C latin
+\newcommand{\Cc}{\mathcal{C}^C}
+\geometry{hmargin=2.5cm,vmargin=1.5cm}%pour définir les marges
+
+\title{BEP\_DM\_DM1}
+\author{Clément Thion, Thomas Besognet}
+\date{November 2019}
+
+\begin{document}
+
+\maketitle
+
+\end{document}
