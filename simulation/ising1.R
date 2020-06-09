@@ -3,7 +3,7 @@ library(ggplot2)
 library(plot3D)
 library('plot.matrix')
 N=40
-B=0
+B=3
 beta=1
 grid=matrix(2*rbinom(N*N,1,0.5)-1,nrow=N,ncol=N)
 grid
