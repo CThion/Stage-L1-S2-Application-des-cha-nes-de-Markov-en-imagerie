@@ -2,46 +2,40 @@ library(stats)
 library(ggplot2)
 library(plot3D)
 library('plot.matrix')
-
-#====================VARIABLES====================
-
-N = 100 #nombre ligne et colonnes
-
-B = 2
-beta = 15
-
-grid = matrix(2*rbinom(N*N, 1, 0.5)-1, nrow=N, ncol=N)  #génération d'une configuration aléatoire
+N=40
+B=3
+beta=1
+grid=matrix(2*rbinom(N*N,1,0.5)-1,nrow=N,ncol=N)
 grid
+#print(grid)
+#image2D(grid)
+#plot(grid)
 
+#for (i in 1:10)
+#{grid=matrix(2*rbinom(N*N,1,0.1)-1,nrow=N,ncol=N)
+#Sys.sleep(0.08)
+#plot(grid)}
 
+#Calcul de l'Ã©nergie
 
-#====================Calcul de l'énergie====================
+energie_ij=matrix(0,nrow=N,ncol=N)
+energie_ij[1,1]=grid[1,1]*(grid[1,2]+grid[2,1])
+energie_ij[N,1]=grid[N,1]*(grid[N-1,1]+grid[N,2])
+energie_ij[1,N]=grid[1,N]*(grid[1,N-1]+grid[2,N])
+energie_ij[N,N]=grid[N,N]*(grid[N,N-1]+grid[N-1,N])
 
-energie_ij = matrix(0,nrow=N,ncol=N)
-
-    #énergie pour les quatres coins
-
-energie_ij[1,1] = grid[1,1]*(grid[1,2]+grid[2,1])
-energie_ij[N,1] = grid[N,1]*(grid[N-1,1]+grid[N,2])
-energie_ij[1,N] = grid[1,N]*(grid[1,N-1]+grid[2,N])
-energie_ij[N,N] = grid[N,N]*(grid[N,N-1]+grid[N-1,N])
-
-#---- énergie pour ligne du haut et du bas (bordure) (3 voisins)
-for (i in 2:(N-1)) 
+for (i in 2:(N-1))
 {
 energie_ij[i,1]=grid[i,1]*(grid[i-1,1]+grid[i,2]+grid[i+1,1])
 energie_ij[i,N]=grid[i,N]*(grid[i-1,N]+grid[i,N-1]+grid[i+1,N])
 }
 
-#---- énergie pour colonnes gauche et droite (bordure) (3 voisins)
-for (j in 2:(N-1)) 
+for (j in 2:(N-1))
 {
   energie_ij[1,j]=grid[1,j]*(grid[1,j-1]+grid[2,j]+grid[1,j+1])
   energie_ij[N,j]=grid[N,j]*(grid[N,j-1]+grid[N-1,j]+grid[N,j+1])
 }
-
-#---- énergie pour le reste des sites (tout moins le contours)
-for (i in 2:(N-1)) 
+for (i in 2:(N-1))
 {
   for (j in 2:(N-1))
   {
@@ -49,20 +43,18 @@ for (i in 2:(N-1))
   }
   
 }
-
+#print(energie_ij)
 energie_site=grid
-
 energie=-B*sum(energie_site)-beta*sum(energie_ij)
+#print(energie)
 
 
+#Monte-Carlo
 
-#====================Monte-Carlo====================
-M=400 #nombre d'itération
-grid_mc = list()
-energie_mc = c()
-
-
-for (k in 1:M)  #fait tourner 400 fois le code
+M=400
+grid_mc=list()
+energie_mc=c()
+for (k in 1:M)
 {
   grid_mc[[k]]=matrix(2*rbinom(N*N,1,0.5)-1,nrow=N,ncol=N)
   energie_ij=matrix(0,nrow=N,ncol=N)
@@ -71,36 +63,27 @@ for (k in 1:M)  #fait tourner 400 fois le code
   energie_ij[1,N]=grid_mc[[k]][1,N]*(grid_mc[[k]][1,N-1]+grid_mc[[k]][2,N])
   energie_ij[N,N]=grid_mc[[k]][N,N]*(grid_mc[[k]][N,N-1]+grid_mc[[k]][N-1,N])
   
-  for (i in 2:(N-1)) #ligne du haut et du bas
+  for (i in 2:(N-1))
   {
     energie_ij[i,1]=grid_mc[[k]][i,1]*(grid_mc[[k]][i-1,1]+grid_mc[[k]][i,2]+grid_mc[[k]][i+1,1])
     energie_ij[i,N]=grid_mc[[k]][i,N]*(grid_mc[[k]][i-1,N]+grid_mc[[k]][i,N-1]+grid_mc[[k]][i+1,N])
   }
   
-  
-      #colonnes de gauche et de droite
-  
-  for (j in 2:(N-1)) 
+  for (j in 2:(N-1))
   {
     energie_ij[1,j]=grid_mc[[k]][1,j]*(grid_mc[[k]][1,j-1]+grid_mc[[k]][2,j]+grid_mc[[k]][1,j+1])
     energie_ij[N,j]=grid_mc[[k]][N,j]*(grid_mc[[k]][N,j-1]+grid_mc[[k]][N-1,j]+grid_mc[[k]][N,j+1])
   }
-  
-  
-      #reste des sites (tous les sites moins les contours)
-  
   for (i in 2:(N-1))
   {
     for (j in 2:(N-1))
     {
-      energie_ij[i,j] = grid_mc[[k]][i,j]*(grid_mc[[k]][i,j-1]+grid_mc[[k]][i,j+1]+grid_mc[[k]][i-1,j]+grid_mc[[k]][i+1,j])
+      energie_ij[i,j]=grid_mc[[k]][i,j]*(grid_mc[[k]][i,j-1]+grid_mc[[k]][i,j+1]+grid_mc[[k]][i-1,j]+grid_mc[[k]][i+1,j])
     }
     
   }
-  energie_mc = c(energie_mc,-B*sum(grid_mc[[k]])-beta*sum(energie_ij))
+  energie_mc=c(energie_mc,-B*sum(grid_mc[[k]])-beta*sum(energie_ij))
 }
-
-
 #print(energie_mc)
 print(min(energie_mc))
 print(max(energie_mc))
