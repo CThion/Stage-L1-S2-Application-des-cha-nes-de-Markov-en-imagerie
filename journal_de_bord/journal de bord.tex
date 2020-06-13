@@ -45,12 +45,15 @@
 \section{Problématiques et objectifs}
 
 \begin{itemize}
-	\item Quelle est la probabilité d'avoir une correspondance à 99\% après n itération d'algorithme de recuit simulé? De Gibbs? De Métropolis? \\
+	\item Quelle est la probabilité d'avoir une correspondance à c\% après n itération d'algorithme de recuit simulé? De Gibbs? De Métropolis? \\
 		\textit{On va faire un algo de montecarlo dans montecarlo, et introduire une mesure du pourcentage de correspondance}
+	\item Quelle est la probabilité d'avoir une correspondance à c\% après k itérations d'algo sans modification d'état?\\
+		\textit{cas ou on demande à l'algo de s'arrête uniquement si il aucun changement de site ne se fait, sur k itérations consécutives (attention donc à ce que k ne soit pas trop grand pour que l'on ne tombe pas en boucle infinie, ni trop petit pour que l'algo tourne quand même un minimum}
 	\item Peut-on gagner en précision en faisant plusieurs foi un recuit simulé, puis en faisant une "moyenne" des images reçues?\\
 		\textit{générer plusieurs image, puis les "additionner"}\\
-		\begin{itemize} \item Là encore, comment évolue la proba de correspondance avec le nombre d'image additionné?	\end{itemize}
-	\item Peut-on gagner en rapidité dans nos algorithme en parcourant les sites non plus un par un mais n par n ?
+		\begin{itemize} \item Là encore, comment évolue la proba de correspondance avec le nombre d'images additionnées?	\end{itemize}
+	\item Peut-on gagner en rapidité dans nos algorithme en parcourant les sites non plus un par un mais n par n ?\\
+		\textit{pour une image de N*N pixels, on peut travailler sur N/2 pixels en même temps sans problème de modification de voisinage sur une même étape}
 \end{itemize}
 
 

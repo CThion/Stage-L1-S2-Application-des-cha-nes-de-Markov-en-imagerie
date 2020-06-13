@@ -45,8 +45,9 @@
 \section{Problématiques et objectifs}
 
 \begin{itemize}
-	\item Quelle est la probabilité d'avoir une correspondance à 99\% après n itération d'algorithme de recuit simulé? De Gibbs? De Métropolis? \\
+	\item Quelle est la probabilité d'avoir une correspondance à c\% après n itération d'algorithme de recuit simulé? De Gibbs? De Métropolis? \\
 		\textit{On va faire un algo de montecarlo dans montecarlo, et introduire une mesure du pourcentage de correspondance}
+	\item Quelle est la probabilité d'avoir une correspondance à c\% après k itérations d'algo sans modification d'état?
 	\item Peut-on gagner en précision en faisant plusieurs foi un recuit simulé, puis en faisant une "moyenne" des images reçues?\\
 		\textit{générer plusieurs image, puis les "additionner"}\\
 		\begin{itemize} \item Là encore, comment évolue la proba de correspondance avec le nombre d'image additionné?	\end{itemize}
