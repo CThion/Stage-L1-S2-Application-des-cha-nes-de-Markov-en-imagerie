@@ -5,7 +5,7 @@
 
 \usepackage{amssymb,mathrsfs}
 \usepackage{a4}
-\usepackage{babel}
+
 \usepackage{amsfonts}
 \usepackage{amsmath}
 \usepackage{mathptmx}
@@ -15,11 +15,13 @@
 \usepackage{tabto} % pour les tabulations
 \usepackage{amsmath,amsfonts,amssymb} %pour les limites
 \usepackage{amsmath}
+\usepackage{natbib}
 
+\usepackage{babel}
 \usepackage{hyperref}
+
 \newcounter{exercice}
 \newcounter{question}
-
 \newcommand\exercice{\setcounter{question}{0}\addtocounter{exercice}{1}\vskip 4truemm\noindent\textbf{Exercice \theexercice .} }
 \newcommand\quest{\setcounter{sousquestion}{0}\addtocounter{question}{1}\hfill\break\textbf{\thequestion .} }
 \newcommand\sousquest{\addtocounter{sousquestion}{1}\hfill\break\hbox{\ \ \ }\textbf{\alph{sousquestion}.} }
@@ -42,7 +44,24 @@
 
 \maketitle
 %=======================================================================================================================================================
-\paragraph{démo probabilité générale = somme probabilités locales}
+
+\section{Les grandes lignes}
+\paragraph{le contexte}
+On note $X$ la variable aléatoire décrivant les états d'une image $x$ donnée.\\
+On note $s_ij$ un pixel données d'une image ligne $i$ colonne $j$, et $X_s$ la variable aléatoire décrivant son état $x_s$, à valeur dans $E={-1,1}$ pour nous qui travaillons sur des images en noir et blanc.
+
+Pour restaurer une image, on a besoin de connaître la probabilité de $X_s$ sur l'ensemble de ses états possible $E$. Pour se faire, on va partir du principe qu'à partir des autres pixels de l'image $(s)_s\neq s_ij$, on peut déduire quel est l'état le plus logique, le plus probable, de $s_ij$. Par exemple si on a l'image d'une pelouse verte avec un pixel en plein milieu tout blanc, on va logiquement avoir tendance à mettre ce pixel en vert, puisqu'il est le seul pixel blanc et que tout est vert autour de lui. \\
+On fait en plus une hypothèse un peu plus forte en supposant qu'il suffit de connaître les plus proches voisins de $s_ij$ pour déterminer son état le plus probable, et non forcément toute l'image. C'est l'hypothèse Markovienne, et ça va nous permettre de ménager les programmes...
+
+Deux questions se posent: comment définir le voisinage, et quel outil utiliser pour représenter l'ensemble des pixels de ce voisinage.\\
+\paragraph{le voisinage d'un pixel} Pour le voisinage $V_s$ de $s_ij$, on \textbf{OOOO}
+\paragraph{le potentiel d'un pixel} Pour représenter numériquement le voisinage de $s_ij$, on va introduire la notion de potentiel $U(x_s)$, aussi appelé énergie, de $s_ij$ dans un état $x_s$ donné. La valeur de $U(x_s)$ varie selon l'état de $s_ij$, mais aussi selon l'état des voisins de $s_ij$. L'expression de $U$ diffère selon les modèles, et certain seront plus adaptés pour des images en noir et blanc qu'en couleur... Dans notre cas, on va utiliser les expression du modèle d'Ising\citep{polyrmf}, c'est à dire: \[  U(x_s) = \beta x_s\sum_{t\in V_s}{x_t} +  Bx_s   \]
+
+
+Maintenant comment mesure t-on $P(X_s=x_s)$ avec $U(x_s)$? On va utiliser la mesure de Gibbs:
+
+\section{Démonstrations}
+\paragraph{démo hypothèse Markov pour potentiel locals}
 \[
 \begin{aligned}
 	P(X_s= x_s | X^s= x^s)
@@ -84,6 +103,14 @@
 \paragraph{Algorithme de Gibbs et Metropolis avec des champs de Markov aléatoires donnés (ising, potts, makovien-gaussien}
 \paragraph{Recuit simulé}
 \paragraph{Interface graphique pour comparaison des différents algorithmes}
+
+
+
+
+
+%=======================================================================================================================================================
+\bibliography{journal de bord}
+\bibliographystyle{plain}
 
 \end{document}
 
