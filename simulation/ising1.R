@@ -12,7 +12,7 @@ beta = 15
 
 
 
-metropolis=function(B, beta, N){
+globalU=function(B, beta, N){
   
   grid = matrix(2*rbinom(N*N, 1, 0.5)-1, nrow=N, ncol=N)  #génération d'une configuration aléatoire
   

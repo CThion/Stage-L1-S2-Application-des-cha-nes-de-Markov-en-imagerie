@@ -1749,33 +1749,287 @@ summary {
 
 
 <!-- rnb-text-begin -->
-<p>This is an <a href="http://rmarkdown.rstudio.com">R Markdown</a> Notebook. When you execute code within the notebook, the results appear beneath the code.</p>
-<p>Try executing this chunk by clicking the <em>Run</em> button within the chunk or by placing your cursor inside it and pressing <em>Ctrl+Shift+Enter</em>.</p>
-<p>Add a new chunk by clicking the <em>Insert Chunk</em> button on the toolbar or by pressing <em>Ctrl+Alt+I</em>.</p>
-<p>When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the <em>Preview</em> button or press <em>Ctrl+Shift+K</em> to preview the HTML file).</p>
-<p>The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike <em>Knit</em>, <em>Preview</em> does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.</p>
-<p>β est la constante de couplage entre sites voisins et B repr´ esente un champ magn´ etique ex- terne. Lorsque β est positif, les configurations les plus probables (i.e d’´ energies plus faibles) sont celles pour lesquelles les spins sont de mˆ eme signes (ferro-megn´ etisme), alors que</p>
-<p>dans le cas de β n´ egatif, au contraire, on favorisera l’alternance de spins de signes opppos´ es (anti- ferromagn´ etisme. La valeur (signe et valeur absolue) de β conditionne donc la r´ egularit´ e du mod` ele d’Ising. Quant au champ magn´ etique externe relatif au potentiel d’ordre 1, il favorise a priori par son signe un spin ou un autre.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY3VydmUoZXhwcj1leHAoLXgpLCBmcm9tPS01LCB0bz01KVxuYGBgIn0= -->
-<pre class="r"><code>curve(expr=exp(-x), from=-5, to=5)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShtYWdyaXR0cilcbmxpYnJhcnkoaW1hZ2VyKVxuYGBgIn0= -->
+<pre class="r"><code>library(magrittr)
+library(imager)</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-plot-begin eyJoZWlnaHQiOjQzMi42MzI5LCJ3aWR0aCI6NzAwLCJzaXplX2JlaGF2aW9yIjowLCJjb25kaXRpb25zIjpbXX0= -->
-<p><img src="data:image/png;base64,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" /></p>
-<!-- rnb-plot-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<div id="outil-pour-la-modélisation" class="section level2">
+<h2>Outil pour la modélisation</h2>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaW1hZ2VHZW5lcmF0b3I9ZnVuY3Rpb24oZm9ybWUsIE4pe1xuICAjZm9uY3Rpb24gcGVybWV0dGFudCBkZSBnw6luw6lyZXIgdW5lIG1hdHJpY2UtaW1hZ2UgZGUgZm9ybWUgY2hvaXNpZSwgZXQgZGUgdGFpbGxlIE4qTlxuICBcbiAgaW1nIDwtIG1hdHJpeCgtMSwgbnJvdz0gTiwgbmNvbD0gTilcbiAgXG4gICMtLS0tcmVjdGFuZ2xlLS0tLVxuICBpZihmb3JtZT09IFwicmVjdGFuZ2xlXCIpe1xuICAgIGltZ1soTi80KTooTiozLzQpLChOLzQpOihOKjMvNCldIDwtIDF9XG4gIFxuICAjLS0tLWxvc2FuZ2UtLS0tXG4gIGlmKGZvcm1lPT0gXCJsb3NhbmdlXCIpe1xuICAgIGZvciAoaSBpbiAxOk4pe1xuICAgICAgZm9yIChqIGluIDE6Til7XG4gICAgICAgIHNpZ21hMFtpLGpdPS0xKzIqKGFicyhpLWopPD1OLzQpKihhYnMoaStqLU4pPD1OLzQpICBcbiAgICAgIH1cbiAgICB9I2ZvclxuICB9I2lmXG4gIFxuICAjLS0tLWRhbWllci0tLS1cbiAgIy0tLS10cmlhbmdsZS0tLS1cbiAgIy0tLS1jZXJjbGUtLS0tXG4gICMtLS0tYmFuZGUtLS0tXG4gIFxuICByZXR1cm4oaW1nKVxufSNmdW5jXG5gYGAifQ== -->
+<pre class="r"><code>imageGenerator=function(forme, N){
+  #fonction permettant de générer une matrice-image de forme choisie, et de taille N*N
+  
+  img &lt;- matrix(-1, nrow= N, ncol= N)
+  
+  #----rectangle----
+  if(forme== &quot;rectangle&quot;){
+    img[(N/4):(N*3/4),(N/4):(N*3/4)] &lt;- 1}
+  
+  #----losange----
+  if(forme== &quot;losange&quot;){
+    for (i in 1:N){
+      for (j in 1:N){
+        sigma0[i,j]=-1+2*(abs(i-j)&lt;=N/4)*(abs(i+j-N)&lt;=N/4)  
+      }
+    }#for
+  }#if
+  
+  #----damier----
+  #----triangle----
+  #----cercle----
+  #----bande----
+  
+  return(img)
+}#func</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgcHl0aG9uXG4yKiooNjQqNjQpXG5gYGAifQ== -->
-<pre class="python"><code>2**(64*64)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYnJ1aXRldXI9ZnVuY3Rpb24oaW1hZ2UsIGJyKXtcbiAgI2ZvbmN0aW9uIHF1aSByZXZvaXQgbCdpbWFnZSBkb25uw6llIGVuIGFyZ3VtZW50IHBhciBsYSBtw6ptZSBpbWFnZSBtYWlzIGJydWl0w6kgcGFyIGxhIG3DqXRob2RlIFwiYnJcIlxuICBpbWdCciA8LSBpbWFnZVxuICBOIDwtICNSRUNVUCBMT05HRVVSIElNQUdFXG4gIGJydWl0IDwtIDBcbiAgIy0tLS1iaW5vbWlhbGUtLS0tXG4gIGlmKGJyPT0gXCJyYmlub21cIil7YnJ1aXQgPC0gbWF0cml4KDIqcmJpbm9tKE5eMiwxLDEtcCktMSxucm93PU4sbmNvbD1OKX1cbiAgIy0tLS1wb2lzc29uLS0tLVxuICAjLS0tLW5vcm1hbGUtLS0tXG4gIFxuICBpbWdCciA8LSBpbWFnZSpiclxuICByZXR1cm4oaW1nQnIpXG59I2Z1bmMgIEEgRklOSVJcbmBgYCJ9 -->
+<pre class="r"><code>bruiteur=function(image, br){
+  #fonction qui revoit l&#39;image donnée en argument par la même image mais bruité par la méthode &quot;br&quot;
+  imgBr &lt;- image
+  N &lt;- #RECUP LONGEUR IMAGE
+  bruit &lt;- 0
+  #----binomiale----
+  if(br== &quot;rbinom&quot;){bruit &lt;- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)}
+  #----poisson----
+  #----normale----
+  
+  imgBr &lt;- image*br
+  return(imgBr)
+}#func  A FINIR</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZW5lcmdpZT1mdW5jdGlvbihTKXtcbiAgI2ZvbmN0aW9uIHBvdXIgbWVzdXJlciBsJ2VucmdpZSBnbG9iYWxlIGQndW5lIGltYWdlXG4gIFxuICBlbGlnbmU9MFxuICBmb3IgKGkgaW4gMTpOKSB7Zm9yIChqIGluIDE6KE4tMSkpe2VsaWduZT1lbGlnbmUrU1tpLGpdKlNbaSxqKzFdfX1cbiAgZWNvbG9ubmU9MFxuICBmb3IgKGogaW4gMTpOKSB7Zm9yIChpIGluIDE6KE4tMSkpe2Vjb2xvbm5lPWVjb2xvbm5lK1NbaSxqXSpTW2krMSxqXX19XG4gIHJldHVybihlbGlnbmUrZWNvbG9ubmUpXG59XG5gYGAifQ== -->
+<pre class="r"><code>energie=function(S){
+  #fonction pour mesurer l&#39;enrgie globale d&#39;une image
+  
+  eligne=0
+  for (i in 1:N) {for (j in 1:(N-1)){eligne=eligne+S[i,j]*S[i,j+1]}}
+  ecolonne=0
+  for (j in 1:N) {for (i in 1:(N-1)){ecolonne=ecolonne+S[i,j]*S[i+1,j]}}
+  return(eligne+ecolonne)
+}</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="algorithme-de-métropolis" class="section level2">
+<h2>Algorithme de métropolis</h2>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubWV0cm9wb2xpc0lzaW5nPWZ1bmN0aW9uKGZvcm1lLCBOLCBiZXRhLCBCLCBuKXtcbmBgYCJ9 -->
+<pre class="r"><code>metropolisIsing=function(forme, N, beta, B, n){</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiV2FybmluZyBtZXNzYWdlOlxuSW4gcmVhZENoYXIoZmlsZSwgc2l6ZSwgVFJVRSkgOiB0cnVuY2F0aW5nIHN0cmluZyB3aXRoIGVtYmVkZGVkIG51bHNcbiJ9 -->
+<pre><code>Warning message:
+In readChar(file, size, TRUE) : truncating string with embedded nuls</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuICAjZm9uY3Rpb24gcXVpIHLDqWFsaXNlIGwnYWxnb3JpdGhtZSBkZSBNZXRyb3BvbGlzIHN1ciB1bmUgaW1hZ2UgaW1nMCBxdWkgZXN0IGJydWl0w6kgZW4gaW1nMSwgZXQgZG9pdCDDoCBsYSBmaW4gw6p0cmUgcmVzdGF1csOpZSBlbiBpbWcyXG4gIFxuICAjLS0tLWNyw6lhdGlvbiBkZSBsJ2ltYWdlIHBhcmZhaXRlIGltZzAtLS0tXG4gIGltZzAgPSBpbWFnZUdlbmVyYXRvcihmb3JtZSwgTilcbiAgaW1nMFxuICBwcmludChcIlRBIE1FUkVcIilcbiAgcHJpbnQoaW1nMFsxLDhdKVxuICAjLS0tLWNyw6lhdGlvbiBkJ3VuZSBpbWFnZSBhdXhpbGlhaXJlIGltZzEsIGF2ZWMgYm9yZCBwbHVzIGxvbmcgZXQgYnJ1aXRhZ2UtLS0tXG4gIGltZzEgPSBtYXRyaXgoMCwgbnJvdz1OKzIsIG5jb2w9TisyKVxuICBpbWcxXG4gIGJydWl0ID0gbWF0cml4KDIqcmJpbm9tKE5eMiwxLDEtcCktMSxucm93PU4sbmNvbD1OKVxuICBpbWcxWzI6KE4rMSksMjooTisxKV0gPSBpbWcwKmJydWl0XG4gIGltZzIgPSBpbWcxICNpbWFnZSB0YW1wb25cbiAgaW1nMlxuICBmb3IoayBpbiAxOm4pe1xuICAgICMtLS0tY2hvaXggZCd1biBzaXRlLS0tXG4gICAgaSA8LSAxK2NlaWxpbmcoTipydW5pZigxKSkgIyBpbmRpY2UgZW50cmUgMiBldCBOKzFcbiAgICBqIDwtIDErY2VpbGluZyhOKnJ1bmlmKDEpKVxuICAgICNpYXV4IDwtIDIgKyBrJSVOICNkZSAyIMOgIE4rMVxuICAgICNqYXV4IDwtIDIgKyBrJS8lKE4tMSklJU4gI2RlIDIgw6AgTisxXG4gICAgIy0tLS10aXJhZ2Ugbm91dmVsbGUgdmFsZXVyZSBjYW5kaWRhdGUtLS0tXG4gICAgaW1nMltpXVtqXSA9IC1pbWcxW2ldW2pdXG4gICAgIy0tLS12b2lzaW5hZ2UtLS0tXG4gICAgdjEgPSBpbWcxW2krMV1bal0gKyBpbWcxW2ktMV1bal0gKyBpbWcxW2ldW2orMV0gKyBpbWcxW2ldW2otMV1cbiAgICBwcmludCh2MSlcbiAgICB2MiA9IGltZzJbaSsxXVtqXSArIGltZzJbaS0xXVtqXSArIGltZzJbaV1baisxXSArIGltZzJbaV1bai0xXVxuICAgIHByaW50KFwiQUFBXCIpXG4gICAgIy0tLS1wb3RlbnRpZWxzLS0tLVxuICAgIFUxID0gLUIqaW1nMVtpXVtqXS1iZXRhKmltZzFbaV1bal0qdjFcbiAgICBVMiA9IC1CKmltZzJbaV1bal0tYmV0YSppbWcyW2ldW2pdKnYyXG4gICAgIy0tLS10ZXN0LS0tLVxuICAgIGRVID0gVTItVTFcbiAgICBwcmludChVMSlcbiAgICBwcmludChpbWcwW2ldW2pdKVxuICAgIHByaW50KGltZzFbaV1bal0pXG4gICAgcHJpbnQoaW1nMltpXVtqXSlcbiAgICBpZihkVTwwKXtpbWcxW2ldW2pdPSAtaW1nMVtpXVtqXX1cbiAgfSNmb3JcbiAgIy0tLS1hZmZpY2hhZ2UtLS0tXG4gIHBhcihtZnJvdz1jKDEsMykpXG4gIGltYWdlKDE6TiwxOk4saW1nMClcbiAgaW1hZ2UoMTpOLDE6TixpbWcxKVxuICBpbWFnZSgxOk4sMTpOLGltZzIpXG59XG5cblxuYGBgIn0= -->
+<pre class="r"><code>  #fonction qui réalise l&#39;algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
+  
+  #----création de l&#39;image parfaite img0----
+  img0 = imageGenerator(forme, N)
+  img0
+  print(&quot;TA MERE&quot;)
+  print(img0[1,8])
+  #----création d&#39;une image auxiliaire img1, avec bord plus long et bruitage----
+  img1 = matrix(0, nrow=N+2, ncol=N+2)
+  img1
+  bruit = matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)
+  img1[2:(N+1),2:(N+1)] = img0*bruit
+  img2 = img1 #image tampon
+  img2
+  for(k in 1:n){
+    #----choix d&#39;un site---
+    i &lt;- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+    j &lt;- 1+ceiling(N*runif(1))
+    #iaux &lt;- 2 + k%%N #de 2 à N+1
+    #jaux &lt;- 2 + k%/%(N-1)%%N #de 2 à N+1
+    #----tirage nouvelle valeure candidate----
+    img2[i][j] = -img1[i][j]
+    #----voisinage----
+    v1 = img1[i+1][j] + img1[i-1][j] + img1[i][j+1] + img1[i][j-1]
+    print(v1)
+    v2 = img2[i+1][j] + img2[i-1][j] + img2[i][j+1] + img2[i][j-1]
+    print(&quot;AAA&quot;)
+    #----potentiels----
+    U1 = -B*img1[i][j]-beta*img1[i][j]*v1
+    U2 = -B*img2[i][j]-beta*img2[i][j]*v2
+    #----test----
+    dU = U2-U1
+    print(U1)
+    print(img0[i][j])
+    print(img1[i][j])
+    print(img2[i][j])
+    if(dU&lt;0){img1[i][j]= -img1[i][j]}
+  }#for
+  #----affichage----
+  par(mfrow=c(1,3))
+  image(1:N,1:N,img0)
+  image(1:N,1:N,img1)
+  image(1:N,1:N,img2)
+}
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubWV0cm9wb2xpc0lzaW5nKFwicmVjdGFuZ2xlXCIsIDY0LCA0LCAxLCAxMF40KVxuYGBgIn0= -->
+<pre class="r"><code>metropolisIsing(&quot;rectangle&quot;, 64, 4, 1, 10^4)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIFwiVEEgTUVSRVwiXG5bMV0gLTFcbiJ9 -->
+<pre><code>[1] &quot;TA MERE&quot;
+[1] -1</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-output-begin eyJkYXRhIjoibGUgbm9tYnJlIGQnb2JqZXRzIOaUvOO4sCByZW1wbGFjZXIgbidlc3QgcGFzIG11bHRpcGxlIGRlIGxhIHRhaWxsZSBkdSByZW1wbGFjZW1lbnRcbiJ9 -->
+<pre><code>le nombre d&#39;objets 攼㸰 remplacer n&#39;est pas multiple de la taille du remplacement</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIE5BXG5bMV0gXCJBQUFcIlxuWzFdIE5BXG5bMV0gTkFcblsxXSBOQVxuWzFdIE5BXG4ifQ== -->
+<pre><code>[1] NA
+[1] &quot;AAA&quot;
+[1] NA
+[1] NA
+[1] NA
+[1] NA</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gaWYgKGRVIDwgMCkgeyA6IHZhbGV1ciBtYW5xdWFudGUgbMOgIG/DuSBUUlVFIC8gRkFMU0UgZXN0IHJlcXVpc1xuIn0= -->
+<pre><code>Error in if (dU &lt; 0) { : valeur manquante là où TRUE / FALSE est requis</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="recuit-simulé" class="section level2">
+<h2>recuit simulé</h2>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI3JlY3VpdFNpbXVsZSgxMF41LDIvMyw2NCwwLjIsMC4zKVxucmVjdWl0U2ltdWxlID0gZnVuY3Rpb24obiwgYmV0YSwgTiwgcCwgYWxwaGEsIHN0b3Ape1xuICBcbiAgIy0tLS1jcsOpYXRpb24gZGUgc2lnbWEwIGxlIHJlY3RhbmdsZSBpbml0aWFsLS0tLVxuICBzaWdtYTAgPC0gbWF0cml4KC0xLG5yb3c9TixuY29sPU4pICBcbiAgc2lnbWEwWyhOLzQpOihOKjMvNCksKE4vNCk6KE4qMy80KV0gPC0gMVxuICBcbiAgIy0tLS1jcsOpYXRpb24gZGUgc2lnbWEgbGUgcmVjdGFuZ2xlIGJydWl0w6ktLS0tXG4gIGJydWl0IDwtIG1hdHJpeCgyKnJiaW5vbShOXjIsMSwxLXApLTEsbnJvdz1OLG5jb2w9TikgXG4gIHNpZ21hIDwtIHNpZ21hMCpicnVpdCAgXG4gIFxuICAjLS0tLWNyw6lhdGlvbiBpbWFnZSBhdXhpbGlhaXJlLCBhdmVjIGNvbnRvdXIgc3VwbMOpbWVudGFpcmUgcG91ciBjYWxjdWxlciBVIHBsdXMgZmFjaWxlbWVudC0tLS1cbiAgU2F1eCA8LSBtYXRyaXgoMCwgbnJvdz1OKzIsIG5jb2w9TisyKSBcbiAgU2F1eFsyOihOKzEpLDI6KE4rMSldIDwtIHNpZ21hXG4gIHNpZ21hYXV4IDwtIFNhdXggI3N1Z21hYXV4ID0gbWF0cmljZSBhdXhpbGlhaXJlIHBvdXIgbGUgY2FsY3VsZSBkZSBVLCBnYXJkZSBsYSB2YWxldXIgaW5pdGlhbGUgZGUgU2F1eCAocXVpIGx1aSBjaGFuZ2UpXG5cbiAgXG4gICMtLS0tLS0tLWxlIHJlY3VpdCBzaW11bMOpLS0tLS0tLS1cbiAgaWYoc3RvcD09MCl7ICNjYXMgb8O5IG9uIHMnYXJyw6p0ZSBzaW1wbGVtZW50IGFwcsOocyBuIGl0w6lyYXRpb25zXG4gICAgZm9yIChrIGluICgxOm4pKSB7XG4gICAgICAjVCA8LSAxL3NxcnQoc3FydCgoMStsb2coaykpKSlcbiAgICAgIFQgPC0gMS9rICNUIHRlbmQgbGVudGVtZW50IHZlcnMgMFxuICAgICAgaWF1eCA8LSAxK2NlaWxpbmcoTipydW5pZigxKSkgIyBpbmRpY2UgZW50cmUgMiBldCBOKzFcbiAgICAgIGphdXggPC0gMStjZWlsaW5nKE4qcnVuaWYoMSkpXG4gICAgICAjaWF1eCA8LSAyICsgayUlTiAjZGUgMiDDoCBOKzFcbiAgICAgICNqYXV4IDwtIDIgKyBrJS8lKE4tMSklJU4gI2RlIDIgw6AgTisxXG4gICAgICBcbiAgICAgIFxuICAgICAgIy0tLS12b2lzaW5hZ2UtLS0tXG4gICAgICBzIDwtIFNhdXhbaWF1eC0xLGphdXhdK1NhdXhbaWF1eCsxLGphdXhdK1NhdXhbaWF1eCxqYXV4LTFdK1NhdXhbaWF1eCxqYXV4KzFdXG4gICAgICAjcHJpbnQoXCJzXCIpXG4gICAgICAjcHJpbnQocylcbiAgICAgICMtLS0tcHJvYmEgcG91ciB1biByZWN1aXQgc2ltdWzDqSwgYXZlYyByYXBwb3J0IGRlIG3DqXRyb3BvbGlzLS0tLVxuICAgICAgciA8LSBleHAoLTIqU2F1eFtpYXV4LGphdXhdKigyKmFscGhhKlQqc2lnbWFhdXhbaWF1eCxqYXV4XStiZXRhKnMpL1QpXG4gICAgICBcbiAgICAgICMtLS0tY2hhbmdlbWVudCBvdSBub24gZGUgc3BpbiBzZWxvbiBsYSBwcm9iYSByLS0tXG4gICAgICBpZihydW5pZigxKTxyKXtTYXV4W2lhdXgsamF1eF0gPC0gLVNhdXhbaWF1eCxqYXV4XX1cbiAgICB9I2ZvclxuICB9I2lmXG4gICAgXG4gIGlmKHN0b3A9PTEpeyNjYXMgb3Ugb24gcydhcnLDqnRlIGFwcsOocyBuIGl0w6lyYXRpb25zIHNhbnMgY2hhbmdlbWVudCBkZSBzcGluXG4gICAgWDwtMCNub21icmUgZCdpdMOpcmF0aW9ucyBjb25zw6ljdXRpdmVzIHNhbnMgY2hhbmdlbWVudCBkZSBzcGluXG4gICAgaXQ8LTBcbiAgICB3aGlsZShYPD1uKSB7XG4gICAgICBpdDwtaXQrMVxuICAgICAgI1QgPC0gMS9zcXJ0KHNxcnQoKDErbG9nKGspKSkpXG4gICAgICBUIDwtIDEvayAjVCB0ZW5kIGxlbnRlbWVudCB2ZXJzIDBcbiAgICAgIGlhdXggPC0gMStjZWlsaW5nKE4qcnVuaWYoMSkpICMgaW5kaWNlIGVudHJlIDIgZXQgTisxXG4gICAgICBqYXV4IDwtIDErY2VpbGluZyhOKnJ1bmlmKDEpKVxuICAgICAgI2lhdXggPC0gMiArIGslJU4gI2RlIDIgw6AgTisxXG4gICAgICAjamF1eCA8LSAyICsgayUvJShOLTEpJSVOICNkZSAyIMOgIE4rMVxuICAgICAgXG4gICAgICBcbiAgICAgICMtLS0tdm9pc2luYWdlLS0tLVxuICAgICAgcyA8LSBTYXV4W2lhdXgtMSxqYXV4XStTYXV4W2lhdXgrMSxqYXV4XStTYXV4W2lhdXgsamF1eC0xXStTYXV4W2lhdXgsamF1eCsxXVxuICAgICAgXG4gICAgICAjLS0tLXByb2JhIHBvdXIgdW4gcmVjdWl0IHNpbXVsw6ktLS0tXG4gICAgICByIDwtIGV4cCgtMipTYXV4W2lhdXgsamF1eF0qKDIqYWxwaGEqVCpzaWdtYWF1eFtpYXV4LGphdXhdK2JldGEqcykvVClcbiAgICAgIFxuICAgICAgIy0tLS1jaGFuZ2VtZW50IG91IG5vbiBkZSBzcGluIHNlbG9uIGxhIHByb2JhIHItLS1cbiAgICAgIGlmKHJ1bmlmKDEpPHIpe1xuICAgICAgICBTYXV4W2lhdXgsamF1eF0gPC0gLVNhdXhbaWF1eCxqYXV4XVxuICAgICAgICBYIDwtIDAjb24gdmllbnQgZGUgY2hhbmdlciB1biBzcGluLCBkb25jIGxhIGNvbmRpdGlvbiBkJ2FycsOqdCByZXRvbWJlIMOgIDBcbiAgICAgIH0jaWZcbiAgICAgIGVsc2V7WCA8LVgrMSB9IFxuICAgIH0jd2hpbGVcbiAgICBwcmludChpdClcbiAgfSNpZlxuICBcbiAgUyA8LSBTYXV4WzI6KE4rMSksMjooTisxKV0gI2ltYWdlIGZpbmFsZSAob24gcmV0aXJlIGxlIGNvbnRvdXIgYXV4aWxpYWlyZSlcbiAgICBcbiAgICBcbiAgIy0tLS1wb3VyY2VudGFnZSBkZSBjb3JyZXNwb25kYW5jZS0tLS1cbiAgbm9rIDwtIDAgI25vbWJyZSBkZSBwaXhlbHMgZGl2ZXJnZW50c1xuICBjb3JyZXNwb25kYW5jZSA8LSAwICNwb3VyY2VudGFnZSBzdXIgbmIgcGl4ZWxzIHRvdGFsXG4gIGZvciAoaSBpbiAoMTpOKSl7XG4gICAgZm9yIChqIGluICgxOk4pKXtcbiAgICAgIGlmKFNbaSxqXSAhPSBzaWdtYTBbaSxqXSl7bm9rIDwtIG5vaysxfVxuICAgIH0jZm9yXG4gIH0jZm9yXG4gIGNvcnJlc3BvbmRhbmNlIDwtICgoTl4yKS1ub2spLyhOXjIpKjEwMFxuICAjcHJpbnQobm9rKVxuICAjcHJpbnQoY29ycmVzcG9uZGFuY2UpXG4gIFxuICBcbiAgIy0tLS1hZmZpY2hhZ2UtLS0tXG4gIHBhcihtZnJvdz1jKDEsMykpXG4gIGltYWdlKDE6TiwxOk4sc2lnbWEwKVxuICBpbWFnZSgxOk4sMTpOLHNpZ21hKVxuICBpbWFnZSgxOk4sMTpOLFMpXG4gIHJldHVybihjb3JyZXNwb25kYW5jZSlcbn0jZnVuY3Rpb25cbmBgYCJ9 -->
+<pre class="r"><code>#recuitSimule(10^5,2/3,64,0.2,0.3)
+recuitSimule = function(n, beta, N, p, alpha, stop){
+  
+  #----création de sigma0 le rectangle initial----
+  sigma0 &lt;- matrix(-1,nrow=N,ncol=N)  
+  sigma0[(N/4):(N*3/4),(N/4):(N*3/4)] &lt;- 1
+  
+  #----création de sigma le rectangle bruité----
+  bruit &lt;- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N) 
+  sigma &lt;- sigma0*bruit  
+  
+  #----création image auxiliaire, avec contour suplémentaire pour calculer U plus facilement----
+  Saux &lt;- matrix(0, nrow=N+2, ncol=N+2) 
+  Saux[2:(N+1),2:(N+1)] &lt;- sigma
+  sigmaaux &lt;- Saux #sugmaaux = matrice auxiliaire pour le calcule de U, garde la valeur initiale de Saux (qui lui change)
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpUaGlzIGlzIGFuIFtSIE1hcmtkb3duXShodHRwOi8vcm1hcmtkb3duLnJzdHVkaW8uY29tKSBOb3RlYm9vay4gV2hlbiB5b3UgZXhlY3V0ZSBjb2RlIHdpdGhpbiB0aGUgbm90ZWJvb2ssIHRoZSByZXN1bHRzIGFwcGVhciBiZW5lYXRoIHRoZSBjb2RlLiANCg0KVHJ5IGV4ZWN1dGluZyB0aGlzIGNodW5rIGJ5IGNsaWNraW5nIHRoZSAqUnVuKiBidXR0b24gd2l0aGluIHRoZSBjaHVuayBvciBieSBwbGFjaW5nIHlvdXIgY3Vyc29yIGluc2lkZSBpdCBhbmQgcHJlc3NpbmcgKkN0cmwrU2hpZnQrRW50ZXIqLiANCg0KQWRkIGEgbmV3IGNodW5rIGJ5IGNsaWNraW5nIHRoZSAqSW5zZXJ0IENodW5rKiBidXR0b24gb24gdGhlIHRvb2xiYXIgb3IgYnkgcHJlc3NpbmcgKkN0cmwrQWx0K0kqLg0KDQpXaGVuIHlvdSBzYXZlIHRoZSBub3RlYm9vaywgYW4gSFRNTCBmaWxlIGNvbnRhaW5pbmcgdGhlIGNvZGUgYW5kIG91dHB1dCB3aWxsIGJlIHNhdmVkIGFsb25nc2lkZSBpdCAoY2xpY2sgdGhlICpQcmV2aWV3KiBidXR0b24gb3IgcHJlc3MgKkN0cmwrU2hpZnQrSyogdG8gcHJldmlldyB0aGUgSFRNTCBmaWxlKS4NCg0KVGhlIHByZXZpZXcgc2hvd3MgeW91IGEgcmVuZGVyZWQgSFRNTCBjb3B5IG9mIHRoZSBjb250ZW50cyBvZiB0aGUgZWRpdG9yLiBDb25zZXF1ZW50bHksIHVubGlrZSAqS25pdCosICpQcmV2aWV3KiBkb2VzIG5vdCBydW4gYW55IFIgY29kZSBjaHVua3MuIEluc3RlYWQsIHRoZSBvdXRwdXQgb2YgdGhlIGNodW5rIHdoZW4gaXQgd2FzIGxhc3QgcnVuIGluIHRoZSBlZGl0b3IgaXMgZGlzcGxheWVkLg0KDQoNCg0KDQrOsiBlc3QgbGEgY29uc3RhbnRlIGRlIGNvdXBsYWdlIGVudHJlIHNpdGVzIHZvaXNpbnMgZXQgQiByZXBywrQgZXNlbnRlIHVuIGNoYW1wIG1hZ27CtCBldGlxdWUgZXgtDQp0ZXJuZS4gTG9yc3F1ZSDOsiBlc3QgcG9zaXRpZiwgbGVzIGNvbmZpZ3VyYXRpb25zIGxlcyBwbHVzIHByb2JhYmxlcyAoaS5lIGTigJnCtCBlbmVyZ2llcyBwbHVzIGZhaWJsZXMpDQpzb250IGNlbGxlcyBwb3VyIGxlc3F1ZWxsZXMgbGVzIHNwaW5zIHNvbnQgZGUgbcuGIGVtZSBzaWduZXMgKGZlcnJvLW1lZ27CtCBldGlzbWUpLCBhbG9ycyBxdWUgDQoNCmRhbnMgbGUgY2FzIGRlIM6yIG7CtCBlZ2F0aWYsIGF1IGNvbnRyYWlyZSwgb24gZmF2b3Jpc2VyYSBs4oCZYWx0ZXJuYW5jZSBkZSBzcGlucyBkZSBzaWduZXMgb3BwcG9zwrQgZXMgKGFudGktDQpmZXJyb21hZ27CtCBldGlzbWUuIExhIHZhbGV1ciAoc2lnbmUgZXQgdmFsZXVyIGFic29sdWUpIGRlIM6yIGNvbmRpdGlvbm5lIGRvbmMgbGEgcsK0IGVndWxhcml0wrQgZSBkdQ0KbW9kYCBlbGUgZOKAmUlzaW5nLiBRdWFudCBhdSBjaGFtcCBtYWduwrQgZXRpcXVlIGV4dGVybmUgcmVsYXRpZiBhdSBwb3RlbnRpZWwgZOKAmW9yZHJlIDEsIGlsIGZhdm9yaXNlDQphIHByaW9yaSBwYXIgc29uIHNpZ25lIHVuIHNwaW4gb3UgdW4gYXV0cmUuDQoNCmBgYHtyfQ0KY3VydmUoZXhwcj1leHAoLXgpLCBmcm9tPS01LCB0bz01KQ0KYGBgDQoNCmBgYHtweXRob259DQoyKiooNjQqNjQpDQpgYGANCg0K</div>
+  
+  #--------le recuit simulé--------
+  if(stop==0){ #cas où on s&#39;arrête simplement après n itérations
+    for (k in (1:n)) {
+      #T &lt;- 1/sqrt(sqrt((1+log(k))))
+      T &lt;- 1/k #T tend lentement vers 0
+      iaux &lt;- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+      jaux &lt;- 1+ceiling(N*runif(1))
+      #iaux &lt;- 2 + k%%N #de 2 à N+1
+      #jaux &lt;- 2 + k%/%(N-1)%%N #de 2 à N+1
+      
+      
+      #----voisinage----
+      s &lt;- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      #print(&quot;s&quot;)
+      #print(s)
+      #----proba pour un recuit simulé, avec rapport de métropolis----
+      r &lt;- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
+      
+      #----changement ou non de spin selon la proba r---
+      if(runif(1)&lt;r){Saux[iaux,jaux] &lt;- -Saux[iaux,jaux]}
+    }#for
+  }#if
+    
+  if(stop==1){#cas ou on s&#39;arrête après n itérations sans changement de spin
+    X&lt;-0#nombre d&#39;itérations consécutives sans changement de spin
+    it&lt;-0
+    while(X&lt;=n) {
+      it&lt;-it+1
+      #T &lt;- 1/sqrt(sqrt((1+log(k))))
+      T &lt;- 1/k #T tend lentement vers 0
+      iaux &lt;- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+      jaux &lt;- 1+ceiling(N*runif(1))
+      #iaux &lt;- 2 + k%%N #de 2 à N+1
+      #jaux &lt;- 2 + k%/%(N-1)%%N #de 2 à N+1
+      
+      
+      #----voisinage----
+      s &lt;- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      
+      #----proba pour un recuit simulé----
+      r &lt;- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
+      
+      #----changement ou non de spin selon la proba r---
+      if(runif(1)&lt;r){
+        Saux[iaux,jaux] &lt;- -Saux[iaux,jaux]
+        X &lt;- 0#on vient de changer un spin, donc la condition d&#39;arrêt retombe à 0
+      }#if
+      else{X &lt;-X+1 } 
+    }#while
+    print(it)
+  }#if
+  
+  S &lt;- Saux[2:(N+1),2:(N+1)] #image finale (on retire le contour auxiliaire)
+    
+    
+  #----pourcentage de correspondance----
+  nok &lt;- 0 #nombre de pixels divergents
+  correspondance &lt;- 0 #pourcentage sur nb pixels total
+  for (i in (1:N)){
+    for (j in (1:N)){
+      if(S[i,j] != sigma0[i,j]){nok &lt;- nok+1}
+    }#for
+  }#for
+  correspondance &lt;- ((N^2)-nok)/(N^2)*100
+  #print(nok)
+  #print(correspondance)
+  
+  
+  #----affichage----
+  par(mfrow=c(1,3))
+  image(1:N,1:N,sigma0)
+  image(1:N,1:N,sigma)
+  image(1:N,1:N,S)
+  return(correspondance)
+}#function</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucmVjdWl0U2ltdWxlKDEwXjQsIDUsIDY0LCAwLjIsIDMsIDEpXG5gYGAifQ== -->
+<pre class="r"><code>recuitSimule(10^4, 5, 64, 0.2, 3, 1)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<div id="les-paramètres-et-leur-estimation" class="section level3">
+<h3>Les paramètres et leur estimation</h3>
+<div id="modèle-dising" class="section level4">
+<h4>Modèle d’Ising</h4>
+<p>On rappelle, pour le modèle d’Ising, <span class="math inline">\(E={-1,1}\)</span>, et <span class="math inline">\(U(x_s) = \beta -x_s\sum_{t\in V_s}{x_t} - Bx_s\)</span>. Le choix du signe de beta est déterminant pour la valeur de <span class="math inline">\(U_s(x_s)\)</span>. En effet, choisir un beta négatif va imposer que toutes les 2-cliques dont les pixels sont de signes différents auront pour potentiel <span class="math inline">\(-1\times 1\times\beta\)</span>, donc un nombre positif, tandis que les 2-cliques de signes identiques auront un potentiel négatif. Or la mesure de Gibbs est telle que plus le potentiel pour un état est élevé, moins ce site est probable d’être dans cette état.</p>
+</div>
+</div>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<!-- rnb-text-end -->
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCmJpYmxpb2dyYXBoeTogam91cm5hbF9kZV9ib3JkLmJpYiAgI2h0dHBzOi8vcm1hcmtkb3duLnJzdHVkaW8uY29tL2F1dGhvcmluZ19iaWJsaW9ncmFwaGllc19hbmRfY2l0YXRpb25zLmh0bWwNCi0tLQ0KYGBge3J9DQpsaWJyYXJ5KG1hZ3JpdHRyKQ0KbGlicmFyeShpbWFnZXIpDQpgYGANCg0KIyMgT3V0aWwgcG91ciBsYSBtb2TDqWxpc2F0aW9uDQoNCmBgYHtyfQ0KaW1hZ2VHZW5lcmF0b3I9ZnVuY3Rpb24oZm9ybWUsIE4pew0KICAjZm9uY3Rpb24gcGVybWV0dGFudCBkZSBnw6luw6lyZXIgdW5lIG1hdHJpY2UtaW1hZ2UgZGUgZm9ybWUgY2hvaXNpZSwgZXQgZGUgdGFpbGxlIE4qTg0KICANCiAgaW1nIDwtIG1hdHJpeCgtMSwgbnJvdz0gTiwgbmNvbD0gTikNCiAgDQogICMtLS0tcmVjdGFuZ2xlLS0tLQ0KICBpZihmb3JtZT09ICJyZWN0YW5nbGUiKXsNCiAgICBpbWdbKE4vNCk6KE4qMy80KSwoTi80KTooTiozLzQpXSA8LSAxfQ0KICANCiAgIy0tLS1sb3NhbmdlLS0tLQ0KICBpZihmb3JtZT09ICJsb3NhbmdlIil7DQogICAgZm9yIChpIGluIDE6Til7DQogICAgICBmb3IgKGogaW4gMTpOKXsNCiAgICAgICAgc2lnbWEwW2ksal09LTErMiooYWJzKGktaik8PU4vNCkqKGFicyhpK2otTik8PU4vNCkgIA0KICAgICAgfQ0KICAgIH0jZm9yDQogIH0jaWYNCiAgDQogICMtLS0tZGFtaWVyLS0tLQ0KICAjLS0tLXRyaWFuZ2xlLS0tLQ0KICAjLS0tLWNlcmNsZS0tLS0NCiAgIy0tLS1iYW5kZS0tLS0NCiAgDQogIHJldHVybihpbWcpDQp9I2Z1bmMNCmBgYA0KDQpgYGB7cn0NCmJydWl0ZXVyPWZ1bmN0aW9uKGltYWdlLCBicil7DQogICNmb25jdGlvbiBxdWkgcmV2b2l0IGwnaW1hZ2UgZG9ubsOpZSBlbiBhcmd1bWVudCBwYXIgbGEgbcOqbWUgaW1hZ2UgbWFpcyBicnVpdMOpIHBhciBsYSBtw6l0aG9kZSAiYnIiDQogIGltZ0JyIDwtIGltYWdlDQogIE4gPC0gI1JFQ1VQIExPTkdFVVIgSU1BR0UNCiAgYnJ1aXQgPC0gMA0KICAjLS0tLWJpbm9taWFsZS0tLS0NCiAgaWYoYnI9PSAicmJpbm9tIil7YnJ1aXQgPC0gbWF0cml4KDIqcmJpbm9tKE5eMiwxLDEtcCktMSxucm93PU4sbmNvbD1OKX0NCiAgIy0tLS1wb2lzc29uLS0tLQ0KICAjLS0tLW5vcm1hbGUtLS0tDQogIA0KICBpbWdCciA8LSBpbWFnZSpicg0KICByZXR1cm4oaW1nQnIpDQp9I2Z1bmMgIEEgRklOSVINCmBgYA0KDQpgYGB7cn0NCmVuZXJnaWU9ZnVuY3Rpb24oUyl7DQogICNmb25jdGlvbiBwb3VyIG1lc3VyZXIgbCdlbnJnaWUgZ2xvYmFsZSBkJ3VuZSBpbWFnZQ0KICANCiAgZWxpZ25lPTANCiAgZm9yIChpIGluIDE6Tikge2ZvciAoaiBpbiAxOihOLTEpKXtlbGlnbmU9ZWxpZ25lK1NbaSxqXSpTW2ksaisxXX19DQogIGVjb2xvbm5lPTANCiAgZm9yIChqIGluIDE6Tikge2ZvciAoaSBpbiAxOihOLTEpKXtlY29sb25uZT1lY29sb25uZStTW2ksal0qU1tpKzEsal19fQ0KICByZXR1cm4oZWxpZ25lK2Vjb2xvbm5lKQ0KfQ0KYGBgDQoNCg0KDQojIyBBbGdvcml0aG1lIGRlIG3DqXRyb3BvbGlzDQoNCmBgYHtyfQ0KbWV0cm9wb2xpc0lzaW5nPWZ1bmN0aW9uKGZvcm1lLCBOLCBiZXRhLCBCLCBuKXsNCiAgI2ZvbmN0aW9uIHF1aSByw6lhbGlzZSBsJ2FsZ29yaXRobWUgZGUgTWV0cm9wb2xpcyBzdXIgdW5lIGltYWdlIGltZzAgcXVpIGVzdCBicnVpdMOpIGVuIGltZzEsIGV0IGRvaXQgw6AgbGEgZmluIMOqdHJlIHJlc3RhdXLDqWUgZW4gaW1nMg0KICANCiAgIy0tLS1jcsOpYXRpb24gZGUgbCdpbWFnZSBwYXJmYWl0ZSBpbWcwLS0tLQ0KICBpbWcwID0gaW1hZ2VHZW5lcmF0b3IoZm9ybWUsIE4pDQogIGltZzANCiAgcHJpbnQoIlRBIE1FUkUiKQ0KICBwcmludChpbWcwWzEsOF0pDQogICMtLS0tY3LDqWF0aW9uIGQndW5lIGltYWdlIGF1eGlsaWFpcmUgaW1nMSwgYXZlYyBib3JkIHBsdXMgbG9uZyBldCBicnVpdGFnZS0tLS0NCiAgaW1nMSA9IG1hdHJpeCgwLCBucm93PU4rMiwgbmNvbD1OKzIpDQogIGltZzENCiAgYnJ1aXQgPSBtYXRyaXgoMipyYmlub20oTl4yLDEsMS1wKS0xLG5yb3c9TixuY29sPU4pDQogIGltZzFbMjooTisxKSwyOihOKzEpXSA9IGltZzAqYnJ1aXQNCiAgaW1nMiA9IGltZzEgI2ltYWdlIHRhbXBvbg0KICBpbWcyDQogIGZvcihrIGluIDE6bil7DQogICAgIy0tLS1jaG9peCBkJ3VuIHNpdGUtLS0NCiAgICBpIDwtIDErY2VpbGluZyhOKnJ1bmlmKDEpKSAjIGluZGljZSBlbnRyZSAyIGV0IE4rMQ0KICAgIGogPC0gMStjZWlsaW5nKE4qcnVuaWYoMSkpDQogICAgI2lhdXggPC0gMiArIGslJU4gI2RlIDIgw6AgTisxDQogICAgI2phdXggPC0gMiArIGslLyUoTi0xKSUlTiAjZGUgMiDDoCBOKzENCiAgICAjLS0tLXRpcmFnZSBub3V2ZWxsZSB2YWxldXJlIGNhbmRpZGF0ZS0tLS0NCiAgICBpbWcyW2ldW2pdID0gLWltZzFbaV1bal0NCiAgICAjLS0tLXZvaXNpbmFnZS0tLS0NCiAgICB2MSA9IGltZzFbaSsxXVtqXSArIGltZzFbaS0xXVtqXSArIGltZzFbaV1baisxXSArIGltZzFbaV1bai0xXQ0KICAgIHByaW50KHYxKQ0KICAgIHYyID0gaW1nMltpKzFdW2pdICsgaW1nMltpLTFdW2pdICsgaW1nMltpXVtqKzFdICsgaW1nMltpXVtqLTFdDQogICAgcHJpbnQoIkFBQSIpDQogICAgIy0tLS1wb3RlbnRpZWxzLS0tLQ0KICAgIFUxID0gLUIqaW1nMVtpXVtqXS1iZXRhKmltZzFbaV1bal0qdjENCiAgICBVMiA9IC1CKmltZzJbaV1bal0tYmV0YSppbWcyW2ldW2pdKnYyDQogICAgIy0tLS10ZXN0LS0tLQ0KICAgIGRVID0gVTItVTENCiAgICBwcmludChVMSkNCiAgICBwcmludChpbWcwW2ldW2pdKQ0KICAgIHByaW50KGltZzFbaV1bal0pDQogICAgcHJpbnQoaW1nMltpXVtqXSkNCiAgICBpZihkVTwwKXtpbWcxW2ldW2pdPSAtaW1nMVtpXVtqXX0NCiAgfSNmb3INCiAgIy0tLS1hZmZpY2hhZ2UtLS0tDQogIHBhcihtZnJvdz1jKDEsMykpDQogIGltYWdlKDE6TiwxOk4saW1nMCkNCiAgaW1hZ2UoMTpOLDE6TixpbWcxKQ0KICBpbWFnZSgxOk4sMTpOLGltZzIpDQp9DQoNCg0KYGBgDQoNCmBgYHtyfQ0KbWV0cm9wb2xpc0lzaW5nKCJyZWN0YW5nbGUiLCA2NCwgNCwgMSwgMTBeNCkNCmBgYA0KDQoNCg0KIyMgcmVjdWl0IHNpbXVsw6kNCmBgYHtyfQ0KI3JlY3VpdFNpbXVsZSgxMF41LDIvMyw2NCwwLjIsMC4zKQ0KcmVjdWl0U2ltdWxlID0gZnVuY3Rpb24obiwgYmV0YSwgTiwgcCwgYWxwaGEsIHN0b3Apew0KICANCiAgIy0tLS1jcsOpYXRpb24gZGUgc2lnbWEwIGxlIHJlY3RhbmdsZSBpbml0aWFsLS0tLQ0KICBzaWdtYTAgPC0gbWF0cml4KC0xLG5yb3c9TixuY29sPU4pICANCiAgc2lnbWEwWyhOLzQpOihOKjMvNCksKE4vNCk6KE4qMy80KV0gPC0gMQ0KICANCiAgIy0tLS1jcsOpYXRpb24gZGUgc2lnbWEgbGUgcmVjdGFuZ2xlIGJydWl0w6ktLS0tDQogIGJydWl0IDwtIG1hdHJpeCgyKnJiaW5vbShOXjIsMSwxLXApLTEsbnJvdz1OLG5jb2w9TikgDQogIHNpZ21hIDwtIHNpZ21hMCpicnVpdCAgDQogIA0KICAjLS0tLWNyw6lhdGlvbiBpbWFnZSBhdXhpbGlhaXJlLCBhdmVjIGNvbnRvdXIgc3VwbMOpbWVudGFpcmUgcG91ciBjYWxjdWxlciBVIHBsdXMgZmFjaWxlbWVudC0tLS0NCiAgU2F1eCA8LSBtYXRyaXgoMCwgbnJvdz1OKzIsIG5jb2w9TisyKSANCiAgU2F1eFsyOihOKzEpLDI6KE4rMSldIDwtIHNpZ21hDQogIHNpZ21hYXV4IDwtIFNhdXggI3N1Z21hYXV4ID0gbWF0cmljZSBhdXhpbGlhaXJlIHBvdXIgbGUgY2FsY3VsZSBkZSBVLCBnYXJkZSBsYSB2YWxldXIgaW5pdGlhbGUgZGUgU2F1eCAocXVpIGx1aSBjaGFuZ2UpDQoNCiAgDQogICMtLS0tLS0tLWxlIHJlY3VpdCBzaW11bMOpLS0tLS0tLS0NCiAgaWYoc3RvcD09MCl7ICNjYXMgb8O5IG9uIHMnYXJyw6p0ZSBzaW1wbGVtZW50IGFwcsOocyBuIGl0w6lyYXRpb25zDQogICAgZm9yIChrIGluICgxOm4pKSB7DQogICAgICAjVCA8LSAxL3NxcnQoc3FydCgoMStsb2coaykpKSkNCiAgICAgIFQgPC0gMS9rICNUIHRlbmQgbGVudGVtZW50IHZlcnMgMA0KICAgICAgaWF1eCA8LSAxK2NlaWxpbmcoTipydW5pZigxKSkgIyBpbmRpY2UgZW50cmUgMiBldCBOKzENCiAgICAgIGphdXggPC0gMStjZWlsaW5nKE4qcnVuaWYoMSkpDQogICAgICAjaWF1eCA8LSAyICsgayUlTiAjZGUgMiDDoCBOKzENCiAgICAgICNqYXV4IDwtIDIgKyBrJS8lKE4tMSklJU4gI2RlIDIgw6AgTisxDQogICAgICANCiAgICAgIA0KICAgICAgIy0tLS12b2lzaW5hZ2UtLS0tDQogICAgICBzIDwtIFNhdXhbaWF1eC0xLGphdXhdK1NhdXhbaWF1eCsxLGphdXhdK1NhdXhbaWF1eCxqYXV4LTFdK1NhdXhbaWF1eCxqYXV4KzFdDQogICAgICAjcHJpbnQoInMiKQ0KICAgICAgI3ByaW50KHMpDQogICAgICAjLS0tLXByb2JhIHBvdXIgdW4gcmVjdWl0IHNpbXVsw6ksIGF2ZWMgcmFwcG9ydCBkZSBtw6l0cm9wb2xpcy0tLS0NCiAgICAgIHIgPC0gZXhwKC0yKlNhdXhbaWF1eCxqYXV4XSooMiphbHBoYSpUKnNpZ21hYXV4W2lhdXgsamF1eF0rYmV0YSpzKS9UKQ0KICAgICAgDQogICAgICAjLS0tLWNoYW5nZW1lbnQgb3Ugbm9uIGRlIHNwaW4gc2Vsb24gbGEgcHJvYmEgci0tLQ0KICAgICAgaWYocnVuaWYoMSk8cil7U2F1eFtpYXV4LGphdXhdIDwtIC1TYXV4W2lhdXgsamF1eF19DQogICAgfSNmb3INCiAgfSNpZg0KICAgIA0KICBpZihzdG9wPT0xKXsjY2FzIG91IG9uIHMnYXJyw6p0ZSBhcHLDqHMgbiBpdMOpcmF0aW9ucyBzYW5zIGNoYW5nZW1lbnQgZGUgc3Bpbg0KICAgIFg8LTAjbm9tYnJlIGQnaXTDqXJhdGlvbnMgY29uc8OpY3V0aXZlcyBzYW5zIGNoYW5nZW1lbnQgZGUgc3Bpbg0KICAgIGl0PC0wDQogICAgd2hpbGUoWDw9bikgew0KICAgICAgaXQ8LWl0KzENCiAgICAgICNUIDwtIDEvc3FydChzcXJ0KCgxK2xvZyhrKSkpKQ0KICAgICAgVCA8LSAxL2sgI1QgdGVuZCBsZW50ZW1lbnQgdmVycyAwDQogICAgICBpYXV4IDwtIDErY2VpbGluZyhOKnJ1bmlmKDEpKSAjIGluZGljZSBlbnRyZSAyIGV0IE4rMQ0KICAgICAgamF1eCA8LSAxK2NlaWxpbmcoTipydW5pZigxKSkNCiAgICAgICNpYXV4IDwtIDIgKyBrJSVOICNkZSAyIMOgIE4rMQ0KICAgICAgI2phdXggPC0gMiArIGslLyUoTi0xKSUlTiAjZGUgMiDDoCBOKzENCiAgICAgIA0KICAgICAgDQogICAgICAjLS0tLXZvaXNpbmFnZS0tLS0NCiAgICAgIHMgPC0gU2F1eFtpYXV4LTEsamF1eF0rU2F1eFtpYXV4KzEsamF1eF0rU2F1eFtpYXV4LGphdXgtMV0rU2F1eFtpYXV4LGphdXgrMV0NCiAgICAgIA0KICAgICAgIy0tLS1wcm9iYSBwb3VyIHVuIHJlY3VpdCBzaW11bMOpLS0tLQ0KICAgICAgciA8LSBleHAoLTIqU2F1eFtpYXV4LGphdXhdKigyKmFscGhhKlQqc2lnbWFhdXhbaWF1eCxqYXV4XStiZXRhKnMpL1QpDQogICAgICANCiAgICAgICMtLS0tY2hhbmdlbWVudCBvdSBub24gZGUgc3BpbiBzZWxvbiBsYSBwcm9iYSByLS0tDQogICAgICBpZihydW5pZigxKTxyKXsNCiAgICAgICAgU2F1eFtpYXV4LGphdXhdIDwtIC1TYXV4W2lhdXgsamF1eF0NCiAgICAgICAgWCA8LSAwI29uIHZpZW50IGRlIGNoYW5nZXIgdW4gc3BpbiwgZG9uYyBsYSBjb25kaXRpb24gZCdhcnLDqnQgcmV0b21iZSDDoCAwDQogICAgICB9I2lmDQogICAgICBlbHNle1ggPC1YKzEgfSANCiAgICB9I3doaWxlDQogICAgcHJpbnQoaXQpDQogIH0jaWYNCiAgDQogIFMgPC0gU2F1eFsyOihOKzEpLDI6KE4rMSldICNpbWFnZSBmaW5hbGUgKG9uIHJldGlyZSBsZSBjb250b3VyIGF1eGlsaWFpcmUpDQogICAgDQogICAgDQogICMtLS0tcG91cmNlbnRhZ2UgZGUgY29ycmVzcG9uZGFuY2UtLS0tDQogIG5vayA8LSAwICNub21icmUgZGUgcGl4ZWxzIGRpdmVyZ2VudHMNCiAgY29ycmVzcG9uZGFuY2UgPC0gMCAjcG91cmNlbnRhZ2Ugc3VyIG5iIHBpeGVscyB0b3RhbA0KICBmb3IgKGkgaW4gKDE6Tikpew0KICAgIGZvciAoaiBpbiAoMTpOKSl7DQogICAgICBpZihTW2ksal0gIT0gc2lnbWEwW2ksal0pe25vayA8LSBub2srMX0NCiAgICB9I2Zvcg0KICB9I2Zvcg0KICBjb3JyZXNwb25kYW5jZSA8LSAoKE5eMiktbm9rKS8oTl4yKSoxMDANCiAgI3ByaW50KG5vaykNCiAgI3ByaW50KGNvcnJlc3BvbmRhbmNlKQ0KICANCiAgDQogICMtLS0tYWZmaWNoYWdlLS0tLQ0KICBwYXIobWZyb3c9YygxLDMpKQ0KICBpbWFnZSgxOk4sMTpOLHNpZ21hMCkNCiAgaW1hZ2UoMTpOLDE6TixzaWdtYSkNCiAgaW1hZ2UoMTpOLDE6TixTKQ0KICByZXR1cm4oY29ycmVzcG9uZGFuY2UpDQp9I2Z1bmN0aW9uDQpgYGANCmBgYHtyfQ0KcmVjdWl0U2ltdWxlKDEwXjQsIDUsIDY0LCAwLjIsIDMsIDEpDQpgYGANCg0KDQoNCg0KDQoNCg0KIyMjIExlcyBwYXJhbcOodHJlcyBldCBsZXVyIGVzdGltYXRpb24NCg0KIyMjIyBNb2TDqGxlIGQnSXNpbmcNCg0KT24gcmFwcGVsbGUsIHBvdXIgbGUgbW9kw6hsZSBkJ0lzaW5nLCAkRT17LTEsMX0kLCBldCAkVSh4X3MpID0gXGJldGEgLXhfc1xzdW1fe3RcaW4gVl9zfXt4X3R9IC0gIEJ4X3MkLg0KTGUgY2hvaXggZHUgc2lnbmUgZGUgYmV0YSBlc3QgZMOpdGVybWluYW50IHBvdXIgbGEgdmFsZXVyIGRlICRVX3MoeF9zKSQuIEVuIGVmZmV0LCBjaG9pc2lyIHVuIGJldGEgbsOpZ2F0aWYgdmEgaW1wb3NlciBxdWUgdG91dGVzIGxlcyAyLWNsaXF1ZXMgZG9udCBsZXMgcGl4ZWxzIHNvbnQgZGUgc2lnbmVzIGRpZmbDqXJlbnRzIGF1cm9udCBwb3VyIHBvdGVudGllbCAkLTFcdGltZXMgMVx0aW1lc1xiZXRhJCwgZG9uYyB1biBub21icmUgcG9zaXRpZiwgdGFuZGlzIHF1ZSBsZXMgMi1jbGlxdWVzIGRlIHNpZ25lcyBpZGVudGlxdWVzIGF1cm9udCB1biBwb3RlbnRpZWwgbsOpZ2F0aWYuIE9yIGxhIG1lc3VyZSBkZSBHaWJicyBlc3QgdGVsbGUgcXVlIHBsdXMgbGUgcG90ZW50aWVsIHBvdXIgdW4gw6l0YXQgZXN0IMOpbGV2w6ksIG1vaW5zIGNlIHNpdGUgZXN0IHByb2JhYmxlIGQnw6p0cmUgZGFucyBjZXR0ZSDDqXRhdC4NCg0KDQoNCg0KDQoNCg0KDQoNCg0KIyBSZWZlcmVuY2Vz</div>
 
 
 

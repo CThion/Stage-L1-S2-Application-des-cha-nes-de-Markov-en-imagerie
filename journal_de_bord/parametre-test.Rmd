@@ -1,0 +1,250 @@
+---
+title: "R Notebook"
+output: html_notebook
+bibliography: journal_de_bord.bib  #https://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html
+---
+```{r}
+library(magrittr)
+library(imager)
+```
+
+## Outil pour la modélisation
+
+```{r}
+imageGenerator=function(forme, N){
+  #fonction permettant de générer une matrice-image de forme choisie, et de taille N*N
+  
+  img <- matrix(-1, nrow= N, ncol= N)
+  
+  #----rectangle----
+  if(forme== "rectangle"){
+    img[(N/4):(N*3/4),(N/4):(N*3/4)] <- 1}
+  
+  #----losange----
+  if(forme== "losange"){
+    for (i in 1:N){
+      for (j in 1:N){
+        sigma0[i,j]=-1+2*(abs(i-j)<=N/4)*(abs(i+j-N)<=N/4)  
+      }
+    }#for
+  }#if
+  
+  #----damier----
+  #----triangle----
+  #----cercle----
+  #----bande----
+  
+  return(img)
+}#func
+```
+
+```{r}
+bruiteur=function(image, br){
+  #fonction qui revoit l'image donnée en argument par la même image mais bruité par la méthode "br"
+  imgBr <- image
+  N <- #RECUP LONGEUR IMAGE
+  bruit <- 0
+  #----binomiale----
+  if(br== "rbinom"){bruit <- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)}
+  #----poisson----
+  #----normale----
+  
+  imgBr <- image*br
+  return(imgBr)
+}#func  A FINIR
+```
+
+```{r}
+energie=function(S){
+  #fonction pour mesurer l'enrgie globale d'une image
+  
+  eligne=0
+  for (i in 1:N) {for (j in 1:(N-1)){eligne=eligne+S[i,j]*S[i,j+1]}}
+  ecolonne=0
+  for (j in 1:N) {for (i in 1:(N-1)){ecolonne=ecolonne+S[i,j]*S[i+1,j]}}
+  return(eligne+ecolonne)
+}
+```
+
+
+
+## Algorithme de métropolis
+
+```{r}
+metropolisIsing=function(forme, N, beta, B, n){
+  #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
+  
+  #----création de l'image parfaite img0----
+  img0 = imageGenerator(forme, N)
+  img0
+  print("TA MERE")
+  print(img0[1,8])
+  #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+  img1 = matrix(0, nrow=N+2, ncol=N+2)
+  img1
+  bruit = matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)
+  img1[2:(N+1),2:(N+1)] = img0*bruit
+  img2 = img1 #image tampon
+  img2
+  for(k in 1:n){
+    #----choix d'un site---
+    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+    j <- 1+ceiling(N*runif(1))
+    #iaux <- 2 + k%%N #de 2 à N+1
+    #jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
+    #----tirage nouvelle valeure candidate----
+    img2[i][j] = -img1[i][j]
+    #----voisinage----
+    v1 = img1[i+1][j] + img1[i-1][j] + img1[i][j+1] + img1[i][j-1]
+    print(v1)
+    v2 = img2[i+1][j] + img2[i-1][j] + img2[i][j+1] + img2[i][j-1]
+    print("AAA")
+    #----potentiels----
+    U1 = -B*img1[i][j]-beta*img1[i][j]*v1
+    U2 = -B*img2[i][j]-beta*img2[i][j]*v2
+    #----test----
+    dU = U2-U1
+    print(U1)
+    print(img0[i][j])
+    print(img1[i][j])
+    print(img2[i][j])
+    if(dU<0){img1[i][j]= -img1[i][j]}
+  }#for
+  #----affichage----
+  par(mfrow=c(1,3))
+  image(1:N,1:N,img0)
+  image(1:N,1:N,img1)
+  image(1:N,1:N,img2)
+}
+
+
+```
+
+```{r}
+metropolisIsing("rectangle", 64, 4, 1, 10^4)
+```
+
+
+
+## recuit simulé
+```{r}
+#recuitSimule(10^5,2/3,64,0.2,0.3)
+recuitSimule = function(n, beta, N, p, alpha, stop){
+  
+  #----création de sigma0 le rectangle initial----
+  sigma0 <- matrix(-1,nrow=N,ncol=N)  
+  sigma0[(N/4):(N*3/4),(N/4):(N*3/4)] <- 1
+  
+  #----création de sigma le rectangle bruité----
+  bruit <- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N) 
+  sigma <- sigma0*bruit  
+  
+  #----création image auxiliaire, avec contour suplémentaire pour calculer U plus facilement----
+  Saux <- matrix(0, nrow=N+2, ncol=N+2) 
+  Saux[2:(N+1),2:(N+1)] <- sigma
+  sigmaaux <- Saux #sugmaaux = matrice auxiliaire pour le calcule de U, garde la valeur initiale de Saux (qui lui change)
+
+  
+  #--------le recuit simulé--------
+  if(stop==0){ #cas où on s'arrête simplement après n itérations
+    for (k in (1:n)) {
+      #T <- 1/sqrt(sqrt((1+log(k))))
+      T <- 1/k #T tend lentement vers 0
+      iaux <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+      jaux <- 1+ceiling(N*runif(1))
+      #iaux <- 2 + k%%N #de 2 à N+1
+      #jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
+      
+      
+      #----voisinage----
+      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      #print("s")
+      #print(s)
+      #----proba pour un recuit simulé, avec rapport de métropolis----
+      r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
+      
+      #----changement ou non de spin selon la proba r---
+      if(runif(1)<r){Saux[iaux,jaux] <- -Saux[iaux,jaux]}
+    }#for
+  }#if
+    
+  if(stop==1){#cas ou on s'arrête après n itérations sans changement de spin
+    X<-0#nombre d'itérations consécutives sans changement de spin
+    it<-0
+    while(X<=n) {
+      it<-it+1
+      #T <- 1/sqrt(sqrt((1+log(k))))
+      T <- 1/k #T tend lentement vers 0
+      iaux <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+      jaux <- 1+ceiling(N*runif(1))
+      #iaux <- 2 + k%%N #de 2 à N+1
+      #jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
+      
+      
+      #----voisinage----
+      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      
+      #----proba pour un recuit simulé----
+      r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
+      
+      #----changement ou non de spin selon la proba r---
+      if(runif(1)<r){
+        Saux[iaux,jaux] <- -Saux[iaux,jaux]
+        X <- 0#on vient de changer un spin, donc la condition d'arrêt retombe à 0
+      }#if
+      else{X <-X+1 } 
+    }#while
+    print(it)
+  }#if
+  
+  S <- Saux[2:(N+1),2:(N+1)] #image finale (on retire le contour auxiliaire)
+    
+    
+  #----pourcentage de correspondance----
+  nok <- 0 #nombre de pixels divergents
+  correspondance <- 0 #pourcentage sur nb pixels total
+  for (i in (1:N)){
+    for (j in (1:N)){
+      if(S[i,j] != sigma0[i,j]){nok <- nok+1}
+    }#for
+  }#for
+  correspondance <- ((N^2)-nok)/(N^2)*100
+  #print(nok)
+  #print(correspondance)
+  
+  
+  #----affichage----
+  par(mfrow=c(1,3))
+  image(1:N,1:N,sigma0)
+  image(1:N,1:N,sigma)
+  image(1:N,1:N,S)
+  return(correspondance)
+}#function
+```
+```{r}
+recuitSimule(10^4, 5, 64, 0.2, 3, 1)
+```
+
+
+
+
+
+
+
+### Les paramètres et leur estimation
+
+#### Modèle d'Ising
+
+On rappelle, pour le modèle d'Ising, $E={-1,1}$, et $U(x_s) = \beta -x_s\sum_{t\in V_s}{x_t} -  Bx_s$.
+Le choix du signe de beta est déterminant pour la valeur de $U_s(x_s)$. En effet, choisir un beta négatif va imposer que toutes les 2-cliques dont les pixels sont de signes différents auront pour potentiel $-1\times 1\times\beta$, donc un nombre positif, tandis que les 2-cliques de signes identiques auront un potentiel négatif. Or la mesure de Gibbs est telle que plus le potentiel pour un état est élevé, moins ce site est probable d'être dans cette état.
+
+
+
+
+
+
+
+
+
+
+# References
