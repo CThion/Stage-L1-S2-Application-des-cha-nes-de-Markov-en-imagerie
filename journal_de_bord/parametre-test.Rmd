@@ -4,11 +4,22 @@ output: html_notebook
 bibliography: journal_de_bord.bib  #https://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html
 ---
 ```{r}
-library(magrittr)
-library(imager)
+#library(magrittr)
+#library(imager)
+library(stats)
+library(survival)
 ```
 
-## Outil pour la modélisation
+Pour une configuration initiale donnée, on va pouvoir considérer de nouvelles configuration candidate pour la remplacer. Il sagit alors de savoir quelle candidate est la meilleure. Deux manières de faire sont ici présenté: des méthodes bayésienne, et non bayésienne.\ 
+Pour une approche non bayésienne du problème, l'évaluation d'une configuration candidate est booléenne: soit on accepte le candidat, soit on le rejete, autrement dit la probabilité d'une nouvelle configuration vaut 0 ou 1.\ 
+Différement, avec une analyse bayésienne d'une candidate, on lui attribuera une probabilité (donc entre 0 et 1) d'être la meilleure.
+
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
+# méthodes non bayésiennes
+## Algorithmes
+### Outil pour les algorithmes
 
 ```{r}
 imageGenerator=function(forme, N){
@@ -68,7 +79,7 @@ energie=function(S){
 
 
 
-## Algorithme de métropolis
+### Algorithme de métropolis
 
 ```{r}
 metropolisIsing=function(forme, N, beta, B, n){
@@ -126,7 +137,13 @@ metropolisIsing("rectangle", 64, 4, 1, 10^4)
 
 
 
-## recuit simulé
+
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
+# méthodes bayésiennes
+## algorithmes
+### recuit simulé
 ```{r}
 #recuitSimule(10^5,2/3,64,0.2,0.3)
 recuitSimule = function(n, beta, N, p, alpha, stop){
@@ -231,9 +248,152 @@ recuitSimule(10^4, 5, 64, 0.2, 3, 1)
 
 
 
-### Les paramètres et leur estimation
 
-#### Modèle d'Ising
+
+
+### Estimateur MAP
+$L(x,x')=1\text{  pour  }x\neq x',\text{et 0 sinon}$
+$E[L(X,\phi(y))|y]=1-P(X=\phi(y)|y)$
+
+### estimateur MPM
+
+### estimateur TPM
+
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
+# Probabilité du pourcentage de bon pixels bien représentés en sachant le nombre d'itérations
+## Fonction de répartition empirique du pourcentage de pixels correctement restitué
+
+
+```{r}
+recuitSimule = function(n, beta, N, p, alpha, stop){
+  
+  #----cr?ation de sigma0 le rectangle initial----
+  sigma0 <- matrix(-1,nrow=N,ncol=N)  
+  sigma0[(N/4):(N*3/4),(N/4):(N*3/4)] <- 1
+  
+  #----cr?ation de sigma le rectangle bruit?----
+  bruit <- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N) 
+  sigma <- sigma0*bruit  
+  
+  #----cr?ation image auxiliaire, avec contour supl?mentaire pour calculer U plus facilement----
+  Saux <- matrix(0, nrow=N+2, ncol=N+2) 
+  Saux[2:(N+1),2:(N+1)] <- sigma
+  sigmaaux <- Saux #sugmaaux = matrice auxiliaire pour le calcule de U, garde la valeur initiale de Saux (qui lui change)
+  #rmc=rep(1/2,n)
+
+  
+  #--------le recuit simul?--------
+  if(stop==0){ #cas o? on s'arr?te simplement apr?s n it?rations
+    print("attention je suis dans le for")
+    for (k in (1:n)) {
+      #T <- 1/sqrt(sqrt((1+log(k))))
+      T <- 1/k #T tend lentement vers 0
+      iaux <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+      jaux <- 1+ceiling(N*runif(1))
+      #iaux <- 2 + k%%N #de 2 ? N+1
+      #jaux <- 2 + k%/%(N-1)%%N #de 2 ? N+1
+      
+      
+      #----voisinage----
+      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      
+      #----proba pour un recuit simul?----
+      r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
+      
+      #----changement ou non de spin selon la proba r---
+      #rmc[k]=r
+      if(runif(1)<r){Saux[iaux,jaux] <- -Saux[iaux,jaux]}
+    }#for
+  }#if
+    
+  if(stop==1){#cas ou on s'arr?te apr?s n it?rations sans changement de spin
+    X<-0#nombre d'it?rations cons?cutives sans changement de spin
+    it<-0
+    while(X<=n) {
+      it<-it+1
+      #T <- 1/sqrt(sqrt((1+log(k))))
+      T <- 1/it #T tend lentement vers 0
+      iaux <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+      jaux <- 1+ceiling(N*runif(1))
+      #iaux <- 2 + k%%N #de 2 ? N+1
+      #jaux <- 2 + k%/%(N-1)%%N #de 2 ? N+1
+      
+      
+      #----voisinage----
+      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      
+      #----proba pour un recuit simul?----
+      r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
+      
+      #----changement ou non de spin selon la proba r---
+      #rmc[k]=r
+      if(runif(1)<r){
+        Saux[iaux,jaux] <- -Saux[iaux,jaux]
+        X <- 0#on vient de changer un spin, donc la condition d'arr?t retombe ? 0
+      }#if
+      else{X <-X+1 } 
+    }#while
+    print(c("ItÃ©rations",it))
+  }#if
+  
+  S <- Saux[2:(N+1),2:(N+1)] #image finale (on retire le contour auxiliaire)
+    
+    
+  #----pourcentage de correspondance----
+  nok <- 0 #nombre de pixels divergents
+  correspondance <- 0 #pourcentage sur nb pixels total
+  for (i in (1:N)){
+    for (j in (1:N)){
+      if(S[i,j] != sigma0[i,j]){nok <- nok+1}
+    }#for
+  }#for
+  correspondance <- ((N^2)-nok)/(N^2)*100
+  #print(nok)
+  print(correspondance)
+  
+  
+  #----affichage----
+  layout(matrix(c(1,4,2,5,3,0), nc=3))
+  image(1:N,1:N,sigma0)
+  image(1:N,1:N,sigma)
+  image(1:N,1:N,S)
+  return(correspondance)
+}#function
+```
+
+```{r}
+MCdeMC=function(pct, K, n, beta, N, p, alpha, stop){
+  #algo de montecarlo sur celui de recuit simul?, pour estimer la proba de correspodnance
+  #? pct% d'une image reconstitu?e, en en fonction du nombre d'it?rations dans le recuitsimul?
+  P <- 0
+  E <- 0
+  corresp=rep(0,K)
+  for (k in (1:K)) { #on fait K recuitSimul?
+    corresp[k] = recuitSimule(n, beta, N, p, alpha, stop)
+    if(corresp[k]>=pct){E <- E+1} #si le pourcentage de correspondance convient ? la condition pct
+  }
+  
+  P <- E/K  #les recuitSimule sont a priori ind?pendants les uns des autres, et r?alis?s identiquement
+  print(P)
+  
+  survie=function(x){1-ecdf(corresp)(x)}
+  plot(ecdf(corresp))
+  x <- seq(min(corresp)-4,100,0.1)
+  #plot.Surv(corresp)
+  plot(x,survie(x),type="S")
+}
+```
+```{r}
+MCdeMC(98,2,400,2/3,64,0.2,0.3,1)
+```
+
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
+# Les paramètres et leur estimation
+## Modèle d'Ising
 
 On rappelle, pour le modèle d'Ising, $E={-1,1}$, et $U(x_s) = \beta -x_s\sum_{t\in V_s}{x_t} -  Bx_s$.
 Le choix du signe de beta est déterminant pour la valeur de $U_s(x_s)$. En effet, choisir un beta négatif va imposer que toutes les 2-cliques dont les pixels sont de signes différents auront pour potentiel $-1\times 1\times\beta$, donc un nombre positif, tandis que les 2-cliques de signes identiques auront un potentiel négatif. Or la mesure de Gibbs est telle que plus le potentiel pour un état est élevé, moins ce site est probable d'être dans cette état.
@@ -241,10 +401,5 @@ Le choix du signe de beta est déterminant pour la valeur de $U_s(x_s)$. En effe
 
 
 
-
-
-
-
-
-
+[//]: <> (===============================================================================================================) 
 # References
