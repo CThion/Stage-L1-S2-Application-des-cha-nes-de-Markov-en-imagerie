@@ -141,6 +141,10 @@ metropolisIsing("rectangle", 64, 4, 1, 10^4)
 [//]: <> (===============================================================================================================) 
 [//]: <> (===============================================================================================================) 
 [//]: <> (===============================================================================================================) 
+
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
 # méthodes bayésiennes
 ## algorithmes
 ### recuit simulé
@@ -258,6 +262,22 @@ $E[L(X,\phi(y))|y]=1-P(X=\phi(y)|y)$
 ### estimateur MPM
 
 ### estimateur TPM
+
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
+[//]: <> (===============================================================================================================) 
+# Adaptabilité du calcul de potentiel
+## groupe de voisin
+On va essayer d'augmenter la précision des algorithmes précédents en jouant sur la définition du voisinage. On définis le voisinage possible comme une étoile à huit branches. La longueur de chaque branche (et donc son poid dans le calcul de U) va dépendre de la continuité des pixels constituant cette branche. Ainsi d'un pixel à l'autre on n'aura pas forcément un voisinage de même ampleur.\ 
+La longeur d'un branche est égale au nombre de pixels côte à côte de même valeur, partant de s.\ 
+Le poid d'une branche de voisinage est alors proportionel à sa longeur. On aurait:
+$U_s=\sum_{i=1}^{8}{a_il_i}$
+avec $(l_i)$ les 8 lead et $(a_i)$ leur longueur.
+
+
+### constitution du voisinage
+1. ajout des 8 plus proches voisins (habituel, si ce n'est que l'on ajoute les diagonales en plus). On les note lead.
+2. pour chacun des lead, on regarde la valeur du pixel qui le jouxe dans l'orientation de la flêche auquel il appartient, opposément à s biensûr. Si ce pixel est de même valeur que le lead,
 
 [//]: <> (===============================================================================================================) 
 [//]: <> (===============================================================================================================) 
