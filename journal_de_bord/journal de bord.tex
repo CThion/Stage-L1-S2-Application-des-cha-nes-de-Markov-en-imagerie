@@ -41,8 +41,31 @@
 \begin{document}
 
 \maketitle
-
-\section{Problématiques et objectifs}
+%=======================================================================================================================================================
+\paragraph{démo probabilité générale = somme probabilités locales}
+\[
+\begin{aligned}
+	P(X_s= x_s | X^s= x^s)
+		&= \dfrac{P(X_s= x_s, X^s= x^s)}{P(X^s= x^s)}  \text{  formule de Bayes}\\
+		&= \dfrac{P(X= x)}{P(X^s= x^s)}\\
+		&= \dfrac{e^{-U(x)}}{e^{-U(x^s)} }\\	
+		&\ \\ 	
+	\text{On a  } U(x^s)
+		&= U_{\bar{s}}(x) = \sum_{c\in C, s\notin c}{U_c(x)}\\
+		&\ \\
+	\text{Et  } U(x) 
+		&= \sum_{c\in C}{U_c(x)}\\
+		&= \sum_{c\in C, s\in c}{U_c(x)} + \sum_{c\in C, s\notin c}{U_c(x)}\\
+		&= U_s(x_s,V_s) + U_{\bar{s}}(x) \\
+		&\ \\
+	Donc, P(X_s= x_s | X^s= x^s)
+		&=\dfrac{exp(-U_s(x_s,V_s) - U_{\bar{s}}(x))}  {exp(-U_{\bar{s}}(x))}\\
+		&=\dfrac{exp(-U_s(x_s,V_s)}{exp(-U_{\bar{s}}(x) + U_{\bar{s}}(x))}\\
+		&=exp(-U_s(x_s,V_s))   \text{   ce qui justifie l'hypthère markovienne}
+\end{aligned}
+\]
+%=======================================================================================================================================================
+\section{Problématiques}
 
 \begin{itemize}
 	\item Quelle est la probabilité d'avoir une correspondance à c\% après n itération d'algorithme de recuit simulé? De Gibbs? De Métropolis? \\
@@ -56,7 +79,11 @@
 		\textit{pour une image de N*N pixels, on peut travailler sur N/2 pixels en même temps sans problème de modification de voisinage sur une même étape}
 \end{itemize}
 
-
+%=======================================================================================================================================================
+\section{objectifs pratiques}
+\paragraph{Algorithme de Gibbs et Metropolis avec des champs de Markov aléatoires donnés (ising, potts, makovien-gaussien}
+\paragraph{Recuit simulé}
+\paragraph{Interface graphique pour comparaison des différents algorithmes}
 
 \end{document}
 

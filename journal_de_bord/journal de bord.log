@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.21)  13 JUN 2020 12:17
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.21)  17 JUN 2020 07:49
 entering extended mode
 **"./journal de bord.tex"
 ("journal de bord.tex"
@@ -487,95 +487,96 @@ LaTeX Info: Redefining \nameref on input line 41.
 \openout3 = `"journal de bord.out"'.
 
 LaTeX Font Info:    Trying to load font information for OT1+ztmcm on input line
- 44.
+ 45.
 
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/psnfss\ot1ztmcm.fd
 File: ot1ztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OT1/ztmcm.
 )
 LaTeX Font Info:    Trying to load font information for OML+ztmcm on input line
- 44.
+ 45.
 
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/psnfss\omlztmcm.fd
 File: omlztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OML/ztmcm.
 )
 LaTeX Font Info:    Trying to load font information for OMS+ztmcm on input line
- 44.
+ 45.
 
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/psnfss\omsztmcm.fd
 File: omsztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OMS/ztmcm.
 )
 LaTeX Font Info:    Trying to load font information for OMX+ztmcm on input line
- 44.
+ 45.
 
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/psnfss\omxztmcm.fd
 File: omxztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OMX/ztmcm.
 )
-LaTeX Font Info:    Trying to load font information for U+rsfs on input line 44
+LaTeX Font Info:    Trying to load font information for U+rsfs on input line 45
 .
 
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/jknappen\ursfs.fd
 File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 )
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 44.
-LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 44.
-LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 44.
-LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <14.4> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 45.
-LaTeX Font Info:    Trying to load font information for OMS+ptm on input line 4
-8.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 45.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 45.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 46.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7.4> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 46.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <6> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 46.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <14.4> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 68.
+LaTeX Font Info:    Trying to load font information for OMS+ptm on input line 7
+1.
 
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/psnfss\omsptm.fd
 File: omsptm.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 48.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 71.
 
-Underfull \hbox (badness 10000) in paragraph at lines 52--54
+Underfull \hbox (badness 10000) in paragraph at lines 75--77
 
  []
 
-LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 54.
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 61.
 [1
 
 {C:/Users/geeka/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 61.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 88.
+ [2]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 88.
 
 ("journal de bord.aux")
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 61.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 61.
-
-
-Package rerunfilecheck Warning: File `"journal de bord".out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `"journal de bord".out':
-(rerunfilecheck)             Before: B5EA67846AD90B925615376540FD14D9;65
-(rerunfilecheck)             After:  E19327FCE0D698E92EE611CCADB2981A;65.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 61.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 88.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 88.
+Package rerunfilecheck Info: File `"journal de bord".out' has not changed.
+(rerunfilecheck)             Checksum: F79BC5B7340D52BB9BD53F597A4153FC;106.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 88.
  ) 
 Here is how much of TeX's memory you used:
- 7492 strings out of 492449
- 111805 string characters out of 3120952
- 211155 words of memory out of 3000000
- 11684 multiletter control sequences out of 15000+200000
- 23688 words of font info for 54 fonts, out of 3000000 for 9000
+ 7544 strings out of 492449
+ 112380 string characters out of 3120952
+ 216155 words of memory out of 3000000
+ 11714 multiletter control sequences out of 15000+200000
+ 40429 words of font info for 95 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 39i,7n,31p,336b,330s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 39i,16n,31p,336b,332s stack positions out of 5000i,500n,10000p,200000b,50000s
 {C:/Users/geeka/Desktop/LATEX/Latex_instalation/fonts/enc/dvips/base/8r.enc}<
 C:/Users/geeka/Desktop/LATEX/Latex_instalation/fonts/type1/public/amsfonts/cm/c
-msy10.pfb><C:/Users/geeka/Desktop/LATEX/Latex_instalation/fonts/type1/urw/times
-/utmb8a.pfb><C:/Users/geeka/Desktop/LATEX/Latex_instalation/fonts/type1/urw/tim
-es/utmr8a.pfb><C:/Users/geeka/Desktop/LATEX/Latex_instalation/fonts/type1/urw/t
-imes/utmri8a.pfb>
-Output written on "journal de bord.pdf" (1 page, 49721 bytes).
+mmi10.pfb><C:/Users/geeka/Desktop/LATEX/Latex_instalation/fonts/type1/public/am
+sfonts/cm/cmr10.pfb><C:/Users/geeka/Desktop/LATEX/Latex_instalation/fonts/type1
+/public/amsfonts/cm/cmsy10.pfb><C:/Users/geeka/Desktop/LATEX/Latex_instalation/
+fonts/type1/urw/symbol/usyr.pfb><C:/Users/geeka/Desktop/LATEX/Latex_instalation
+/fonts/type1/urw/times/utmb8a.pfb><C:/Users/geeka/Desktop/LATEX/Latex_instalati
+on/fonts/type1/urw/times/utmr8a.pfb><C:/Users/geeka/Desktop/LATEX/Latex_instala
+tion/fonts/type1/urw/times/utmri8a.pfb>
+Output written on "journal de bord.pdf" (2 pages, 76379 bytes).
 PDF statistics:
- 33 PDF objects out of 1000 (max. 8388607)
- 3 named destinations out of 1000 (max. 500000)
- 9 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 59 PDF objects out of 1000 (max. 8388607)
+ 9 named destinations out of 1000 (max. 500000)
+ 17 words of extra memory for PDF output out of 10000 (max. 10000000)
 
