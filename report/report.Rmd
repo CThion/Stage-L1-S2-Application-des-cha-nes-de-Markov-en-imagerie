@@ -1,7 +1,7 @@
 ---
 title: "R Notebook"
 output: html_notebook
-bibliography: journal_de_bord.bib  #https://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html
+bibliography: report.bib  #https://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html
 ---
 ```{r}
 #library(magrittr)
@@ -10,7 +10,7 @@ library(stats)
 library(survival)
 ```
 
-Pour une configuration initiale donnée, on va pouvoir considérer de nouvelles configuration candidate pour la remplacer. Il sagit alors de savoir quelle candidate est la meilleure. Deux manières de faire sont ici présenté: des méthodes bayésienne, et non bayésienne.\ 
+Pour une configuration initiale donnée, on va pouvoir considérer de nouvelles configurations candidates pour la remplacer. Il sagit alors de savoir quelle candidate est la meilleure. Deux manières de faire sont ici présentées: une approche bayésiennes, et non bayésiennes.\ 
 Pour une approche non bayésienne du problème, l'évaluation d'une configuration candidate est booléenne: soit on accepte le candidat, soit on le rejete, autrement dit la probabilité d'une nouvelle configuration vaut 0 ou 1.\ 
 Différement, avec une analyse bayésienne d'une candidate, on lui attribuera une probabilité (donc entre 0 et 1) d'être la meilleure.
 
@@ -87,16 +87,13 @@ metropolisIsing=function(forme, N, beta, B, n){
   
   #----création de l'image parfaite img0----
   img0 = imageGenerator(forme, N)
-  img0
-  print("TA MERE")
-  print(img0[1,8])
+  image(img0)
   #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
   img1 = matrix(0, nrow=N+2, ncol=N+2)
-  img1
   bruit = matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)
   img1[2:(N+1),2:(N+1)] = img0*bruit
+  image(img1)
   img2 = img1 #image tampon
-  img2
   for(k in 1:n){
     #----choix d'un site---
     i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
@@ -104,35 +101,32 @@ metropolisIsing=function(forme, N, beta, B, n){
     #iaux <- 2 + k%%N #de 2 à N+1
     #jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
     #----tirage nouvelle valeure candidate----
-    img2[i][j] = -img1[i][j]
+    img2[i,j] = -img1[i,j]
     #----voisinage----
-    v1 = img1[i+1][j] + img1[i-1][j] + img1[i][j+1] + img1[i][j-1]
-    print(v1)
-    v2 = img2[i+1][j] + img2[i-1][j] + img2[i][j+1] + img2[i][j-1]
-    print("AAA")
+    v1 = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+    v2 = img2[i+1,j] + img2[i-1,j] + img2[i,j+1] + img2[i,j-1]
     #----potentiels----
-    U1 = -B*img1[i][j]-beta*img1[i][j]*v1
-    U2 = -B*img2[i][j]-beta*img2[i][j]*v2
+    U1 = -B*img1[i,j]-beta*img1[i,j]*v1
+    U2 = -B*img2[i,j]-beta*img2[i,j]*v2
     #----test----
     dU = U2-U1
-    print(U1)
-    print(img0[i][j])
-    print(img1[i][j])
-    print(img2[i][j])
-    if(dU<0){img1[i][j]= -img1[i][j]}
+    if(dU<0){img1[i,j]= -img1[i,j]}
+    else{
+      p <- exp(-dU)
+      if(runif(1)<=p){img1[i,j]= -img1[i,j]}
+      else{img2[i,j] <- img1[i,j]} #sinon on ne change pas
+    }#else
   }#for
   #----affichage----
-  par(mfrow=c(1,3))
-  image(1:N,1:N,img0)
-  image(1:N,1:N,img1)
-  image(1:N,1:N,img2)
+  #par(mfrow=c(1,3))
+  image(img1)
 }
 
 
 ```
 
 ```{r}
-metropolisIsing("rectangle", 64, 4, 1, 10^4)
+metropolisIsing("rectangle", 64, 1, 0, 10^4)
 ```
 
 
@@ -280,6 +274,89 @@ On pourrait envisager de limiter la longeur des branches à 5 ou 10.
 1. ajout des 8 plus proches voisins (habituel, si ce n'est que l'on ajoute les diagonales en plus). On les note lead.
 2. pour chacun des lead, on regarde la valeur du pixel qui le jouxe dans l'orientation de la flêche auquel il appartient, opposément à s biensûr. Si ce pixel est de même valeur que le lead, on l'intègre à la branche. Sinon, la branche et terminée (cas d'un image en noir et blanc).
 
+```{r}
+Vbranch=function(img, is, js, ib, jb){
+  #fonction qui forme une branche de voisinage de s
+  
+  #----VARIABLES----
+  dii <- ib-is #coord ligne 
+  djj <- jb-js#coord colonnes
+  branch = 0
+  lead <- img[ib,jb]
+  cdd = 0 #candidat
+  k <- 1
+  
+  #----FONCTION----
+  #----branche horizontale----
+  
+  if(dii==0){
+    #--orientée gauche--
+    if(djj<0){
+      cdd <- img[ib,jb-k]
+      while(cdd==lead){
+        branch <- branch + cdd
+        k <- k+1
+        cdd <- img[ib,jb-k]
+      }#while
+      return(branch)
+    }#else
+    #--orientée droite--
+    else{
+      cdd <- img[ib,jb+k]
+      while (cdd==lead) {
+        branch <- branch + cdd
+        k <- k+1
+        cdd <- img[ib,jb+k]
+      }#while
+      return(branch)
+    }#else
+  }#if
+  
+  #----branche verticale----
+  if(djj==0){
+    #--orientée bas--
+    if(dii<0){
+      cdd <- img[ib+k,jb]
+      while(cdd==lead){
+        branch <- branch + cdd
+        k <- k+1
+        cdd <- img[ib+k,jb]
+      }#while
+      return(branch)
+    }#if
+    #--orientée haut--
+    else{
+      cdd <- img[ib-k,jb]
+      while(cdd==lead){
+        cdd <- img[ib-k,jb]
+        k <- k+1
+        cdd <- img[ib-k, jb]
+      }#while
+      return(branch)
+    }#else
+  }#if
+}#func
+
+
+```
+```{r}
+Vstar=function(img, i,j){
+  s <- 0
+  s <- s + Vbranch(img, i, j, i-1, j)
+  s <- s + Vbranch(img, i, j, i+1, j)
+  s <- s + Vbranch(img, i, j, i, j-1)
+  s <- s + Vbranch(img, i, j, i, j+1)
+  return(s)
+}#func
+```
+
+```{r}
+img <- imageGenerator("rectangle", 50)
+Vstar(img, 20,23)
+```
+
+
+
 [//]: <> (===============================================================================================================) 
 [//]: <> (===============================================================================================================) 
 [//]: <> (===============================================================================================================) 
@@ -318,6 +395,7 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
       
       
       #----voisinage----
+      #s <- Vstar(Saux, iaux, jaux)
       s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
       
       #----proba pour un recuit simul?----
@@ -343,6 +421,7 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
       
       
       #----voisinage----
+      #s <- Vstar(Saux, iaux, jaux)
       s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
       
       #----proba pour un recuit simul?----
@@ -407,7 +486,7 @@ MCdeMC=function(pct, K, n, beta, N, p, alpha, stop){
 }
 ```
 ```{r}
-MCdeMC(98,2,400,2/3,64,0.2,0.3,1)
+MCdeMC(98,2,400,2/3,64,0.2,0.3,0)
 ```
 
 [//]: <> (===============================================================================================================) 
