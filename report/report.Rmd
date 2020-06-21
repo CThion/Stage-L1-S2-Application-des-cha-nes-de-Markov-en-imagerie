@@ -23,8 +23,9 @@ Différement, avec une analyse bayésienne d'une candidate, on dispose d'informa
 ### Outil pour les algorithmes
 
 #### Fonction de génération d'image
-
 ```{r}
+#========================================================================================================
+
 imageGenerator=function(forme, N){
   #fonction permettant de générer une matrice-image de forme choisie, et de taille N*N
   
@@ -50,9 +51,14 @@ imageGenerator=function(forme, N){
   
   return(img)
 }#func
+
+#========================================================================================================
 ```
+
 #### fonction de bruitage d'image
 ```{r}
+#========================================================================================================
+
 bruiteur=function(image, br){
   #fonction qui revoit l'image donnée en argument par la même image mais bruité par la méthode "br"
   imgBr <- image
@@ -66,10 +72,14 @@ bruiteur=function(image, br){
   imgBr <- image*br
   return(imgBr)
 }#func  A FINIR
-```
-#### fcontion de calcul de l'énergie générale d'une image
 
+#========================================================================================================
+```
+
+#### fcontion de calcul de l'énergie générale d'une image
 ```{r}
+#========================================================================================================
+
 energie=function(S){
   #fonction pour mesurer l'enrgie globale d'une image
   
@@ -79,6 +89,8 @@ energie=function(S){
   for (j in 1:N) {for (i in 1:(N-1)){ecolonne=ecolonne+S[i,j]*S[i+1,j]}}
   return(eligne+ecolonne)
 }
+
+#========================================================================================================
 ```
 
 
@@ -100,6 +112,7 @@ metropolisIsing=function(forme, N, beta, B, n){
   img1[2:(N+1),2:(N+1)] = img0*bruit
   image(img1)
   img2 = img1 #image tampon
+  
   for(k in 1:n){
     #----choix d'un site---
     i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
@@ -157,8 +170,8 @@ GibbsIsing=function(forme, N, beta, B, n){
     #----choix d'un site---
     i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
     j <- 1+ceiling(N*runif(1))
-    #iaux <- 2 + k%%N #de 2 à N+1
-    #jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
+    iaux <- 2 + k%%N #de 2 à N+1
+    jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
     
     
     #----changement de valeur au site visé sur img2 (1ou-1) pour représenter E en entier avec img1 et img2 (cas d'une image en noir et blanc)----
@@ -171,8 +184,8 @@ GibbsIsing=function(forme, N, beta, B, n){
     #----calcule de la proba conditionnelle locale----
     P <- exp(-U1)/(exp(-U1)+exp(-U2))
     #----test----
-    if(runif(1)<=p){img1[i,j]= -img1[i,j]}
-    else{img2[i,j] <- img1[i,j]} #opération inverse, on ne retient pas le changement.S
+    if(runif(1)<=p){img1[i,j]= -img1[i,j]}#img1 redevient identique à img2
+    else{img2[i,j] <- img1[i,j]} #opération inverse, on ne retient pas le changement, et img2 redevient identique à img1
   }#for
   #----affichage----
   #par(mfrow=c(1,3))
@@ -182,7 +195,60 @@ GibbsIsing=function(forme, N, beta, B, n){
 #========================================================================================================
 ```
 ```{r}
-GibbsIsing("rectangle", 64, 1, 5, 20)
+GibbsIsing("rectangle", 64, 1, 1, 10^6)
+```
+
+### Recuit simulé non bayésien
+
+```{r}
+recuitMetro("rectangle", 64, 1, 1, 10^4)
+```
+
+```{r}
+#========================================================================================================
+
+recuitMetro=function(forme, N, beta, B, n){
+  #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
+  
+  #----création de l'image parfaite img0----
+  img0 = imageGenerator(forme, N)
+  image(img0)
+  #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+  img1 = matrix(0, nrow=N+2, ncol=N+2)
+  bruit = matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)
+  img1[2:(N+1),2:(N+1)] = img0*bruit
+  image(img1)
+  img2 = img1 #image tampon
+  
+  for(k in 1:n){
+    T <- 1#/sqrt(log(1+k))
+    #----choix d'un site---
+    #i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+    #j <- 1+ceiling(N*runif(1))
+    iaux <- 2 + k%%N #de 2 à N+1
+    jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
+    #----tirage nouvelle valeure candidate----
+    img2[i,j] = -img1[i,j]
+    #----voisinage----
+    v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+    #----potentiels----
+    U1 = -B*img1[i,j]/T-beta*img1[i,j]*v/T
+    U2 = -B*img2[i,j]/T-beta*img2[i,j]*v/T
+    #----test----
+    dU = U2-U1
+    if(dU<0){img1[i,j]= -img1[i,j]}
+    else{
+      p <- exp(-dU)
+      if(runif(1)<=p){img1[i,j]= -img1[i,j]}
+      else{img2[i,j] <- img1[i,j]} #sinon on ne change pas
+    }#else
+  }#for
+  #----affichage----
+  #par(mfrow=c(1,3))
+  image(img1)
+}
+
+#========================================================================================================
 ```
 
 
@@ -505,6 +571,11 @@ Vstar(img, 20,23)
 [//]: <> (===============================================================================================================)
 
 ```{r}
+recuitSimule(400,2/3,64,0.2,0.3,0)
+```
+
+
+```{r}
 #========================================================================================================
 
 recuitSimule = function(n, beta, N, p, alpha, stop){
@@ -529,15 +600,15 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
     for (k in (1:n)) {
       #T <- 1/sqrt(sqrt((1+log(k))))
       T <- 1/k #T tend lentement vers 0
-      iaux <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
-      jaux <- 1+ceiling(N*runif(1))
-      #iaux <- 2 + k%%N #de 2 ? N+1
-      #jaux <- 2 + k%/%(N-1)%%N #de 2 ? N+1
+      #iaux <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+      #jaux <- 1+ceiling(N*runif(1))
+      iaux <- 2 + k%%N #de 2 ? N+1
+      jaux <- 2 + k%/%(N-1)%%N #de 2 ? N+1
       
       
       #----voisinage----
-      s <- Vstar(Saux, iaux, jaux)
-      #s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      #s <- Vstar(Saux, iaux, jaux)
+      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
       
       #----proba pour un recuit simul?----
       r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
@@ -562,8 +633,8 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
       
       
       #----voisinage----
-      #s <- Vstar(Saux, iaux, jaux)
-      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      s <- Vstar(Saux, iaux, jaux)
+      #s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
       
       #----proba pour un recuit simul?----
       r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
@@ -605,6 +676,9 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
 
 #========================================================================================================
 ```
+
+
+
 
 ```{r}
 #========================================================================================================
