@@ -116,3 +116,5 @@ globalU=function(B, beta, N){
   plot(grid_mc[[opti]])
   
 }#function
+
+globalU(B, beta, N)

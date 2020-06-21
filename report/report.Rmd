@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "Restauration d'image à l'aide d'algorithme stochastiques par chaînes de Markov"
 output: html_notebook
 bibliography: report.bib  #https://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html
 ---
@@ -10,16 +10,19 @@ library(stats)
 library(survival)
 ```
 
-Pour une configuration initiale donnée, on va pouvoir considérer de nouvelles configurations candidates pour la remplacer. Il sagit alors de savoir quelle candidate est la meilleure. Deux manières de faire sont ici présentées: une approche bayésiennes, et non bayésiennes.\ 
-Pour une approche non bayésienne du problème, l'évaluation d'une configuration candidate est booléenne: soit on accepte le candidat, soit on le rejete, autrement dit la probabilité d'une nouvelle configuration vaut 0 ou 1.\ 
-Différement, avec une analyse bayésienne d'une candidate, on lui attribuera une probabilité (donc entre 0 et 1) d'être la meilleure.
+>> **Différence entre l'approche bayésienne et non bayésienne**
+>
+Pour une configuration initiale donnée, on va pouvoir considérer de nouvelles configurations candidates pour la remplacer. Il sagit alors de savoir quelle candidate est la meilleure. Deux manières de faire sont ici présentées: une approche bayésiennes, et non bayésiennes.  
+Pour une approche non bayésienne du problème, l'évaluation d'une configuration candidate est booléenne: soit on accepte le candidat, soit on le rejete, autrement dit la probabilité d'une nouvelle configuration vaut 0 ou 1, car on n'a aucune information apriori sur la configuration de l'image.  
+Différement, avec une analyse bayésienne d'une candidate, on dispose d'informations à priori sur cette dernière, et on lui attribuera ainsi une probabilité entre 0 et 1 d'être la meilleure.
 
-[//]: <> (===============================================================================================================) 
-[//]: <> (===============================================================================================================) 
-[//]: <> (===============================================================================================================) 
 # méthodes non bayésiennes
+
 ## Algorithmes
+
 ### Outil pour les algorithmes
+
+#### Fonction de génération d'image
 
 ```{r}
 imageGenerator=function(forme, N){
@@ -48,7 +51,7 @@ imageGenerator=function(forme, N){
   return(img)
 }#func
 ```
-
+#### fonction de bruitage d'image
 ```{r}
 bruiteur=function(image, br){
   #fonction qui revoit l'image donnée en argument par la même image mais bruité par la méthode "br"
@@ -64,6 +67,7 @@ bruiteur=function(image, br){
   return(imgBr)
 }#func  A FINIR
 ```
+#### fcontion de calcul de l'énergie générale d'une image
 
 ```{r}
 energie=function(S){
@@ -82,6 +86,8 @@ energie=function(S){
 ### Algorithme de métropolis
 
 ```{r}
+#========================================================================================================
+
 metropolisIsing=function(forme, N, beta, B, n){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
@@ -103,11 +109,10 @@ metropolisIsing=function(forme, N, beta, B, n){
     #----tirage nouvelle valeure candidate----
     img2[i,j] = -img1[i,j]
     #----voisinage----
-    v1 = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
-    v2 = img2[i+1,j] + img2[i-1,j] + img2[i,j+1] + img2[i,j-1]
+    v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
     #----potentiels----
-    U1 = -B*img1[i,j]-beta*img1[i,j]*v1
-    U2 = -B*img2[i,j]-beta*img2[i,j]*v2
+    U1 = -B*img1[i,j]-beta*img1[i,j]*v
+    U2 = -B*img2[i,j]-beta*img2[i,j]*v
     #----test----
     dU = U2-U1
     if(dU<0){img1[i,j]= -img1[i,j]}
@@ -122,27 +127,76 @@ metropolisIsing=function(forme, N, beta, B, n){
   image(img1)
 }
 
-
+#========================================================================================================
 ```
 
 ```{r}
 metropolisIsing("rectangle", 64, 1, 0, 10^4)
+
+```
+
+### Algorithme de Gibbs
+
+```{r}
+#========================================================================================================
+
+GibbsIsing=function(forme, N, beta, B, n){
+  #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
+  
+  #----création de l'image parfaite img0----
+  img0 = imageGenerator(forme, N)
+  image(img0)
+  #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+  img1 = matrix(0, nrow=N+2, ncol=N+2)
+  bruit = matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)
+  img1[2:(N+1),2:(N+1)] = img0*bruit
+  image(img1)
+  img2 = img1 #image tampon
+  
+  for(k in 1:n){
+    #----choix d'un site---
+    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+    j <- 1+ceiling(N*runif(1))
+    #iaux <- 2 + k%%N #de 2 à N+1
+    #jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
+    
+    
+    #----changement de valeur au site visé sur img2 (1ou-1) pour représenter E en entier avec img1 et img2 (cas d'une image en noir et blanc)----
+    img2[i,j] = -img1[i,j]
+    #----voisinage----
+    v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+    #----potentiels----
+    U1 = -B*img1[i,j]-beta*img1[i,j]*v
+    U2 = -B*img2[i,j]-beta*img2[i,j]*v
+    #----calcule de la proba conditionnelle locale----
+    P <- exp(-U1)/(exp(-U1)+exp(-U2))
+    #----test----
+    if(runif(1)<=p){img1[i,j]= -img1[i,j]}
+    else{img2[i,j] <- img1[i,j]} #opération inverse, on ne retient pas le changement.S
+  }#for
+  #----affichage----
+  #par(mfrow=c(1,3))
+  image(img1)
+}
+
+#========================================================================================================
+```
+```{r}
+GibbsIsing("rectangle", 64, 1, 5, 20)
 ```
 
 
-
-
-[//]: <> (===============================================================================================================) 
-[//]: <> (===============================================================================================================) 
-[//]: <> (===============================================================================================================) 
-
-[//]: <> (===============================================================================================================) 
-[//]: <> (===============================================================================================================) 
 [//]: <> (===============================================================================================================) 
 # méthodes bayésiennes
+[//]: <> (===============================================================================================================)
 ## algorithmes
+[//]: <> (===============================================================================================================)
 ### recuit simulé
+[//]: <> (===============================================================================================================)
+
 ```{r}
+#========================================================================================================
+
 #recuitSimule(10^5,2/3,64,0.2,0.3)
 recuitSimule = function(n, beta, N, p, alpha, stop){
   
@@ -235,18 +289,12 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
   image(1:N,1:N,S)
   return(correspondance)
 }#function
+
+#========================================================================================================
 ```
 ```{r}
 recuitSimule(10^4, 5, 64, 0.2, 3, 1)
 ```
-
-
-
-
-
-
-
-
 
 
 ### Estimateur MAP
@@ -257,11 +305,14 @@ $E[L(X,\phi(y))|y]=1-P(X=\phi(y)|y)$
 
 ### estimateur TPM
 
-[//]: <> (===============================================================================================================) 
-[//]: <> (===============================================================================================================) 
+
+
 [//]: <> (===============================================================================================================) 
 # Adaptabilité du calcul de potentiel
+[//]: <> (===============================================================================================================) 
 ## groupe de voisin
+[//]: <> (===============================================================================================================) 
+
 On va essayer d'augmenter la précision des algorithmes précédents en jouant sur la définition du voisinage. On définis le voisinage possible comme une étoile à huit branches. La longueur de chaque branche (et donc son poid dans le calcul de U) va dépendre de la continuité des pixels constituant cette branche. Ainsi d'un pixel à l'autre on n'aura pas forcément un voisinage de même ampleur.\ 
 La longeur d'un branche est égale au nombre de pixels côte à côte suivant l'orientation de la branche, de même valeur (pour une image en noir et blanc), partant de s.\ 
 Le poid d'une branche de voisinage est alors proportionel à sa longeur. On aurait:
@@ -271,10 +322,97 @@ avec $(l_i)$ les 8 lead et $(a_i)$ leur longueur.
 On pourrait envisager de limiter la longeur des branches à 5 ou 10.
 
 ### constitution du voisinage
+
 1. ajout des 8 plus proches voisins (habituel, si ce n'est que l'on ajoute les diagonales en plus). On les note lead.
 2. pour chacun des lead, on regarde la valeur du pixel qui le jouxe dans l'orientation de la flêche auquel il appartient, opposément à s biensûr. Si ce pixel est de même valeur que le lead, on l'intègre à la branche. Sinon, la branche et terminée (cas d'un image en noir et blanc).
 
 ```{r}
+#========================================================================================================
+
+Vbranch2=function(img, is, js, ib, jb){
+  #fonction qui forme une branche de voisinage de s
+  
+  #----VARIABLES----
+  dii <- ib-is #coord ligne 
+  djj <- jb-js#coord colonnes
+  branch = 0
+  lead <- img[ib,jb]
+  cdd = 0 #candidat
+  k <- 1
+  
+  #----FONCTION----
+  
+  #----branche horizontale----
+  if(dii==0){
+    
+    #--orientée gauche--
+    if(djj<0){
+      cdd <- img[ib,jb-k]
+      if(cdd==lead){
+        while(cdd==lead){
+          branch <- branch + cdd
+          k <- k+1
+          cdd <- img[ib,jb-k]
+        }#while
+      }#if
+      else{branch <- branch + cdd}
+      return(branch)
+    }#if
+    
+    #--orientée droite--
+    else{
+      cdd <- img[ib,jb+k]
+      if(cdd==lead){
+        while (cdd==lead) {
+          branch <- branch + cdd
+          k <- k+1
+          cdd <- img[ib,jb+k]
+        }#while
+      }#if
+      else{branch <- branch + cdd}
+      return(branch)
+    }#else
+  }#if
+  
+  #----branche verticale----
+  if(djj==0){
+    
+    #--orientée bas--
+    if(dii<0){
+      cdd <- img[ib+k,jb]
+      if(cdd==lead){
+        while(cdd==lead){
+          branch <- branch + cdd
+          k <- k+1
+          cdd <- img[ib+k,jb]
+        }#while
+      }#if
+      else{branch <- branch + cdd}
+      return(branch)
+    }#if
+    
+    #--orientée haut--
+    else{
+      cdd <- img[ib-k,jb]
+      if(cdd==lead){
+        while(cdd==lead){
+          cdd <- img[ib-k,jb]
+          k <- k+1
+          cdd <- img[ib-k, jb]
+        }#while
+      }#if
+      else{branch <- branch + cdd}
+      return(branch)
+    }#else
+  }#if
+}#func
+
+#========================================================================================================
+```
+
+```{r}
+#========================================================================================================
+
 Vbranch=function(img, is, js, ib, jb){
   #fonction qui forme une branche de voisinage de s
   
@@ -337,17 +475,20 @@ Vbranch=function(img, is, js, ib, jb){
   }#if
 }#func
 
-
+#========================================================================================================
 ```
+
 ```{r}
 Vstar=function(img, i,j){
   s <- 0
-  s <- s + Vbranch(img, i, j, i-1, j)
-  s <- s + Vbranch(img, i, j, i+1, j)
-  s <- s + Vbranch(img, i, j, i, j-1)
-  s <- s + Vbranch(img, i, j, i, j+1)
+  s <- s + Vbranch2(img, i, j, i-1, j)
+  s <- s + Vbranch2(img, i, j, i+1, j)
+  s <- s + Vbranch2(img, i, j, i, j-1)
+  s <- s + Vbranch2(img, i, j, i, j+1)
   return(s)
 }#func
+
+#========================================================================================================
 ```
 
 ```{r}
@@ -358,13 +499,14 @@ Vstar(img, 20,23)
 
 
 [//]: <> (===============================================================================================================) 
-[//]: <> (===============================================================================================================) 
-[//]: <> (===============================================================================================================) 
 # Probabilité du pourcentage de bon pixels bien représentés en sachant le nombre d'itérations
+[//]: <> (===============================================================================================================)
 ## Fonction de répartition empirique du pourcentage de pixels correctement restitué
-
+[//]: <> (===============================================================================================================)
 
 ```{r}
+#========================================================================================================
+
 recuitSimule = function(n, beta, N, p, alpha, stop){
   
   #----cr?ation de sigma0 le rectangle initial----
@@ -384,7 +526,6 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
   
   #--------le recuit simul?--------
   if(stop==0){ #cas o? on s'arr?te simplement apr?s n it?rations
-    print("attention je suis dans le for")
     for (k in (1:n)) {
       #T <- 1/sqrt(sqrt((1+log(k))))
       T <- 1/k #T tend lentement vers 0
@@ -395,8 +536,8 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
       
       
       #----voisinage----
-      #s <- Vstar(Saux, iaux, jaux)
-      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      s <- Vstar(Saux, iaux, jaux)
+      #s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
       
       #----proba pour un recuit simul?----
       r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
@@ -455,21 +596,25 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
   
   
   #----affichage----
-  layout(matrix(c(1,4,2,5,3,0), nc=3))
-  image(1:N,1:N,sigma0)
-  image(1:N,1:N,sigma)
-  image(1:N,1:N,S)
+  #layout(matrix(c(1,4,2,5,3,0), nc=3))
+  #image(1:N,1:N,sigma0)
+  #image(1:N,1:N,sigma)
+  #image(1:N,1:N,S)
   return(correspondance)
 }#function
+
+#========================================================================================================
 ```
 
 ```{r}
+#========================================================================================================
+
 MCdeMC=function(pct, K, n, beta, N, p, alpha, stop){
   #algo de montecarlo sur celui de recuit simul?, pour estimer la proba de correspodnance
   #? pct% d'une image reconstitu?e, en en fonction du nombre d'it?rations dans le recuitsimul?
   P <- 0
   E <- 0
-  corresp=rep(0,K)
+  corresp = rep(0,K)#génère une suite de K zero
   for (k in (1:K)) { #on fait K recuitSimul?
     corresp[k] = recuitSimule(n, beta, N, p, alpha, stop)
     if(corresp[k]>=pct){E <- E+1} #si le pourcentage de correspondance convient ? la condition pct
@@ -484,16 +629,19 @@ MCdeMC=function(pct, K, n, beta, N, p, alpha, stop){
   #plot.Surv(corresp)
   plot(x,survie(x),type="S")
 }
+
+#========================================================================================================
 ```
 ```{r}
 MCdeMC(98,2,400,2/3,64,0.2,0.3,0)
 ```
 
-[//]: <> (===============================================================================================================) 
-[//]: <> (===============================================================================================================) 
+ 
 [//]: <> (===============================================================================================================) 
 # Les paramètres et leur estimation
+[//]: <> (===============================================================================================================)
 ## Modèle d'Ising
+[//]: <> (===============================================================================================================)
 
 On rappelle, pour le modèle d'Ising, $E={-1,1}$, et $U(x_s) = \beta -x_s\sum_{t\in V_s}{x_t} -  Bx_s$.
 Le choix du signe de beta est déterminant pour la valeur de $U_s(x_s)$. En effet, choisir un beta négatif va imposer que toutes les 2-cliques dont les pixels sont de signes différents auront pour potentiel $-1\times 1\times\beta$, donc un nombre positif, tandis que les 2-cliques de signes identiques auront un potentiel négatif. Or la mesure de Gibbs est telle que plus le potentiel pour un état est élevé, moins ce site est probable d'être dans cette état.
