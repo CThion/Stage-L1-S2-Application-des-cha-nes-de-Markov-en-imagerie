@@ -95,7 +95,7 @@ energie=function(S){
 
 
 
-### Algorithme de métropolis
+### Algorithme de métropolis (metropolisIsing)
 
 ```{r}
 #========================================================================================================
@@ -140,15 +140,15 @@ metropolisIsing=function(forme, N, beta, B, n){
   image(img1)
 }
 
+
+metropolisIsing("rectangle", 64, 1, 0, 10^4)
+
 #========================================================================================================
 ```
 
-```{r}
-metropolisIsing("rectangle", 64, 1, 0, 10^4)
 
-```
 
-### Algorithme de Gibbs
+### Algorithme de Gibbs (GibbsIsing)
 
 ```{r}
 #========================================================================================================
@@ -192,17 +192,18 @@ GibbsIsing=function(forme, N, beta, B, n){
   image(img1)
 }
 
+
+GibbsIsing("rectangle", 64, 1, 1, 10^6)
 #========================================================================================================
 ```
-```{r}
-GibbsIsing("rectangle", 64, 1, 1, 10^6)
-```
+
+
+
+
 
 ### Recuit simulé non bayésien
+#### recuitMetro
 
-```{r}
-recuitMetro("rectangle", 64, 1, 1, 10^4)
-```
 
 ```{r}
 #========================================================================================================
@@ -220,26 +221,26 @@ recuitMetro=function(forme, N, beta, B, n){
   image(img1)
   img2 = img1 #image tampon
   
-  for(k in 1:n){
-    T <- 1#/sqrt(log(1+k))
+  for(k in (1:n)){
+    T <- 1/log(1+k)
     #----choix d'un site---
     #i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
     #j <- 1+ceiling(N*runif(1))
     iaux <- 2 + k%%N #de 2 à N+1
     jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
-    #----tirage nouvelle valeure candidate----
+    #----on test l'autre valeur possible sur l'image tampon. Si c'est ok on fait le changement sur img1 aussi.----
     img2[i,j] = -img1[i,j]
     #----voisinage----
     v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
     #----potentiels----
-    U1 = -B*img1[i,j]/T-beta*img1[i,j]*v/T
-    U2 = -B*img2[i,j]/T-beta*img2[i,j]*v/T
+    U1 = -B*img1[i,j]/T-beta*img1[i,j]*v/T #potentiel actuel
+    U2 = -B*img2[i,j]/T-beta*img2[i,j]*v/T #potentiel candidat
     #----test----
     dU = U2-U1
-    if(dU<0){img1[i,j]= -img1[i,j]}
+    if(dU<0){img1[i,j]= -img1[i,j]} #si U1 > U2, valeur candidate acceptée
     else{
       p <- exp(-dU)
-      if(runif(1)<=p){img1[i,j]= -img1[i,j]}
+      if(runif(1)<=p){img1[i,j]= -img1[i,j]} #valeur candidate acceptée selon sa proba conditionnelle
       else{img2[i,j] <- img1[i,j]} #sinon on ne change pas
     }#else
   }#for
@@ -248,6 +249,9 @@ recuitMetro=function(forme, N, beta, B, n){
   image(img1)
 }
 
+
+
+recuitMetro("rectangle", 64, 1, 1, 10^4)
 #========================================================================================================
 ```
 
@@ -255,15 +259,13 @@ recuitMetro=function(forme, N, beta, B, n){
 [//]: <> (===============================================================================================================) 
 # méthodes bayésiennes
 [//]: <> (===============================================================================================================)
-## algorithmes
-[//]: <> (===============================================================================================================)
-### recuit simulé
+## recuit simulé
 [//]: <> (===============================================================================================================)
 
 ```{r}
 #========================================================================================================
 
-#recuitSimule(10^5,2/3,64,0.2,0.3)
+
 recuitSimule = function(n, beta, N, p, alpha, stop){
   
   #----création de sigma0 le rectangle initial----
@@ -292,7 +294,8 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
       
       
       #----voisinage----
-      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      s <- Vstar(Saux, N, iaux, jaux)
+      #s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
       #print("s")
       #print(s)
       #----proba pour un recuit simulé, avec rapport de métropolis----
@@ -356,12 +359,14 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
   return(correspondance)
 }#function
 
+
+recuitSimule(10^4, 5, 64, 0.2, 3, 0)
 #========================================================================================================
 ```
-```{r}
-recuitSimule(10^4, 5, 64, 0.2, 3, 1)
-```
 
+
+## Les estimateurs
+> une autre approche pour déterminer la probabilité de X et Xs, c'est de travailler avec la notion de coût. On considère ainsi le coût représenter par le change d'un état par rapport à l'état précédent.
 
 ### Estimateur MAP
 $L(x,x')=1\text{  pour  }x\neq x',\text{et 0 sinon}$
@@ -376,7 +381,7 @@ $E[L(X,\phi(y))|y]=1-P(X=\phi(y)|y)$
 [//]: <> (===============================================================================================================) 
 # Adaptabilité du calcul de potentiel
 [//]: <> (===============================================================================================================) 
-## groupe de voisin
+## voisinage en étoile
 [//]: <> (===============================================================================================================) 
 
 On va essayer d'augmenter la précision des algorithmes précédents en jouant sur la définition du voisinage. On définis le voisinage possible comme une étoile à huit branches. La longueur de chaque branche (et donc son poid dans le calcul de U) va dépendre de la continuité des pixels constituant cette branche. Ainsi d'un pixel à l'autre on n'aura pas forcément un voisinage de même ampleur.\ 
@@ -392,17 +397,18 @@ On pourrait envisager de limiter la longeur des branches à 5 ou 10.
 1. ajout des 8 plus proches voisins (habituel, si ce n'est que l'on ajoute les diagonales en plus). On les note lead.
 2. pour chacun des lead, on regarde la valeur du pixel qui le jouxe dans l'orientation de la flêche auquel il appartient, opposément à s biensûr. Si ce pixel est de même valeur que le lead, on l'intègre à la branche. Sinon, la branche et terminée (cas d'un image en noir et blanc).
 
+#### Vbranch, Vstar
 ```{r}
 #========================================================================================================
 
-Vbranch2=function(img, is, js, ib, jb){
-  #fonction qui forme une branche de voisinage de s
+Vbranch2=function(img, N, is, js, ib, jb){
+  #fonction qui forme UNE branche de voisinage de s (is, js), avec les coordonnées du lead qui sont (ib, jb)
   
   #----VARIABLES----
   dii <- ib-is #coord ligne 
   djj <- jb-js#coord colonnes
-  branch = 0
   lead <- img[ib,jb]
+  branch <- lead #la branche est de longeur minimale 1 (cas du voisinage standard)
   cdd = 0 #candidat
   k <- 1
   
@@ -413,7 +419,9 @@ Vbranch2=function(img, is, js, ib, jb){
     
     #--orientée gauche--
     if(djj<0){
-      cdd <- img[ib,jb-k]
+      cdd <- img[ib,jb-k] #avec la bordure de 0 auxiliaire, on ne devrait pas avoir d'erreure
+      print(cdd)
+      print(lead)
       if(cdd==lead){
         while(cdd==lead){
           branch <- branch + cdd
@@ -428,8 +436,10 @@ Vbranch2=function(img, is, js, ib, jb){
     #--orientée droite--
     else{
       cdd <- img[ib,jb+k]
+      print(cdd)
+      print(lead)
       if(cdd==lead){
-        while (cdd==lead) {
+        while (cdd==lead & jb+k<=N) {
           branch <- branch + cdd
           k <- k+1
           cdd <- img[ib,jb+k]
@@ -446,8 +456,10 @@ Vbranch2=function(img, is, js, ib, jb){
     #--orientée bas--
     if(dii<0){
       cdd <- img[ib+k,jb]
+      print(cdd)
+      print(lead)
       if(cdd==lead){
-        while(cdd==lead){
+        while(cdd==lead & ib+k<=N){
           branch <- branch + cdd
           k <- k+1
           cdd <- img[ib+k,jb]
@@ -460,8 +472,10 @@ Vbranch2=function(img, is, js, ib, jb){
     #--orientée haut--
     else{
       cdd <- img[ib-k,jb]
+      print(cdd)
+      print(lead)
       if(cdd==lead){
-        while(cdd==lead){
+        while(cdd==lead & ib-k>=1){
           cdd <- img[ib-k,jb]
           k <- k+1
           cdd <- img[ib-k, jb]
@@ -545,12 +559,12 @@ Vbranch=function(img, is, js, ib, jb){
 ```
 
 ```{r}
-Vstar=function(img, i,j){
+Vstar=function(img, N, i,j){
   s <- 0
-  s <- s + Vbranch2(img, i, j, i-1, j)
-  s <- s + Vbranch2(img, i, j, i+1, j)
-  s <- s + Vbranch2(img, i, j, i, j-1)
-  s <- s + Vbranch2(img, i, j, i, j+1)
+  s <- s + Vbranch2(img, N, i, j, i-1, j)
+  s <- s + Vbranch2(img, N, i, j, i+1, j)
+  s <- s + Vbranch2(img, N, i, j, i, j-1)
+  s <- s + Vbranch2(img, N, i, j, i, j+1)
   return(s)
 }#func
 
@@ -559,7 +573,11 @@ Vstar=function(img, i,j){
 
 ```{r}
 img <- imageGenerator("rectangle", 50)
-Vstar(img, 20,23)
+
+imgaux <- matrix(data=0,nrow=52,ncol=52)
+imgaux[2:51,2:51] <- img
+
+Vstar(imgaux, 50, 2, 2)
 ```
 
 
@@ -570,6 +588,133 @@ Vstar(img, 20,23)
 ## Fonction de répartition empirique du pourcentage de pixels correctement restitué
 [//]: <> (===============================================================================================================)
 
+> **remarque** On cherchera plutôt la probabilité de correspondance sachant le nombre de révolutions, plutôt que le nombre d'itération. Cela permet de s'afranchir de la taille de l'image. Par conséquent dans les algos on privélégiera les palaiyage déterministes, permettant d'assurer un balayage de tous les sites à chaque révolution.
+
+> **hypothèse** à varifier/démontrer, mais, dans le cas où on a aucune information sur un pixel, ni sur ses voisin à priori, la proba de son état sur E suit la loi uniforme p=1/2.
+
+> **remarque** Au niveau local avec un voisinage 2-connexité, on peut travailler avec l'espression de la mesure de Gibbs $\frac{1}{Z} exp(-U(x))$. Le voisinage d'un site ne peut avoir que $2^4 = 16$ configurations possibles. Et comme la configuration du voisinage conditionne directement l'état du site considéré, connaître la proba de Vs revient à connaître la proba de xs. 
+
+>**remarque** Il est surement plus simple de commencer à chercher à modéliser Nn après une première révolution. En effet on sait alors que la valeur en chaque site a été le fruit de l'algo, on dispose donc d'informations à posteriori sur ce site.  Avant le première révolution, on ne peut pas prédire des valeurs des sites.
+
+Une question intermédiaire: *quelle est la probabilité $P_s$que l'algorithme du recuit restitue correctement 1 pixel après un balayage ? * On pourra alors supposer que la proba qu'il restitue correctement l'image après 1 révolution est égale à $P_s^N$, soit le produit des proba locales de bonne restitution.
+
+### Probabiblité $P_s$ de bonne restitution de s après N révolutions
+
+Avant le balayage: $x_s$ est correct, ou non (selon le bruitage)
+Après un balayage: $x_s$ est correct (l'algo a fait le bon changement), ou non  
+Après N balayages: $x_s$ est correct ou non (il est tout à fait possible que l'algo vienne à modifier faussement $x_s$ à un N donné)  
+Quelle est la proba que l'algo corrige corrige correctement $x_s$? (avec une correction nulle dans le cas ou xs est déjà bon)  
+Si on considère le cas de l'échantilloneur de Gibbs, à la révolution n-1, la proba a priori que l'algo affecte la bonne valeur à s à la n-ième révolution, c'est la proba à psotériori que la valeur effictevement affecté à s par l'algo soit la bonne, soit la mesure de Gibbs. 
+
+#### recuit simulé fixe
+Légère modification du recuit simulé de Guyader, affin que que l'on donner en argument non plus le nombre d'intération totale, mais le nombre de révolutions (parcours de tous les sites de l'image une fois). Cela a forcément impliqué que le parcours des sites de soit plus aléatoire, mais ici ligne par ligne.
+
+```{r}
+recuitSimuleFixe(10,2/3,64,0.2,0.3,0)
+```
+
+```{r}
+recuitSimuleFixe = function(n, beta, N, p, alpha, stop){
+  
+  #----cr?ation de sigma0 le rectangle initial----
+  sigma0 <- matrix(-1,nrow=N,ncol=N)  
+  sigma0[(N/4):(N*3/4),(N/4):(N*3/4)] <- 1
+  
+  #----cr?ation de sigma le rectangle bruit?----
+  bruit <- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N) 
+  sigma <- sigma0*bruit  
+  
+  #----cr?ation image auxiliaire, avec contour supl?mentaire pour calculer U plus facilement----
+  Saux <- matrix(0, nrow=N+2, ncol=N+2) 
+  Saux[2:(N+1),2:(N+1)] <- sigma
+  sigmaaux <- Saux #sugmaaux = matrice auxiliaire pour le calcule de U, garde la valeur initiale de Saux (qui lui change)
+
+  
+  #--------le recuit simul?--------
+  if(stop==0){ #cas o? on s'arr?te simplement apr?s n it?rations
+    for (k in (1:(N*N*n))) {#N*N*n = nombre d'itération nécessaires pour faire n révolutions
+      #T <- 1/sqrt(sqrt((1+log(k))))
+      T <- 1/k #T tend lentement vers 0
+      #iaux <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+      #jaux <- 1+ceiling(N*runif(1))
+      iaux <- 2 + k%%N #de 2 ? N+1
+      jaux <- 2 + k%/%(N-1)%%N #de 2 ? N+1
+      
+      
+      #----voisinage----
+      #s <- Vstar(Saux, iaux, jaux)
+      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      
+      #----proba pour un recuit simul?----
+      r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
+      
+      #----changement ou non de spin selon la proba r---
+      #rmc[k]=r
+      if(runif(1)<r){Saux[iaux,jaux] <- -Saux[iaux,jaux]}
+    }#for
+  }#if
+    
+  if(stop==1){#cas ou on s'arr?te apr?s n it?rations sans changement de spin
+    X<-0 #nombre d'it?rations cons?cutives sans changement de spin
+    it<-0 #nb itération
+    revo<-0 #nb de révolution
+    while(X<=n) {
+      it<-it+1
+      revo <- it%/%N*N
+      #T <- 1/sqrt(sqrt((1+log(k))))
+      T <- 1/it #T tend lentement vers 0
+      iaux <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+      jaux <- 1+ceiling(N*runif(1))
+      #iaux <- 2 + k%%N #de 2 ? N+1
+      #jaux <- 2 + k%/%(N-1)%%N #de 2 ? N+1
+      
+      
+      #----voisinage----
+      #s <- Vstar(Saux, iaux, jaux)
+      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      
+      #----proba pour un recuit simul?----
+      r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
+      
+      #----changement ou non de spin selon la proba r---
+      #rmc[k]=r
+      if(runif(1)<r){
+        Saux[iaux,jaux] <- -Saux[iaux,jaux]
+        X <- 0#on vient de changer un spin, donc la condition d'arr?t retombe ? 0
+      }#if
+      else{X <-X+1 } 
+    }#while
+    print(c("ItÃ©rations",it))
+  }#if
+  
+  S <- Saux[2:(N+1),2:(N+1)] #image finale (on retire le contour auxiliaire)
+    
+    
+  #----pourcentage de correspondance----
+  nok <- 0 #nombre de pixels divergents
+  correspondance <- 0 #pourcentage sur nb pixels total
+  for (i in (1:N)){
+    for (j in (1:N)){
+      if(S[i,j] != sigma0[i,j]){nok <- nok+1}
+    }#for
+  }#for
+  correspondance <- ((N^2)-nok)/(N^2)*100
+  #print(nok)
+  #print(correspondance)
+  
+  
+  #----affichage----
+  #layout(matrix(c(1,4,2,5,3,0), nc=3))
+  #image(1:N,1:N,sigma0)
+  #image(1:N,1:N,sigma)
+  #image(1:N,1:N,S)
+  return(correspondance)
+}#function
+```
+
+
+
+#### recuit simulé (guyader)
 ```{r}
 recuitSimule(400,2/3,64,0.2,0.3,0)
 ```
@@ -578,7 +723,7 @@ recuitSimule(400,2/3,64,0.2,0.3,0)
 ```{r}
 #========================================================================================================
 
-recuitSimule = function(n, beta, N, p, alpha, stop){
+recuitSimule2 = function(n, beta, N, p, alpha, stop){
   
   #----cr?ation de sigma0 le rectangle initial----
   sigma0 <- matrix(-1,nrow=N,ncol=N)  
@@ -607,7 +752,7 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
       
       
       #----voisinage----
-      #s <- Vstar(Saux, iaux, jaux)
+      #☻s <- Vstar(Saux, iaux, jaux)
       s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
       
       #----proba pour un recuit simul?----
@@ -679,7 +824,7 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
 
 
 
-
+#### Montecarlo de Montecarlo (MCdeMC)
 ```{r}
 #========================================================================================================
 
@@ -688,26 +833,39 @@ MCdeMC=function(pct, K, n, beta, N, p, alpha, stop){
   #? pct% d'une image reconstitu?e, en en fonction du nombre d'it?rations dans le recuitsimul?
   P <- 0
   E <- 0
-  corresp = rep(0,K)#génère une suite de K zero
+  corresp = rep(0,K)#génère une suite de K zero, qui va stoquer no résults pour afficher ensuite avec ecfd()
   for (k in (1:K)) { #on fait K recuitSimul?
-    corresp[k] = recuitSimule(n, beta, N, p, alpha, stop)
+    corresp[k] = recuitSimuleFixe(n, beta, N, p, alpha, stop)
     if(corresp[k]>=pct){E <- E+1} #si le pourcentage de correspondance convient ? la condition pct
   }
   
   P <- E/K  #les recuitSimule sont a priori ind?pendants les uns des autres, et r?alis?s identiquement
-  print(P)
+  print(c("probabilité de correspondance = ",P))
   
-  survie=function(x){1-ecdf(corresp)(x)}
+  #survie=function(x){1-ecdf(corresp)(x)}
   plot(ecdf(corresp))
-  x <- seq(min(corresp)-4,100,0.1)
+  #x <- seq(min(corresp)-4,100,0.1)
   #plot.Surv(corresp)
-  plot(x,survie(x),type="S")
+  #plot(x,survie(x),type="S")
 }
 
 #========================================================================================================
 ```
 ```{r}
-MCdeMC(98,2,400,2/3,64,0.2,0.3,0)
+#MCdeMC(98,40,10,2/3,64,0.2,0.3,0)
+```
+```{r}
+MCdeMC_revo=function(n, beta, N, p, alpha, stop){
+  corresp2 = c(1,n)
+  revolution = c(1:n)
+  for( revo in(1:n)){ #on va tester le recuit en faisant varier le nombre de révolution de 1 à 50 (cas ou stop = 0)
+    corresp2[revo] = recuitSimuleFixe(revo, beta, N, p, alpha, stop)
+  }#for
+  rev <- data.frame(revo = c(1:n), correspondance = corresp2 )
+  ggplot(data = rev, aes(x="nombre_de_revolution", y="pourcentage de correspondance")) + geom_point() + geom_smooth() #+ geom_line()
+}#func
+
+#MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
 ```
 
  
