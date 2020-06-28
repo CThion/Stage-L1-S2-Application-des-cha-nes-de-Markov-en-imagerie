@@ -16,6 +16,28 @@ Pour une configuration initiale donnée, on va pouvoir considérer de nouvelles 
 Pour une approche non bayésienne du problème, l'évaluation d'une configuration candidate est booléenne: soit on accepte le candidat, soit on le rejete, autrement dit la probabilité d'une nouvelle configuration vaut 0 ou 1, car on n'a aucune information apriori sur la configuration de l'image.  
 Différement, avec une analyse bayésienne d'une candidate, on dispose d'informations à priori sur cette dernière, et on lui attribuera ainsi une probabilité entre 0 et 1 d'être la meilleure.
 
+\[
+\begin{aligned}
+	P(X_s= x_s | X^s= x^s)
+		&= \dfrac{P(X_s= x_s, X^s= x^s)}{P(X^s= x^s)}  \text{  formule de Bayes}\\
+		&= \dfrac{P(X= x)}{P(X^s= x^s)}\\
+		&= \dfrac{e^{-U(x)}}{e^{-U(x^s)} }\\	
+		&\ \\ 	
+	\text{On a  } U(x^s)
+		&= U_{\bar{s}}(x) = \sum_{c\in C, s\notin c}{U_c(x)}\\
+		&\ \\
+	\text{Et  } U(x) 
+		&= \sum_{c\in C}{U_c(x)}\\
+		&= \sum_{c\in C, s\in c}{U_c(x)} + \sum_{c\in C, s\notin c}{U_c(x)}\\
+		&= U_s(x_s,V_s) + U_{\bar{s}}(x) \\
+		&\ \\
+	\text{Donc  }, P(X_s= x_s | X^s= x^s)
+		&=\dfrac{exp(-U_s(x_s,V_s) - U_{\bar{s}}(x))}  {exp(-U_{\bar{s}}(x))}\\
+		&=\dfrac{exp(-U_s(x_s,V_s)}{exp(-U_{\bar{s}}(x) + U_{\bar{s}}(x))}\\
+		&=exp(-U_s(x_s,V_s))   \text{   ce qui justifie l'hypthère markovienne}
+\end{aligned}
+\]
+
 # méthodes non bayésiennes
 
 ## Algorithmes
@@ -97,6 +119,9 @@ energie=function(S){
 
 ### Algorithme de métropolis (metropolisIsing)
 
+Le parametre alpha détermine le poid donné à l'image bruité initiale. Si alpha est trop grand, les valeurs les plus probables seront toujours celles de l'image bruitée, et donc l'algorithme ne fera rien. Si il est trop petit voir nulle, la configuration initiale va être oubliée petit à petit, et on va tendre vers l'image branche, soit donc une la configuration d'énergie minimale ne tenant pas compte de l'image bruitée.  
+
+
 ```{r}
 #========================================================================================================
 
@@ -157,7 +182,7 @@ metropolisIsing("rectangle", 64, 1, 0, 1, 10^5)
 ```{r}
 #========================================================================================================
 
-GibbsIsing=function(forme, N, beta, B, n){
+GibbsIsing=function(forme, N, beta, B, alpha, n){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
   #----création de l'image parfaite img0----
@@ -169,6 +194,7 @@ GibbsIsing=function(forme, N, beta, B, n){
   img1[2:(N+1),2:(N+1)] = img0*bruit
   image(img1)
   img2 = img1 #image tampon
+  img3 = img1
   
   for(k in 1:n){
     #----choix d'un site---
@@ -183,12 +209,14 @@ GibbsIsing=function(forme, N, beta, B, n){
     #----voisinage----
     v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
     #----potentiels----
-    U1 = -B*img1[i,j]-beta*img1[i,j]*v
-    U2 = -B*img2[i,j]-beta*img2[i,j]*v
+    #U1 = -B*img1[i,j]-beta*img1[i,j]*v
+    #U2 = -B*img2[i,j]-beta*img2[i,j]*v
+    U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])
+    U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])
     #----calcule de la proba conditionnelle locale----
-    P <- exp(-U1)/(exp(-U1)+exp(-U2))
+    P <- exp(-U2)/(exp(-U1)+exp(-U2))
     #----test----
-    if(runif(1)<=p){img1[i,j]= -img1[i,j]}#img1 redevient identique à img2
+    if(runif(1)<= P){img1[i,j]= img2[i,j]}#img1 redevient identique à img2
     else{img2[i,j] <- img1[i,j]} #opération inverse, on ne retient pas le changement, et img2 redevient identique à img1
   }#for
   #----affichage----
@@ -197,7 +225,7 @@ GibbsIsing=function(forme, N, beta, B, n){
 }
 
 
-GibbsIsing("rectangle", 64, 1, 1, 10^4)
+GibbsIsing("rectangle", 64, 2, 0, 0.5, 10^4)
 #========================================================================================================
 ```
 
