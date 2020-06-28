@@ -100,7 +100,7 @@ energie=function(S){
 ```{r}
 #========================================================================================================
 
-metropolisIsing=function(forme, N, beta, B, n){
+metropolisIsing=function(forme, N, beta, B, alpha, n){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
   #----création de l'image parfaite img0----
@@ -111,7 +111,8 @@ metropolisIsing=function(forme, N, beta, B, n){
   bruit = matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)
   img1[2:(N+1),2:(N+1)] = img0*bruit
   image(img1)
-  img2 = img1 #image tampon
+  img2 = img1 #image tamponz
+  img3 = img1 #mémoire du bruit initiale
   
   for(k in 1:n){
     #----choix d'un site---
@@ -124,8 +125,11 @@ metropolisIsing=function(forme, N, beta, B, n){
     #----voisinage----
     v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
     #----potentiels----
-    U1 = -B*img1[i,j]-beta*img1[i,j]*v
-    U2 = -B*img2[i,j]-beta*img2[i,j]*v
+    #U1 = -B*img1[i,j]-beta*img1[i,j]*v-alpha*img3[i,j]
+    #U2 = -B*img2[i,j]-beta*img2[i,j]*v-alpha*img3[i,j]
+    U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])
+    U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])
+    
     #----test----
     dU = U2-U1
     if(dU<0){img1[i,j]= -img1[i,j]}
@@ -141,7 +145,7 @@ metropolisIsing=function(forme, N, beta, B, n){
 }
 
 
-metropolisIsing("rectangle", 64, 1, 0, 10^4)
+metropolisIsing("rectangle", 64, 1, 0, 1, 10^5)
 
 #========================================================================================================
 ```
@@ -193,7 +197,7 @@ GibbsIsing=function(forme, N, beta, B, n){
 }
 
 
-GibbsIsing("rectangle", 64, 1, 1, 10^6)
+GibbsIsing("rectangle", 64, 1, 1, 10^4)
 #========================================================================================================
 ```
 
@@ -294,8 +298,8 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
       
       
       #----voisinage----
-      s <- Vstar(Saux, N, iaux, jaux)
-      #s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      #s <- Vstar(Saux, N, iaux, jaux)
+      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
       #print("s")
       #print(s)
       #----proba pour un recuit simulé, avec rapport de métropolis----
@@ -360,7 +364,7 @@ recuitSimule = function(n, beta, N, p, alpha, stop){
 }#function
 
 
-recuitSimule(10^4, 5, 64, 0.2, 3, 0)
+recuitSimule(10^5, 5, 64, 0.2, 3, 0)
 #========================================================================================================
 ```
 
