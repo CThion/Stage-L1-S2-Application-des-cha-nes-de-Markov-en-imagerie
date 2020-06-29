@@ -152,8 +152,8 @@ metropolisIsing=function(forme, N, beta, B, alpha, n){
     #----potentiels----
     #U1 = -B*img1[i,j]-beta*img1[i,j]*v-alpha*img3[i,j]
     #U2 = -B*img2[i,j]-beta*img2[i,j]*v-alpha*img3[i,j]
-    U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])
-    U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])
+    U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+    U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
     
     #----test----
     dU = U2-U1
@@ -235,12 +235,10 @@ GibbsIsing("rectangle", 64, 2, 0, 0.5, 10^4)
 
 ### Recuit simulé non bayésien
 #### recuitMetro
-
-
 ```{r}
 #========================================================================================================
 
-recuitMetro=function(forme, N, beta, B, n){
+recuitMetro=function(forme, N, beta, B, alpha, n){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
   #----création de l'image parfaite img0----
@@ -251,28 +249,36 @@ recuitMetro=function(forme, N, beta, B, n){
   bruit = matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)
   img1[2:(N+1),2:(N+1)] = img0*bruit
   image(img1)
-  img2 = img1 #image tampon
+  img2 = img1 #image tamponz
+  img3 = img1 #mémoire du bruit initiale
   
-  for(k in (1:n)){
-    T <- 1/log(1+k)
+  for(k in 1:n){
+    T <- 1/k
+    Br <- B/T
+    betar <- beta/T
+    alphar <- alpha/T
+    #print(c(T,Br,betar,alphar))
     #----choix d'un site---
-    #i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
-    #j <- 1+ceiling(N*runif(1))
-    iaux <- 2 + k%%N #de 2 à N+1
-    jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
-    #----on test l'autre valeur possible sur l'image tampon. Si c'est ok on fait le changement sur img1 aussi.----
+    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+    j <- 1+ceiling(N*runif(1))
+    #iaux <- 2 + k%%N #de 2 à N+1
+    #jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
+    #----tirage nouvelle valeure candidate----
     img2[i,j] = -img1[i,j]
     #----voisinage----
     v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
     #----potentiels----
-    U1 = -B*img1[i,j]/T-beta*img1[i,j]*v/T #potentiel actuel
-    U2 = -B*img2[i,j]/T-beta*img2[i,j]*v/T #potentiel candidat
+    #U1 = -B*img1[i,j]-beta*img1[i,j]*v-alpha*img3[i,j]
+    #U2 = -B*img2[i,j]-beta*img2[i,j]*v-alpha*img3[i,j]
+    U1 = -Br*img1[i,j]-img1[i,j]*(betar*v + alphar*img3[i,j])#potentiel actuel
+    U2 = -Br*img2[i,j]-img2[i,j]*(betar*v + alphar*img3[i,j])#potentiel candidat
+    
     #----test----
     dU = U2-U1
-    if(dU<0){img1[i,j]= -img1[i,j]} #si U1 > U2, valeur candidate acceptée
+    if(dU<0){img1[i,j]= -img1[i,j]}
     else{
       p <- exp(-dU)
-      if(runif(1)<=p){img1[i,j]= -img1[i,j]} #valeur candidate acceptée selon sa proba conditionnelle
+      if(runif(1)<=p){img1[i,j]= -img1[i,j]}
       else{img2[i,j] <- img1[i,j]} #sinon on ne change pas
     }#else
   }#for
@@ -281,11 +287,12 @@ recuitMetro=function(forme, N, beta, B, n){
   image(img1)
 }
 
+recuitMetro("rectangle", 64, 1, 0, 0.3, 10^5)
 
-
-recuitMetro("rectangle", 64, 1, 1, 10^4)
 #========================================================================================================
 ```
+
+
 
 
 [//]: <> (===============================================================================================================) 
@@ -401,7 +408,7 @@ recuitSimule(10^5, 5, 64, 0.2, 3, 0)
 > une autre approche pour déterminer la probabilité de X et Xs, c'est de travailler avec la notion de coût. On considère ainsi le coût représenter par le change d'un état par rapport à l'état précédent.
 
 ### Estimateur MAP
-$L(x,x')=1\text{  pour  }x\neq x',\text{et 0 sinon}$
+$L(x,x')=1\text{  pour  }x\neq x',\text{et 0 sinon}$  
 $E[L(X,\phi(y))|y]=1-P(X=\phi(y)|y)$
 
 ### estimateur MPM
