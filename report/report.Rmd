@@ -8,6 +8,7 @@ bibliography: report.bib  #https://rmarkdown.rstudio.com/authoring_bibliographie
 #library(imager)
 library(stats)
 library(survival)
+library(ggplot2)
 ```
 
 >> **Différence entre l'approche bayésienne et non bayésienne**
@@ -115,6 +116,22 @@ energie=function(S){
 #========================================================================================================
 ```
 
+#### fonction de calcul de correspondance
+```{r}
+correspondance=function(img0, img1, N){
+  #----pourcentage de correspondance----
+  nok <- 0 #nombre de pixels divergents
+  correspondance <- 0 #pourcentage sur nb pixels total
+  for (i in (1:N)){
+    for (j in (1:N)){
+      if(img0[i,j] != img1[i,j]){nok <- nok+1}
+    }#for
+  }#for
+  correspondance <- ((N^2)-nok)/(N^2)*100
+  return(correspondance)
+}#func
+```
+
 
 
 ### Algorithme de métropolis (metropolisIsing)
@@ -130,12 +147,12 @@ metropolisIsing=function(forme, N, beta, B, alpha, L, n){
   
   #----création de l'image parfaite img0----
   img0 = imageGenerator(forme, N)
-  image(img0)
+  #image(img0)
   #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
   img1 = matrix(0, nrow=N+2, ncol=N+2)
   bruit = matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)
   img1[2:(N+1),2:(N+1)] = img0*bruit
-  image(img1)
+  #image(img1)
   img2 = img1 #image tamponz
   img3 = img1 #mémoire du bruit initiale
   
@@ -167,13 +184,18 @@ metropolisIsing=function(forme, N, beta, B, alpha, L, n){
   }#for
   #----affichage----
   #par(mfrow=c(1,3))
-  image(img1)
+  #image(img1)
+  
+  corresp <- correspondance(img0, img1, N)
+  return(corresp) #utile pour MCdeMC_Vstar
+  #calcul de la correspondance
 }
 
-metropolisIsing("rectangle", 64, 1, 0, 1, 20, 10^4)
+
+
 metropolisIsing("rectangle", 64, 1, 0, 1, 10, 10^4)
-metropolisIsing("rectangle", 64, 1, 0, 1, 5, 10^4)
-metropolisIsing("rectangle", 64, 1, 0, 1, 1, 10^4)
+#metropolisIsing("rectangle", 64, 1, 0, 1, 5, 10^4)
+#metropolisIsing("rectangle", 64, 1, 0, 1, 1, 10^4)
 
 #========================================================================================================
 ```
@@ -442,6 +464,16 @@ On pourrait envisager de limiter la longeur des branches à 5 ou 10.
 #### Vbranch, Vstar
 
 ```{r}
+img <- imageGenerator("rectangle", 50)
+
+imgaux <- matrix(data=0,nrow=52,ncol=52)
+imgaux[2:51,2:51] <- img
+image(img)
+#Vstar(imgaux, 50, 2, 2)
+
+```
+
+```{r}
 #========================================================================================================
 vbranch=function(img, N, is, js, iv, jv, L){
   #la taille de l'image N doit être précisée (à remplacer par méthode info image)
@@ -474,7 +506,7 @@ vbranch=function(img, N, is, js, iv, jv, L){
   return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
 }#func
 
-vbranch3(img, 50, 1,1, 0, -1, 50 )
+#vbranch(img, 50, 1,1, 0, -1, 50 )
 #========================================================================================================
 ```
 
@@ -489,22 +521,29 @@ Vstar=function(img, N, i, j, L){
   return(s)
 }#func
 
-Vstar(img, 50, 50,2 , 5)
+#Vstar(img, 50, 50,2 , 5)
 #========================================================================================================
 ```
 
-```{r}
-img <- imageGenerator("rectangle", 50)
+#### comparaison des performances
 
-imgaux <- matrix(data=0,nrow=52,ncol=52)
-imgaux[2:51,2:51] <- img
-image(img)
-#Vstar(imgaux, 50, 2, 2)
-
-```
 ```{r}
-print(img[-10,-10])
+#========================================================================================================
+
+MCdeMC_Vstar=function(forme, N, beta, B, alpha, L, n){
+  corresp = c(1,L)
+  longueur = c(1:L)
+  for( l in(1:L)){ corresp[l] = metropolisIsing(forme, N, beta, B, alpha, l, n) }#for
+  rev <- data.frame(revo = c(1:L), correspondance = corresp )
+  print(rev)
+  ggplot(data = rev, aes(x="nombre_de_revolution", y="pourcentage de correspondance")) + geom_point() + geom_smooth() #+ geom_line()
+}#func
+
+
+MCdeMC_Vstar("rectangle", 64, 1, 0, 1, 20, 10^4)
+#========================================================================================================
 ```
+Il semble qu'une augmentation même faible de la longueur des branches permette déjà d'améliorer significativement le nombre de pixels bien restitués, mais que l'on ne peut pas augmenter encore ce nombre par un alongement de cette longeur de branche.
 
 
 
@@ -533,13 +572,11 @@ Quelle est la proba que l'algo corrige corrige correctement $x_s$? (avec une cor
 Si on considère le cas de l'échantilloneur de Gibbs, à la révolution n-1, la proba a priori que l'algo affecte la bonne valeur à s à la n-ième révolution, c'est la proba à psotériori que la valeur effictevement affecté à s par l'algo soit la bonne, soit la mesure de Gibbs. 
 
 #### recuit simulé fixe
-Légère modification du recuit simulé de Guyader, affin que que l'on donner en argument non plus le nombre d'intération totale, mais le nombre de révolutions (parcours de tous les sites de l'image une fois). Cela a forcément impliqué que le parcours des sites de soit plus aléatoire, mais ici ligne par ligne.
+Légère modification du recuit simulé de Guyader, affin que que l'on donner en argument non plus le nombre d'intération totale, mais le nombre de révolutions (parcours de tous les sites de l'image une fois). Cela a impliqué pour simplifier le code que le parcours des sites de soit plus aléatoire, mais ici ligne par ligne.
+
 
 ```{r}
-recuitSimuleFixe(10,2/3,64,0.2,0.3,0)
-```
-
-```{r}
+#========================================================================================================
 recuitSimuleFixe = function(n, beta, N, p, alpha, stop){
   
   #----cr?ation de sigma0 le rectangle initial----
@@ -617,25 +654,14 @@ recuitSimuleFixe = function(n, beta, N, p, alpha, stop){
     
     
   #----pourcentage de correspondance----
-  nok <- 0 #nombre de pixels divergents
-  correspondance <- 0 #pourcentage sur nb pixels total
-  for (i in (1:N)){
-    for (j in (1:N)){
-      if(S[i,j] != sigma0[i,j]){nok <- nok+1}
-    }#for
-  }#for
-  correspondance <- ((N^2)-nok)/(N^2)*100
-  #print(nok)
-  #print(correspondance)
+  corresp <- correspondance(S, sigma0, N)
+  return(corresp)
   
-  
-  #----affichage----
-  #layout(matrix(c(1,4,2,5,3,0), nc=3))
-  #image(1:N,1:N,sigma0)
-  #image(1:N,1:N,sigma)
-  #image(1:N,1:N,S)
-  return(correspondance)
 }#function
+
+
+recuitSimuleFixe(10,2/3,64,0.2,0.3,0)
+#========================================================================================================
 ```
 
 
@@ -788,10 +814,12 @@ MCdeMC_revo=function(n, beta, N, p, alpha, stop){
     corresp2[revo] = recuitSimuleFixe(revo, beta, N, p, alpha, stop)
   }#for
   rev <- data.frame(revo = c(1:n), correspondance = corresp2 )
-  ggplot(data = rev, aes(x="nombre_de_revolution", y="pourcentage de correspondance")) + geom_point() + geom_smooth() #+ geom_line()
+  print(rev)
+  ggplot(data = rev, aes(x="nombre_de_revolution", y="pourcentage de correspondance")) + geom_line()    # + geom_point() 
+    # + geom_smooth()  
 }#func
 
-#MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
+MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
 ```
 
  
