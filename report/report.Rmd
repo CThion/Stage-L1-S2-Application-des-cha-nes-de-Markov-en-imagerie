@@ -1,7 +1,9 @@
 ---
 title: "Restauration d'image à l'aide d'algorithme stochastiques par chaînes de Markov"
-output: html_notebook
-bibliography: report.bib  #https://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html
+output:
+  html_notebook: default
+  pdf_document: default
+bibliography: report.bib
 ---
 ```{r}
 #library(magrittr)
@@ -10,6 +12,7 @@ library(stats)
 library(survival)
 library(ggplot2)
 ```
+[//]: <> (===============================================================================================================)
 
 >> **Différence entre l'approche bayésienne et non bayésienne**
 >
@@ -39,9 +42,9 @@ Différement, avec une analyse bayésienne d'une candidate, on dispose d'informa
 \end{aligned}
 \]
 
-# méthodes non bayésiennes
+# Méthodes non bayésiennes
 
-## Algorithmes
+## Algorithmes d'échantillonage RMF adaptés à la restauration d'image
 
 ### Outil pour les algorithmes
 
@@ -71,6 +74,7 @@ imageGenerator=function(forme, N){
   #----triangle----
   #----cercle----
   #----bande----
+
   
   return(img)
 }#func
@@ -87,6 +91,7 @@ bruiteur=function(image, br){
   imgBr <- image
   N <- #RECUP LONGEUR IMAGE
   bruit <- 0
+  p <- 0.15
   #----binomiale----
   if(br== "rbinom"){bruit <- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)}
   #----poisson----
@@ -99,7 +104,7 @@ bruiteur=function(image, br){
 #========================================================================================================
 ```
 
-#### fcontion de calcul de l'énergie générale d'une image
+#### fonction de calcul de l'énergie générale d'une image
 ```{r}
 #========================================================================================================
 
@@ -116,7 +121,7 @@ energie=function(S){
 #========================================================================================================
 ```
 
-#### fonction de calcul de correspondance
+#### fonction de calcul de correspondance pixel par pixel entre deux images
 ```{r}
 correspondance=function(img0, img1, N){
   #----pourcentage de correspondance----
@@ -136,13 +141,19 @@ correspondance=function(img0, img1, N){
 
 ### Algorithme de métropolis (metropolisIsing)
 
-Le parametre alpha détermine le poid donné à l'image bruité initiale. Si alpha est trop grand, les valeurs les plus probables seront toujours celles de l'image bruitée, et donc l'algorithme ne fera rien. Si il est trop petit voir nulle, la configuration initiale va être oubliée petit à petit, et on va tendre vers l'image branche, soit donc une la configuration d'énergie minimale ne tenant pas compte de l'image bruitée.  
+Le parametre alpha détermine le poid donné à l'image bruitée initiale. 
+- Si alpha est trop grand, les valeurs les plus probables seront toujours celles de l'image bruitée, et donc l'algorithme ne fera rien. 
+- Si il est trop petit voir nulle, la configuration initiale va être oubliée petit à petit, et on va tendre vers l'image branche, soit donc la configuration d'énergie minimale ne tenant pas compte de l'image bruitée.  
+
+Le calcul du voisinage se fait grâce à la fonction Vstar, détaillée plus bas. Pour avoir le voisinage standard (les quatres pixels haut bas gauche droite), il suffit de mettre 1 comme valeur pour L.  
+
+Le parcours des sites peut se faire soit aléatoirement, soit ligne par ligne. 
 
 
 ```{r}
 #========================================================================================================
 
-metropolisIsing=function(forme, N, beta, B, alpha, L, n){
+metropolisIsing=function(forme, N, beta, B, alpha, L, n, p){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
   #----création de l'image parfaite img0----
@@ -193,7 +204,7 @@ metropolisIsing=function(forme, N, beta, B, alpha, L, n){
 
 
 
-metropolisIsing("rectangle", 64, 1, 0, 1, 10, 10^4)
+metropolisIsing("rectangle", 64, 1, 0, 1, 10, 10^4, 0.15)
 #metropolisIsing("rectangle", 64, 1, 0, 1, 5, 10^4)
 #metropolisIsing("rectangle", 64, 1, 0, 1, 1, 10^4)
 
@@ -207,7 +218,7 @@ metropolisIsing("rectangle", 64, 1, 0, 1, 10, 10^4)
 ```{r}
 #========================================================================================================
 
-GibbsIsing=function(forme, N, beta, B, alpha, n){
+GibbsIsing=function(forme, N, beta, B, alpha, n, p){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
   #----création de l'image parfaite img0----
@@ -225,8 +236,8 @@ GibbsIsing=function(forme, N, beta, B, alpha, n){
     #----choix d'un site---
     i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
     j <- 1+ceiling(N*runif(1))
-    iaux <- 2 + k%%N #de 2 à N+1
-    jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
+    #iaux <- 2 + k%%N #de 2 à N+1
+    #jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
     
     
     #----changement de valeur au site visé sur img2 (1ou-1) pour représenter E en entier avec img1 et img2 (cas d'une image en noir et blanc)----
@@ -250,7 +261,7 @@ GibbsIsing=function(forme, N, beta, B, alpha, n){
 }
 
 
-GibbsIsing("rectangle", 64, 2, 0, 0.5, 10^4)
+GibbsIsing("rectangle", 64, 2, 0, 0.5, 10^4, 0.15)
 #========================================================================================================
 ```
 
@@ -260,10 +271,11 @@ GibbsIsing("rectangle", 64, 2, 0, 0.5, 10^4)
 
 ### Recuit simulé non bayésien
 #### recuitMetro
+On réalise un recuit simulé en faisant lentement réduire les paramètres B, beta et alpha, par division successive par t la temperature, qui diminue lentement au cours des itérations.
 ```{r}
 #========================================================================================================
 
-recuitMetro=function(forme, N, beta, B, alpha, n){
+recuitMetro=function(forme, N, beta, B, alpha, n, p){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
   #----création de l'image parfaite img0----
@@ -312,7 +324,7 @@ recuitMetro=function(forme, N, beta, B, alpha, n){
   image(img1)
 }
 
-recuitMetro("rectangle", 64, 1, 0, 0.3, 10^5)
+recuitMetro("rectangle", 64, 1, 0, 0.3, 10^5, 0.15)
 
 #========================================================================================================
 ```
@@ -320,11 +332,11 @@ recuitMetro("rectangle", 64, 1, 0, 0.3, 10^5)
 
 
 
-[//]: <> (===============================================================================================================) 
+
 # méthodes bayésiennes
-[//]: <> (===============================================================================================================)
-## recuit simulé
-[//]: <> (===============================================================================================================)
+
+## recuit simulé de Guyader
+
 
 ```{r}
 #========================================================================================================
@@ -442,27 +454,26 @@ $E[L(X,\phi(y))|y]=1-P(X=\phi(y)|y)$
 
 
 
-[//]: <> (===============================================================================================================) 
-# Adaptabilité du calcul de potentiel
-[//]: <> (===============================================================================================================) 
-## voisinage en étoile
-[//]: <> (===============================================================================================================) 
 
-On va essayer d'augmenter la précision des algorithmes précédents en jouant sur la définition du voisinage. On définis le voisinage possible comme une étoile à huit branches. La longueur de chaque branche (et donc son poid dans le calcul de U) va dépendre de la continuité des pixels constituant cette branche. Ainsi d'un pixel à l'autre on n'aura pas forcément un voisinage de même ampleur.\ 
+# Adaptabilité du calcul de potentiel
+
+## voisinage en étoile
+
+On va essayer d'augmenter la précision des algorithmes précédents en jouant sur la définition du voisinage. On définit le voisinage possible comme une étoile à huit branches. La longueur de chaque branche (et donc son poid dans le calcul de U) va dépendre de la continuité des pixels constituant cette branche. Ainsi d'un pixel à l'autre on n'aura pas forcément un voisinage de même ampleur.\ 
 La longeur d'un branche est égale au nombre de pixels côte à côte suivant l'orientation de la branche, de même valeur (pour une image en noir et blanc), partant de s.\ 
 Le poid d'une branche de voisinage est alors proportionel à sa longeur. On aurait:
 $U_s=Bx_s+\beta x_s\sum_{i=1}^{8}{a_il_i}$
 avec $(l_i)$ les 8 lead et $(a_i)$ leur longueur.
 
-On pourrait envisager de limiter la longeur des branches à 5 ou 10.
+On peut choisir laune longuer maximal pour les branches, avec comme longuer infini simplement une longeur supérieure ou égale à la largeur de l'image.
 
 ### constitution du voisinage
 
-1. ajout des 8 plus proches voisins (habituel, si ce n'est que l'on ajoute les diagonales en plus). On les note lead.
-2. pour chacun des lead, on regarde la valeur du pixel qui le jouxe dans l'orientation de la flêche auquel il appartient, opposément à s biensûr. Si ce pixel est de même valeur que le lead, on l'intègre à la branche. Sinon, la branche et terminée (cas d'un image en noir et blanc).
+1. ajout des 4 plus proches voisins (habituel). On les note lead.
+2. pour chacun des lead, on regarde la valeur du pixel qui le jouxe dans l'orientation de la flêche auquel il appartient, opposément à s biensûr. Si ce pixel est de même valeur que le lead, on l'intègre à la branche. Sinon, la branche est terminée (cas d'une image en noir et blanc).
 
 #### Vbranch, Vstar
-
+Image pour tester les fonctions Vbranch() et Vstar
 ```{r}
 img <- imageGenerator("rectangle", 50)
 
@@ -472,6 +483,9 @@ image(img)
 #Vstar(imgaux, 50, 2, 2)
 
 ```
+#### Vbranch()
+Fonction qui calcule le poid d'une seule branche, d'orientation donnée.
+
 
 ```{r}
 #========================================================================================================
@@ -510,7 +524,8 @@ vbranch=function(img, N, is, js, iv, jv, L){
 #========================================================================================================
 ```
 
-
+#### Vstar()
+Fonction qui calcule le voisinage d'un site, selon le modèle en étoile à quatre branches.
 ```{r}
 Vstar=function(img, N, i, j, L){
   s <- 0
@@ -526,32 +541,32 @@ Vstar=function(img, N, i, j, L){
 ```
 
 #### comparaison des performances
-
+On regarde comment évolue les performance de restauration en fonction de la taille du voisinage.
 ```{r}
 #========================================================================================================
 
-MCdeMC_Vstar=function(forme, N, beta, B, alpha, L, n){
+MCdeMC_Vstar=function(forme, N, beta, B, alpha, L, n, p){
   corresp = c(1,L)
   longueur = c(1:L)
-  for( l in(1:L)){ corresp[l] = metropolisIsing(forme, N, beta, B, alpha, l, n) }#for
-  rev <- data.frame(revo = c(1:L), correspondance = corresp )
+  for( l in(1:L)){ corresp[l] = metropolisIsing(forme, N, beta, B, alpha, l, n, p) }#for
+  rev <- data.frame(longeur = c(1:L), correspondance = corresp )
   print(rev)
-  ggplot(data = rev, aes(x="nombre_de_revolution", y="pourcentage de correspondance")) + geom_point() + geom_smooth() #+ geom_line()
+  ggplot(data = rev, aes(x="taille_des_branches", y="pourcentage de correspondance")) + geom_point() + geom_smooth() #+ geom_line()
 }#func
 
 
-MCdeMC_Vstar("rectangle", 64, 1, 0, 1, 20, 10^4)
+MCdeMC_Vstar("rectangle", 64, 1, 0, 1, 20, 10^4, 0.15)
 #========================================================================================================
 ```
 Il semble qu'une augmentation même faible de la longueur des branches permette déjà d'améliorer significativement le nombre de pixels bien restitués, mais que l'on ne peut pas augmenter encore ce nombre par un alongement de cette longeur de branche.
 
 
 
-[//]: <> (===============================================================================================================) 
+
 # Probabilité du pourcentage de bon pixels bien représentés en sachant le nombre d'itérations
-[//]: <> (===============================================================================================================)
+
 ## Fonction de répartition empirique du pourcentage de pixels correctement restitué
-[//]: <> (===============================================================================================================)
+
 
 > **remarque** On cherchera plutôt la probabilité de correspondance sachant le nombre de révolutions, plutôt que le nombre d'itération. Cela permet de s'afranchir de la taille de l'image. Par conséquent dans les algos on privélégiera les palaiyage déterministes, permettant d'assurer un balayage de tous les sites à chaque révolution.
 
@@ -667,9 +682,6 @@ recuitSimuleFixe(10,2/3,64,0.2,0.3,0)
 
 
 #### recuit simulé (guyader)
-```{r}
-recuitSimule(400,2/3,64,0.2,0.3,0)
-```
 
 
 ```{r}
