@@ -125,7 +125,7 @@ Le parametre alpha détermine le poid donné à l'image bruité initiale. Si alp
 ```{r}
 #========================================================================================================
 
-metropolisIsing=function(forme, N, beta, B, alpha, n){
+metropolisIsing=function(forme, N, beta, B, alpha, L, n){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
   #----création de l'image parfaite img0----
@@ -143,12 +143,13 @@ metropolisIsing=function(forme, N, beta, B, alpha, n){
     #----choix d'un site---
     i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
     j <- 1+ceiling(N*runif(1))
-    #iaux <- 2 + k%%N #de 2 à N+1
-    #jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
+    #i <- 2 + k%%N #de 2 à N+1
+    #j <- 2 + k%/%(N-1)%%N #de 2 à N+1
     #----tirage nouvelle valeure candidate----
     img2[i,j] = -img1[i,j]
     #----voisinage----
-    v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+    #v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+    v = Vstar(img1, N+2, i, j, L)
     #----potentiels----
     #U1 = -B*img1[i,j]-beta*img1[i,j]*v-alpha*img3[i,j]
     #U2 = -B*img2[i,j]-beta*img2[i,j]*v-alpha*img3[i,j]
@@ -169,8 +170,10 @@ metropolisIsing=function(forme, N, beta, B, alpha, n){
   image(img1)
 }
 
-
-metropolisIsing("rectangle", 64, 1, 0, 1, 10^5)
+metropolisIsing("rectangle", 64, 1, 0, 1, 20, 10^4)
+metropolisIsing("rectangle", 64, 1, 0, 1, 10, 10^4)
+metropolisIsing("rectangle", 64, 1, 0, 1, 5, 10^4)
+metropolisIsing("rectangle", 64, 1, 0, 1, 1, 10^4)
 
 #========================================================================================================
 ```
@@ -253,16 +256,16 @@ recuitMetro=function(forme, N, beta, B, alpha, n){
   img3 = img1 #mémoire du bruit initiale
   
   for(k in 1:n){
-    T <- 1/k
-    Br <- B/T
-    betar <- beta/T
-    alphar <- alpha/T
+    t <- 1/k
+    Br <- B/t
+    betar <- beta/t
+    alphar <- alpha/t
     #print(c(T,Br,betar,alphar))
     #----choix d'un site---
     i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
     j <- 1+ceiling(N*runif(1))
-    #iaux <- 2 + k%%N #de 2 à N+1
-    #jaux <- 2 + k%/%(N-1)%%N #de 2 à N+1
+    #i <- 2 + k%%N #de 2 à N+1
+    #j <- 2 + k%/%(N-1)%%N #de 2 à N+1
     #----tirage nouvelle valeure candidate----
     img2[i,j] = -img1[i,j]
     #----voisinage----
@@ -437,176 +440,56 @@ On pourrait envisager de limiter la longeur des branches à 5 ou 10.
 2. pour chacun des lead, on regarde la valeur du pixel qui le jouxe dans l'orientation de la flêche auquel il appartient, opposément à s biensûr. Si ce pixel est de même valeur que le lead, on l'intègre à la branche. Sinon, la branche et terminée (cas d'un image en noir et blanc).
 
 #### Vbranch, Vstar
+
 ```{r}
 #========================================================================================================
-
-Vbranch2=function(img, N, is, js, ib, jb){
-  #fonction qui forme UNE branche de voisinage de s (is, js), avec les coordonnées du lead qui sont (ib, jb)
+vbranch=function(img, N, is, js, iv, jv, L){
+  #la taille de l'image N doit être précisée (à remplacer par méthode info image)
+  #L détermine la longueur maximale d'une branche
+  #(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)] ce qui donne le sens de la branche à partir de s
+  v = c()
+  vl = c()
+  if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
   
-  #----VARIABLES----
-  dii <- ib-is #coord ligne 
-  djj <- jb-js#coord colonnes
-  lead <- img[ib,jb]
-  branch <- lead #la branche est de longeur minimale 1 (cas du voisinage standard)
-  cdd = 0 #candidat
-  k <- 1
+  #----récupération des L sites de la branche potentielles sans condition----
+  for(k in(1:L)){  
+    i <- is+k*iv
+    j <- js+k*jv
+    if(i>=1 && i<=N){ if(j>=1 && j<=N){ #teste si les coordonnées du candidat sont dans l'image
+      vl <- c(vl,img[i,j])
+    }}#if&if
+  }#for
+  #print(vl)
+  #print(length(vl))
+  if(is.null(vl[1])){return(0)}
   
-  #----FONCTION----
+  #----épuration selon la condition de valeur de site----
+  lead <- vl[1]
+  for(k in 1:length(vl)){ #parcours les L sites
+    if(vl[k]==lead){  v <- c(v,vl[k])  }#condition pour faire partie de la branche.
+  }#for
   
-  #----branche horizontale----
-  if(dii==0){
-    
-    #--orientée gauche--
-    if(djj<0){
-      cdd <- img[ib,jb-k] #avec la bordure de 0 auxiliaire, on ne devrait pas avoir d'erreure
-      print(cdd)
-      print(lead)
-      if(cdd==lead){
-        while(cdd==lead){
-          branch <- branch + cdd
-          k <- k+1
-          cdd <- img[ib,jb-k]
-        }#while
-      }#if
-      else{branch <- branch + cdd}
-      return(branch)
-    }#if
-    
-    #--orientée droite--
-    else{
-      cdd <- img[ib,jb+k]
-      print(cdd)
-      print(lead)
-      if(cdd==lead){
-        while (cdd==lead & jb+k<=N) {
-          branch <- branch + cdd
-          k <- k+1
-          cdd <- img[ib,jb+k]
-        }#while
-      }#if
-      else{branch <- branch + cdd}
-      return(branch)
-    }#else
-  }#if
-  
-  #----branche verticale----
-  if(djj==0){
-    
-    #--orientée bas--
-    if(dii<0){
-      cdd <- img[ib+k,jb]
-      print(cdd)
-      print(lead)
-      if(cdd==lead){
-        while(cdd==lead & ib+k<=N){
-          branch <- branch + cdd
-          k <- k+1
-          cdd <- img[ib+k,jb]
-        }#while
-      }#if
-      else{branch <- branch + cdd}
-      return(branch)
-    }#if
-    
-    #--orientée haut--
-    else{
-      cdd <- img[ib-k,jb]
-      print(cdd)
-      print(lead)
-      if(cdd==lead){
-        while(cdd==lead & ib-k>=1){
-          cdd <- img[ib-k,jb]
-          k <- k+1
-          cdd <- img[ib-k, jb]
-        }#while
-      }#if
-      else{branch <- branch + cdd}
-      return(branch)
-    }#else
-  }#if
+  #print(v)
+  #print(length(v))
+  return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
 }#func
 
+vbranch3(img, 50, 1,1, 0, -1, 50 )
 #========================================================================================================
 ```
 
-```{r}
-#========================================================================================================
-
-Vbranch=function(img, is, js, ib, jb){
-  #fonction qui forme une branche de voisinage de s
-  
-  #----VARIABLES----
-  dii <- ib-is #coord ligne 
-  djj <- jb-js#coord colonnes
-  branch = 0
-  lead <- img[ib,jb]
-  cdd = 0 #candidat
-  k <- 1
-  
-  #----FONCTION----
-  #----branche horizontale----
-  
-  if(dii==0){
-    #--orientée gauche--
-    if(djj<0){
-      cdd <- img[ib,jb-k]
-      while(cdd==lead){
-        branch <- branch + cdd
-        k <- k+1
-        cdd <- img[ib,jb-k]
-      }#while
-      return(branch)
-    }#else
-    #--orientée droite--
-    else{
-      cdd <- img[ib,jb+k]
-      while (cdd==lead) {
-        branch <- branch + cdd
-        k <- k+1
-        cdd <- img[ib,jb+k]
-      }#while
-      return(branch)
-    }#else
-  }#if
-  
-  #----branche verticale----
-  if(djj==0){
-    #--orientée bas--
-    if(dii<0){
-      cdd <- img[ib+k,jb]
-      while(cdd==lead){
-        branch <- branch + cdd
-        k <- k+1
-        cdd <- img[ib+k,jb]
-      }#while
-      return(branch)
-    }#if
-    #--orientée haut--
-    else{
-      cdd <- img[ib-k,jb]
-      while(cdd==lead){
-        cdd <- img[ib-k,jb]
-        k <- k+1
-        cdd <- img[ib-k, jb]
-      }#while
-      return(branch)
-    }#else
-  }#if
-}#func
-
-#========================================================================================================
-```
 
 ```{r}
-Vstar=function(img, N, i,j){
+Vstar=function(img, N, i, j, L){
   s <- 0
-  s <- s + Vbranch2(img, N, i, j, i-1, j)
-  s <- s + Vbranch2(img, N, i, j, i+1, j)
-  s <- s + Vbranch2(img, N, i, j, i, j-1)
-  s <- s + Vbranch2(img, N, i, j, i, j+1)
+  s <- s + vbranch(img, N, i, j, -1, 0, L)
+  s <- s + vbranch(img, N, i, j, 1, 0, L)
+  s <- s + vbranch(img, N, i, j, 0, -1, L)
+  s <- s + vbranch(img, N, i, j, 0, 1, L)
   return(s)
 }#func
 
+Vstar(img, 50, 50,2 , 5)
 #========================================================================================================
 ```
 
@@ -615,8 +498,12 @@ img <- imageGenerator("rectangle", 50)
 
 imgaux <- matrix(data=0,nrow=52,ncol=52)
 imgaux[2:51,2:51] <- img
+image(img)
+#Vstar(imgaux, 50, 2, 2)
 
-Vstar(imgaux, 50, 2, 2)
+```
+```{r}
+print(img[-10,-10])
 ```
 
 
