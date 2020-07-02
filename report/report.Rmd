@@ -20,27 +20,7 @@ Pour une configuration initiale donnée, on va pouvoir considérer de nouvelles 
 Pour une approche non bayésienne du problème, l'évaluation d'une configuration candidate est booléenne: soit on accepte le candidat, soit on le rejete, autrement dit la probabilité d'une nouvelle configuration vaut 0 ou 1, car on n'a aucune information apriori sur la configuration de l'image.  
 Différement, avec une analyse bayésienne d'une candidate, on dispose d'informations à priori sur cette dernière, et on lui attribuera ainsi une probabilité entre 0 et 1 d'être la meilleure.
 
-\[
-\begin{aligned}
-	P(X_s= x_s | X^s= x^s)
-		&= \dfrac{P(X_s= x_s, X^s= x^s)}{P(X^s= x^s)}  \text{  formule de Bayes}\\
-		&= \dfrac{P(X= x)}{P(X^s= x^s)}\\
-		&= \dfrac{e^{-U(x)}}{e^{-U(x^s)} }\\	
-		&\ \\ 	
-	\text{On a  } U(x^s)
-		&= U_{\bar{s}}(x) = \sum_{c\in C, s\notin c}{U_c(x)}\\
-		&\ \\
-	\text{Et  } U(x) 
-		&= \sum_{c\in C}{U_c(x)}\\
-		&= \sum_{c\in C, s\in c}{U_c(x)} + \sum_{c\in C, s\notin c}{U_c(x)}\\
-		&= U_s(x_s,V_s) + U_{\bar{s}}(x) \\
-		&\ \\
-	\text{Donc  }, P(X_s= x_s | X^s= x^s)
-		&=\dfrac{exp(-U_s(x_s,V_s) - U_{\bar{s}}(x))}  {exp(-U_{\bar{s}}(x))}\\
-		&=\dfrac{exp(-U_s(x_s,V_s)}{exp(-U_{\bar{s}}(x) + U_{\bar{s}}(x))}\\
-		&=exp(-U_s(x_s,V_s))   \text{   ce qui justifie l'hypthère markovienne}
-\end{aligned}
-\]
+
 
 # Méthodes non bayésiennes
 
@@ -65,7 +45,7 @@ imageGenerator=function(forme, N){
   if(forme== "losange"){
     for (i in 1:N){
       for (j in 1:N){
-        sigma0[i,j]=-1+2*(abs(i-j)<=N/4)*(abs(i+j-N)<=N/4)  
+        img[i,j]=-1+2*(abs(i-j)<=N/4)*(abs(i+j-N)<=N/4)  
       }
     }#for
   }#if
@@ -74,6 +54,9 @@ imageGenerator=function(forme, N){
   #----triangle----
   #----cercle----
   #----bande----
+  if(forme=="bande"){
+    for (j in 1:(N/2)){ img[,2*j]=rep(1,N) }
+  }#if
 
   
   return(img)
@@ -82,6 +65,7 @@ imageGenerator=function(forme, N){
 #========================================================================================================
 ```
 
+
 #### fonction de bruitage d'image
 ```{r}
 #========================================================================================================
@@ -89,20 +73,25 @@ imageGenerator=function(forme, N){
 bruiteur=function(image, br){
   #fonction qui revoit l'image donnée en argument par la même image mais bruité par la méthode "br"
   imgBr <- image
-  N <- #RECUP LONGEUR IMAGE
+  N <- dim(image)[1]
   bruit <- 0
   p <- 0.15
   #----binomiale----
   if(br== "rbinom"){bruit <- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)}
+  
   #----poisson----
+  
   #----normale----
   
-  imgBr <- image*br
+  imgBr <- image*bruit
   return(imgBr)
 }#func  A FINIR
 
 #========================================================================================================
 ```
+
+
+
 
 #### fonction de calcul de l'énergie générale d'une image
 ```{r}
@@ -560,7 +549,47 @@ MCdeMC_Vstar("rectangle", 64, 1, 0, 1, 20, 10^4, 0.15)
 ```
 Il semble qu'une augmentation même faible de la longueur des branches permette déjà d'améliorer significativement le nombre de pixels bien restitués, mais que l'on ne peut pas augmenter encore ce nombre par un alongement de cette longeur de branche.
 
+#### algo déterministe
+On définit l'énergie d'une site comme $U(x)=\sum_{l\in H,\ t\in l}t$, avec $H_s$ l'ensemble des branches voisines de s. L'énergie est donc ici la somme du poid des branches du voisinage de s, qui ne tient pas compte de la valeur de s, contrairement au modèle d'Ising. On reprend l'algorithme de Metropolis pour essayer avec ce nouveau modèle d'énergie.
 
+
+```{r}
+metropolisStar=function(forme, N, L, n){
+  #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
+  
+  #----création de l'image parfaite img0----
+  img0 = imageGenerator(forme, N)
+  image(img0)
+  #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+  img1 = matrix(0, nrow=N+2, ncol=N+2)
+  img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom")
+  image(img1)
+  img3 = img1 #mémoire du bruit initiale
+  
+  for(k in 1:n){
+    #----choix d'un site---
+    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+    j <- 1+ceiling(N*runif(1))
+    #i <- 2 + k%%N #de 2 à N+1
+    #j <- 2 + k%/%(N-1)%%N #de 2 à N+1
+    
+    #----voisinage----
+    v = Vstar(img1, N+2, i, j, L)
+    #----changement déterministe----
+    img1[i][j] <- v/abs(v) #-1 ou 1
+    
+  }#for
+  #----affichage----
+  #par(mfrow=c(1,3))
+  image(img1)
+  
+  corresp <- correspondance(img0, img1, N)
+  return(corresp) #utile pour MCdeMC_Vstar
+  #calcul de la correspondance
+}
+
+metropolisStar("rectangle", 64, 5, 10^4)
+```
 
 
 # Probabilité du pourcentage de bon pixels bien représentés en sachant le nombre d'itérations
