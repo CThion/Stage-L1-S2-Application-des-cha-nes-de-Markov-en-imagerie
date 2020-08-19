@@ -1,0 +1,300 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Restauration d'image grâce aux chaînes de markov},
+  pdfauthor={Clément Thion},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{Restauration d'image grâce aux chaînes de markov}
+\author{Clément Thion}
+\date{06/2020}
+
+\begin{document}
+\maketitle
+
+\hypertarget{moduxe9lisation-dune-image}{%
+\section{Modélisation d'une image}\label{moduxe9lisation-dune-image}}
+
+Pour la suite on utilise les notations suivantes:\\
+- s : un pixel de l'image, avec \(x_s\) sa valeur (-1 ou 1 dans notre
+cas)\\
+- \(V_s\) : le voisinage de s\\
+- \(U(x_s)\) : le potentiel de s pour la valeur \(x_s\). On parle aussi
+d'énergie.\\
+- \(X_s\) : la variable aléatoire décrivant l'état de s. Pour nous
+\(X_s\in\{-1,1\}\)\\
+- X : la variable aléatoire décrivant la configuration de l'image\\
+-
+\fbox{$\tilde X^s=$la variable aléatoire décrivant la configuration de l'image privée du pixel $s$.}
+
+\hypertarget{hypothuxe8se-markovienne}{%
+\subsection{Hypothèse markovienne}\label{hypothuxe8se-markovienne}}
+
+A priori pour ``deviner'' quelle est la bonne valeur d'un pixel dans une
+image données, le mieux à faire est de considérer tous le reste de
+l'image, donc la valeur de chacun des autres pixels de l'image, et alors
+d'en tirer une conclusion sur \(P(X_s=x_s)\). On fait cependant
+l'hypothèse que connaître le voisinage proche de s est équivalent à
+connaître toute l'image, soit \(P(X_s=x_s|X)=P(X_s=x_s|V_s)\).
+\fbox{\vbox{Il faut écrire $P(X_s=x_s|\tilde X^s)=P(X_s=x_s|V_s)$. En effet si on écrit $P(X_s=x_s|X)$, cette probabilité vaut $0$ ou $1$, puisque $X$ contient la valeur du pixel $s$! (elle vaut $1$ si la valeur du pixel 
+$s$ dans la configuration d'image $X$ vaut $x_s$ et $0$ sinon).}}
+
+\hypertarget{le-moduxe8le-dising}{%
+\subsection{Le modèle d'Ising}\label{le-moduxe8le-dising}}
+
+Le modèle d'Ising nous fournit une formule pour calculer le potentiel
+d'un pixel, pour un état donné, en fonction de son voisinage. On a:
+
+\[U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s}\]
+
+On verra une de ses limites dans la partie sur l'estimation de
+\(\beta\).
+
+\hypertarget{adapation-uxe0-la-restauration-dimage}{%
+\subsection{Adapation à la restauration
+d'image}\label{adapation-uxe0-la-restauration-dimage}}
+
+Pour la restauration d'image, on comprend qu'il manque quelque chose au
+modéle d'Ising. Tel qu'il est, avec un algorithme de metropolis, notre
+image tendrait irrémédiablement vers l'image blanche, qui est bien
+l'image de plus faible énergie dans l'absolu. Il nous faut passer à la
+probabilité conditionnée par la configuration de départ que l'on note
+\(X^0\): \(P(X_s=x_s|X^0,V_s)\). Pour se faire on ajoute un paramètre
+pour ternir compte de l'image bruitée de départ, de sorte que la
+configuration de plus basse énergie ne soit plus l'image blanche mais
+bien l'image que l'on souhaite restaurer. Ainsi on modifie \(U(x_s)\)
+par:
+\[ U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s} -\alpha x_s^0\]
+avec \(x_s^0\) la valeur du site s de l'image bruitée de départ.
+
+\hypertarget{des-algorithmes-pour-la-restauration-dimage}{%
+\section{Des algorithmes pour la restauration
+d'image}\label{des-algorithmes-pour-la-restauration-dimage}}
+
+\hypertarget{lalgorithme-de-metropolis}{%
+\subsection{L'algorithme de
+Metropolis}\label{lalgorithme-de-metropolis}}
+
+\hypertarget{metropolisising}{%
+\subsubsection{metropolisIsing}\label{metropolisising}}
+
+\textbf{Le paramètre alpha} détermine l'importance donnée à l'image
+bruitée initiale dans la probabilité conditionnelle.\\
+- Si alpha est trop grand devant \(\beta\), les valeurs les plus
+probables seront toujours celles de l'image bruitée, et donc
+l'algorithme ne fera rien.\\
+- S'il est trop petit voir nul, la configuration initiale va être
+oubliée itération après itération, et on va tendre vers l'image branche,
+soit donc la configuration d'énergie minimale parmi toutes les
+configurations possibles.
+
+\textbf{Le paramètre \(\beta\)}
+
+\textbf{Le calcul du voisinage} se fait grâce à la fonction Vstar,
+détaillée plus bas. Pour avoir le voisinage standard (les quatres pixels
+haut bas gauche droite), il suffit de mettre 1 comme valeur pour L.
+
+\textbf{Le parcours des sites} peut se faire soit aléatoirement, soit
+ligne par ligne.
+
+\hypertarget{luxe9chantilloneur-de-gibbs}{%
+\subsection{L'échantilloneur de
+Gibbs}\label{luxe9chantilloneur-de-gibbs}}
+
+\hypertarget{gibbsising}{%
+\subsubsection{gibbsIsing}\label{gibbsising}}
+
+\hypertarget{le-recuit-simuluxe9}{%
+\subsection{Le recuit simulé}\label{le-recuit-simuluxe9}}
+
+\hypertarget{estimation-du-paramuxe8tre-beta}{%
+\section{\texorpdfstring{Estimation du paramètre
+\(\beta\)}{Estimation du paramètre \textbackslash beta}}\label{estimation-du-paramuxe8tre-beta}}
+
+L'algorithme de recuit précédent marche plutôt bien pour des images
+pleines (rectangle, losange), mais si on éssaie de restaurer une image
+en plusieurs parties, une succession de bandes par exemple, ou un
+damier, l'algorithme ne fonctionne plus du tout.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#metropolisIsing("ligne", 64, 1, 0, 1, 10, 10\^{}4, 0.15)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{distinction-des-uxe9nergies-verticales-et-horizontales}{%
+\subsection{Distinction des énergies verticales et
+horizontales}\label{distinction-des-uxe9nergies-verticales-et-horizontales}}
+
+Une idée que l'on peut avoir pour palier au problème est de séparer les
+calcules de potentiels entre la verticale et l'horizontale, en
+appliquant à chaque terme un facteur beta dédié à une orientation,
+\(\beta_{horizontal}\) et \(\beta_{vertical}\). On a ainsi:
+\(U(x_s)= -x_s[\beta_h(x_d+x_g)+\beta_v(x_h+x_b)+\alpha x_s^0]\) avec
+\(x_d,x_g,x_h,x_b\) les valeurs des pixels voisins du site s
+respectivement à droite, gauche, haut, bas. On modifie l'algorithme de
+recuit pour essayer:
+
+On peut ainsi avoir des signes différents pour \(\beta_h\) et
+\(\beta_v\), et donc privilégier les lignes pour une direction et les
+alternances blanc/noir dans l'autre direction. Pour l'exemple précédent
+avec des lignes horizontales, on va choisir \(\beta_h > 0\) pour
+privilégier les lignes sur l'horizontale et \(\beta_v < 0\) pour
+privilégier l'alternance des pixels sur la verticale.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#algo qui va bien}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{voisinage-de-taille-variable}{%
+\subsection{Voisinage de taille
+variable}\label{voisinage-de-taille-variable}}
+
+\hypertarget{amuxe9lioration-de-la-rapidituxe9-des-algorithmes}{%
+\section{Amélioration de la rapidité des
+algorithmes}\label{amuxe9lioration-de-la-rapidituxe9-des-algorithmes}}
+
+Depuis le début, on fixe le nombre d'itérations de l'algorithme (souvent
+à \(10^4\) ou \(10^5\)). Cependant, on peut supposer que parfois il ne
+soit pas nécessaire de faire autant d'itération pour arriver à un
+résultat correct. De plus, le bruitage est réalisé aléatoirement, et
+donc d'une exécution de d'algorithme à une autre, le nombre d'itération
+nécessaire pour restaurer l'image ne sera pas forcément le même.
+
+Une manière de rendre le nombre d'itération variable serait de le
+conditionner au nombre de parcours de site successifs sans changement de
+valeurs. On pourra ainsi déclarer arbitrairement que, dès que
+l'algorithme réalise dix itérations successive sans changement de
+valeur, il s'arrête. C'est ce que l'on fait dans l'algorithme de
+metropolis suivant:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#algo qui va bien}
+\end{Highlighting}
+\end{Shaded}
+
+\fbox{\vbox{\textbf{Une idée :} pour aller encore plus vite, au lieu d'attendre dix itérations successives sans aucune modification, on pourrait arrêter l'algorithme dès que, au cours des dix dernières itérations, il y a au plus 1 modification. On peut jouer sur ces deux paramètres (taille de la "fenêtre coulissante", ici 10, et nombre maximum de changements, 0 dans votre exemple, et ici 1).}}
+
+\hypertarget{evolution-de-la-restauration-en-fonction-dun-nombre-dituxe9rations}{%
+\section{Evolution de la restauration en fonction d'un nombre
+d'itérations}\label{evolution-de-la-restauration-en-fonction-dun-nombre-dituxe9rations}}
+
+Avec des algorithmes dont le nombre d'itération varie, on peut se
+demander quelle est la probabilité d'avoir une image restaurée à un H\%,
+après n itérations consécutives sans changements.
+
+\hypertarget{probabilituxe9-davoir-la-configuration-duxe9nergie-minimal}{%
+\subsection{Probabilité d'avoir la configuration d'énergie
+minimal}\label{probabilituxe9-davoir-la-configuration-duxe9nergie-minimal}}
+
+\hypertarget{probabilituxe9-de-succuxe8s-pour-un-pixel}{%
+\subsubsection{Probabilité de succès pour un
+pixel}\label{probabilituxe9-de-succuxe8s-pour-un-pixel}}
+
+\hypertarget{probabilituxe9-de-succuxe8s-pour-une-configuration-compluxe8te}{%
+\subsubsection{Probabilité de succès pour une configuration
+complète}\label{probabilituxe9-de-succuxe8s-pour-une-configuration-compluxe8te}}
+
+\hypertarget{probabilituxe9-davoir-restauruxe9-limage-uxe0-h}{%
+\subsection{Probabilité d'avoir restauré l'image à
+H\%}\label{probabilituxe9-davoir-restauruxe9-limage-uxe0-h}}
+
+\end{document}

@@ -1,0 +1,37 @@
+				# La modélisation d'une image
+	
+			## Les notations
+		
+			## Le modèle d'Ising
+
+			## Adapation à la restauration d'image
+
+
+
+				# Les algorithme basiques pour la restauration d'image
+
+			## L'algorithme de Metropolis
+
+			## L'échantilloneur de Gibbs
+
+			## Le recuit simulé
+
+
+
+				# L'estimation du paramètre $\beta$
+
+			## Distiction des énergies verticales et horizontales
+
+			## Voisinage de taille variable
+
+
+
+				# Evolution de la restauration en fonction d'une nombre d'itérations
+
+			## Probabilité d'avoir la configuration d'énergie minimal 
+
+		### Probabilité de succès pour un pixel
+
+		### Probabilité de succès pour une configuration complète
+
+			## Probabilité d'avoir restauré l'image à H%

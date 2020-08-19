@@ -1,0 +1,114 @@
+---
+title: "Application des chaînes de Markov en imagerie"
+author: "Clément Thion"
+date: "juin 2020"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r, include=FALSE}
+#code qui ne sera pas ajouté au rapport
+```
+
+# Modélisation d'une image
+
+Pour la suite on utilise les notations suivantes:  
+- s : un pixel de l'image, avec $x_s$ sa valeur (-1 ou 1 dans notre cas)  
+- $V_s$ : le voisinage de s  
+- $U(x_s)$ : le potentiel de s pour la valeur $x_s$. On parle aussi d'énergie.  
+- $X_s$ : la variable aléatoire décrivant l'état de s. Pour nous $X_s\in\{-1,1\}$  
+- X : la variable aléatoire décrivant la configuration de l'image.
+
+
+## Hypothèse markovienne
+
+A priori pour "deviner" quelle est la bonne valeur d'un pixel dans une image données, le mieux  à faire est de considérer tous le reste de l'image, donc la valeur de chacun des autres pixels de l'image, et alors d'en tirer une conclusion sur $P(X_s=x_s)$. On fait cependant l'hypothèse que connaître le voisinage proche de s est équivalent à connaître toute l'image, soit $P(X_s=x_s|X)=P(X_s=x_s|V_s)$. 
+
+
+## Le modèle d'Ising
+
+Le modèle d'Ising nous fournit une formule pour calculer le potentiel d'un pixel, pour un état donné, en fonction de son voisinage. On a:
+
+\[U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s}\]
+
+On verra une de ses limites dans la partie sur l'estimation de $\beta$.
+
+
+## Adapation à la restauration d'image
+
+Pour la restauration d'image, on comprends qu'il manque quelque chose au modéle d'Ising. Tel qu'il est, avec un algorithme de metropolis, notre image tendrait irrémédiablement vers l'image blanche, qui est bien l'image de plus faible énergie dans l'absolu. Il nous faut passer à la probabilité conditionnée par la configuration de départ que l'on note $X^0$: $P(X_s=x_s|X^0,V_s)$. Pour se faire on ajoute un paramêtre pour ternir compte de l'image bruitée de départ, de sorte que la configuration de plus basse énergie ne soit plus l'image blanche mais bien l'image que l'on souhaite restaurer. Ainsi on modifie $U(x_s)$ par:
+\[ U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s} -\alpha x_s^0\]
+avec $x_s^0$ la valeur du site s de l'image bruitée de départ.
+
+# Des algorithmes pour la restauration d'image
+
+## L'algorithme de Metropolis
+
+### metropolisIsing
+
+**Le parametre alpha** détermine l'importance donnée à l'image bruitée initiale dans la probabilité donditionnelle.   
+- Si alpha est trop grand devant $\beta$, les valeurs les plus probables seront toujours celles de l'image bruitée, et donc l'algorithme ne fera rien. 
+- Si il est trop petit voir nulle, la configuration initiale va être oubliée itération après itération, et on va tendre vers l'image branche, soit donc la configuration d'énergie minimale parmis toutes les configurations possibles. 
+
+__Le parametre $\beta$__
+
+__Le calcul du voisinage__ se fait grâce à la fonction Vstar, détaillée plus bas. Pour avoir le voisinage standard (les quatres pixels haut bas gauche droite), il suffit de mettre 1 comme valeur pour L.  
+
+__Le parcours des sites__ peut se faire soit aléatoirement, soit ligne par ligne. 
+
+## L'échantilloneur de Gibbs
+
+### gibbsIsing
+
+## Le recuit simulé
+
+# Estimation du paramètre $\beta$
+
+L'algorithme de recuit précédent marche plutôt bien pour des images pleines (rectangle, losange), mais si on éssaie de restaurer une image en plusieurs parties, une succession de bandes par exemple, ou un damier, l'algorithme ne fonctionne plus du tout. 
+
+```{r}
+#metropolisIsing("ligne", 64, 1, 0, 1, 10, 10^4, 0.15)
+
+```
+
+
+## Distiction des énergies verticales et horizontales
+
+Une idée que l'on peut avoir pour palier au problème est de séparer les calcules de potentiels entre la verticale et l'horizontale, en appliquant à chaque terme un facteur beta dédié à une orientation, $\beta_{horizontal}$ et $\beta_{vertical}$. On a ainsi: $U(x_s)= -x_s[\beta_h(x_d+x_g)+\beta_v(x_h+x_b)+\alpha x_s^0]$ avec $x_d,x_g,x_h,x_b$ les valeurs des pixels voisins du site s respectivement à droite, gauche, haut, bas. On modifier l'algorithme de recuit pour essayer:
+
+```{r}
+
+```
+
+
+On peut ainsi avoir des signes différents pour $\beta_h$ et $\beta_v$, et donc privilégier les lignes pour une direction et les alternances blanc/noir dans l'autre direction. Pour l'exemple précédent avec des lignes horizontales, on va choisir $\beta_h > 0$ pour privilégier les lignes sur l'horizontale et $\beta_v < 0$ pour privilégier l'alternance des pixels sur la verticale. 
+
+```{r}
+#algo qui va bien
+```
+
+
+## Voisinage de taille variable
+
+# Amélioration de la rapidité des algorithmes
+
+Depuis le début, on fixe le nombre d'itération de l'algorithme (souvent à $10^4$ ou $10^5$). Cependant, on peut supposer que parfois il ne soit pas nécessaire de faire autant d'itération pour arriver à un résultat correct. De plus, le bruitage est réalisé aléatoirement, et donc d'une exécution de d'algorithme à une autre, le nombre d'itération nécessaire pour restaurer l'image ne sera pas forcément le même.  
+
+Une manière de rendre le nombre d'itération variable serait de le conditionner au nombre de parcours de site successifs sans changement de valeurs. On pourra ainsi déclarer arbitrairement que, dès que l'algorithme réalise dix itérations successive sans changement de valeur, il s'arrête. C'est ce que l'on fait dans l'algorithme de metropolis suivant:
+
+```{r}
+#algo qui va bien
+```
+
+
+# Evolution de la restauration en fonction d'une nombre d'itérations
+
+Avec des algorithmes dont le nombre d'itération varie, on peut se demander quelle est la probabilité d'avoir une image restaurée à un H%, après n itérations consécutives sans changements.
+
+## Probabilité d'avoir la configuration d'énergie minimal 
+
+### Probabilité de succès pour un pixel
+### Probabilité de succès pour une configuration complète
+
+## Probabilité d'avoir restauré l'image à H%

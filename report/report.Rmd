@@ -1,8 +1,10 @@
 ---
 title: "Restauration d'image à l'aide d'algorithme stochastiques par chaînes de Markov"
 output:
-  html_notebook: default
+  html_document:
+    df_print: paged
   pdf_document: default
+  html_notebook: default
 bibliography: report.bib
 ---
 ```{r}
@@ -14,13 +16,6 @@ library(ggplot2)
 ```
 [//]: <> (===============================================================================================================)
 
->> **Différence entre l'approche bayésienne et non bayésienne**
->
-Pour une configuration initiale donnée, on va pouvoir considérer de nouvelles configurations candidates pour la remplacer. Il sagit alors de savoir quelle candidate est la meilleure. Deux manières de faire sont ici présentées: une approche bayésiennes, et non bayésiennes.  
-Pour une approche non bayésienne du problème, l'évaluation d'une configuration candidate est booléenne: soit on accepte le candidat, soit on le rejete, autrement dit la probabilité d'une nouvelle configuration vaut 0 ou 1, car on n'a aucune information apriori sur la configuration de l'image.  
-Différement, avec une analyse bayésienne d'une candidate, on dispose d'informations à priori sur cette dernière, et on lui attribuera ainsi une probabilité entre 0 et 1 d'être la meilleure.
-
-
 
 # Méthodes non bayésiennes
 
@@ -31,7 +26,6 @@ Différement, avec une analyse bayésienne d'une candidate, on dispose d'informa
 #### Fonction de génération d'image
 ```{r}
 #========================================================================================================
-
 imageGenerator=function(forme, N){
   #fonction permettant de générer une matrice-image de forme choisie, et de taille N*N
   
@@ -62,6 +56,8 @@ imageGenerator=function(forme, N){
   return(img)
 }#func
 
+
+
 #========================================================================================================
 ```
 
@@ -69,8 +65,7 @@ imageGenerator=function(forme, N){
 #### fonction de bruitage d'image
 ```{r}
 #========================================================================================================
-
-bruiteur=function(image, br){
+bruiteur=function(image, br, p){
   #fonction qui revoit l'image donnée en argument par la même image mais bruité par la méthode "br"
   imgBr <- image
   N <- dim(image)[1]
@@ -85,7 +80,9 @@ bruiteur=function(image, br){
   
   imgBr <- image*bruit
   return(imgBr)
-}#func  A FINIR
+}#func
+
+
 
 #========================================================================================================
 ```
@@ -96,7 +93,6 @@ bruiteur=function(image, br){
 #### fonction de calcul de l'énergie générale d'une image
 ```{r}
 #========================================================================================================
-
 energie=function(S){
   #fonction pour mesurer l'enrgie globale d'une image
   
@@ -107,11 +103,14 @@ energie=function(S){
   return(eligne+ecolonne)
 }
 
+
+
 #========================================================================================================
 ```
 
 #### fonction de calcul de correspondance pixel par pixel entre deux images
 ```{r}
+#========================================================================================================
 correspondance=function(img0, img1, N){
   #----pourcentage de correspondance----
   nok <- 0 #nombre de pixels divergents
@@ -124,156 +123,18 @@ correspondance=function(img0, img1, N){
   correspondance <- ((N^2)-nok)/(N^2)*100
   return(correspondance)
 }#func
-```
-
-# Adaptabilité du calcul de potentiel
-
-## voisinage en étoile
-
-On va essayer d'augmenter la précision des algorithmes précédents en jouant sur la définition du voisinage. On définit le voisinage possible comme une étoile à huit branches. La longueur de chaque branche (et donc son poid dans le calcul de U) va dépendre de la continuité des pixels constituant cette branche. Ainsi d'un pixel à l'autre on n'aura pas forcément un voisinage de même ampleur.\ 
-La longeur d'un branche est égale au nombre de pixels côte à côte suivant l'orientation de la branche, de même valeur (pour une image en noir et blanc), partant de s.\ 
-Le poid d'une branche de voisinage est alors proportionel à sa longeur. On aurait:
-$U_s=Bx_s+\beta x_s\sum_{i=1}^{8}{a_il_i}$
-avec $(l_i)$ les 8 lead et $(a_i)$ leur longueur.
-
-On peut choisir laune longuer maximal pour les branches, avec comme longuer infini simplement une longeur supérieure ou égale à la largeur de l'image.
-
-### constitution du voisinage
-
-1. ajout des 4 plus proches voisins (habituel). On les note lead.
-2. pour chacun des lead, on regarde la valeur du pixel qui le jouxe dans l'orientation de la flêche auquel il appartient, opposément à s biensûr. Si ce pixel est de même valeur que le lead, on l'intègre à la branche. Sinon, la branche est terminée (cas d'une image en noir et blanc).
-
-#### Vbranch, Vstar
-Image pour tester les fonctions Vbranch() et Vstar
-```{r}
-img <- imageGenerator("rectangle", 50)
-
-imgaux <- matrix(data=0,nrow=52,ncol=52)
-imgaux[2:51,2:51] <- img
-image(img)
-#Vstar(imgaux, 50, 2, 2)
-
-```
-#### Vbranch()
-Fonction qui calcule le poid d'une seule branche, d'orientation donnée.
 
 
-```{r}
-#========================================================================================================
-vbranch=function(img, N, is, js, iv, jv, L){
-  #la taille de l'image N doit être précisée (à remplacer par méthode info image)
-  #L détermine la longueur maximale d'une branche
-  #(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)] ce qui donne le sens de la branche à partir de s
-  v = c()
-  vl = c()
-  if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
-  
-  #----récupération des L sites de la branche potentielles sans condition----
-  for(k in(1:L)){  
-    i <- is+k*iv
-    j <- js+k*jv
-    if(i>=1 && i<=N){ if(j>=1 && j<=N){ #teste si les coordonnées du candidat sont dans l'image
-      vl <- c(vl,img[i,j])
-    }}#if&if
-  }#for
-  #print(vl)
-  #print(length(vl))
-  if(is.null(vl[1])){return(0)}
-  
-  #----épuration selon la condition de valeur de site----
-  lead <- vl[1]
-  for(k in 1:length(vl)){ #parcours les L sites
-    if(vl[k]==lead){  v <- c(v,vl[k])  }#condition pour faire partie de la branche.
-  }#for
-  
-  #print(v)
-  #print(length(v))
-  return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
-}#func
 
-#vbranch(img, 50, 1,1, 0, -1, 50 )
 #========================================================================================================
 ```
 
-#### Vstar()
-Fonction qui calcule le voisinage d'un site, selon le modèle en étoile à quatre branches.
-```{r}
-Vstar=function(img, N, i, j, L){
-  s <- 0
-  s <- s + vbranch(img, N, i, j, -1, 0, L)
-  s <- s + vbranch(img, N, i, j, 1, 0, L)
-  s <- s + vbranch(img, N, i, j, 0, -1, L)
-  s <- s + vbranch(img, N, i, j, 0, 1, L)
-  return(s)
-}#func
-
-#Vstar(img, 50, 50,2 , 5)
-#========================================================================================================
-```
-
-#### comparaison des performances
-On regarde comment évolue les performance de restauration en fonction de la taille du voisinage.
-```{r}
-#========================================================================================================
-
-
-```
-Il semble qu'une augmentation même faible de la longueur des branches permette déjà d'améliorer significativement le nombre de pixels bien restitués, mais que l'on ne peut pas augmenter encore ce nombre par un alongement de cette longeur de branche.
-
-#### algo déterministe
-On définit l'énergie d'une site comme $U(x)=\sum_{l\in H,\ t\in l}t$, avec $H_s$ l'ensemble des branches voisines de s. L'énergie est donc ici la somme du poid des branches du voisinage de s, qui ne tient pas compte de la valeur de s, contrairement au modèle d'Ising. On reprend l'algorithme de Metropolis pour essayer avec ce nouveau modèle d'énergie.
-
-
-```{r}
-metropolisStar=function(forme, N, L, n){
-  #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
-  
-  #----création de l'image parfaite img0----
-  img0 = imageGenerator(forme, N)
-  image(img0)
-  #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
-  img1 = matrix(0, nrow=N+2, ncol=N+2)
-  img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom")
-  image(img1)
-  img3 = img1 #mémoire du bruit initiale
-  
-  for(k in 1:n){
-    #----choix d'un site---
-    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
-    j <- 1+ceiling(N*runif(1))
-    #i <- 2 + k%%N #de 2 à N+1
-    #j <- 2 + k%/%(N-1)%%N #de 2 à N+1
-    
-    #----voisinage----
-    v = Vstar(img1, N+2, i, j, L)
-    #----changement déterministe----
-    img1[i][j] <- v/abs(v) #-1 ou 1
-    
-  }#for
-  #----affichage----
-  #par(mfrow=c(1,3))
-  image(img1)
-  
-  corresp <- correspondance(img0, img1, N)
-  return(corresp) #utile pour MCdeMC_Vstar
-  #calcul de la correspondance
-}
-```
 
 ### Algorithme de métropolis (metropolisIsing)
 
-Le parametre alpha détermine le poid donné à l'image bruitée initiale. 
-- Si alpha est trop grand, les valeurs les plus probables seront toujours celles de l'image bruitée, et donc l'algorithme ne fera rien. 
-- Si il est trop petit voir nulle, la configuration initiale va être oubliée petit à petit, et on va tendre vers l'image branche, soit donc la configuration d'énergie minimale ne tenant pas compte de l'image bruitée.  
-
-Le calcul du voisinage se fait grâce à la fonction Vstar, détaillée plus bas. Pour avoir le voisinage standard (les quatres pixels haut bas gauche droite), il suffit de mettre 1 comme valeur pour L.  
-
-Le parcours des sites peut se faire soit aléatoirement, soit ligne par ligne. 
-
 
 ```{r}
 #========================================================================================================
-
 metropolisIsing=function(forme, N, beta, B, alpha, L, n, p){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
@@ -329,6 +190,8 @@ metropolisIsing("rectangle", 64, 1, 0, 1, 10, 10^4, 0.15)
 #metropolisIsing("rectangle", 64, 1, 0, 1, 5, 10^4)
 #metropolisIsing("rectangle", 64, 1, 0, 1, 1, 10^4)
 
+
+
 #========================================================================================================
 ```
 
@@ -336,9 +199,8 @@ metropolisIsing("rectangle", 64, 1, 0, 1, 10, 10^4, 0.15)
 
 ### Algorithme de Gibbs (GibbsIsing)
 
-```{r}
+```{r GibbsIsing}
 #========================================================================================================
-
 GibbsIsing=function(forme, N, beta, B, alpha, n, p){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
@@ -382,7 +244,7 @@ GibbsIsing=function(forme, N, beta, B, alpha, n, p){
 }
 
 
-GibbsIsing("rectangle", 64, 2, 0, 0.5, 10^4, 0.15)
+#GibbsIsing("rectangle", 64, 2, 0, 0.5, 10^4, 0.15)
 #========================================================================================================
 ```
 
@@ -392,8 +254,8 @@ GibbsIsing("rectangle", 64, 2, 0, 0.5, 10^4, 0.15)
 
 ### Recuit simulé non bayésien
 #### recuitMetro
-On réalise un recuit simulé en faisant lentement réduire les paramètres B, beta et alpha, par division successive par t la temperature, qui diminue lentement au cours des itérations.
-```{r}
+
+```{r recuitMetro}
 #========================================================================================================
 
 recuitMetro=function(forme, N, beta, B, alpha, n, p){
@@ -440,7 +302,7 @@ recuitMetro=function(forme, N, beta, B, alpha, n, p){
       else{img2[i,j] <- img1[i,j]} #sinon on ne change pas
     }#else
   }#for
-  #----affichage----
+  #----affichage---- 
   #par(mfrow=c(1,3))
   image(img1)
 }
@@ -459,7 +321,7 @@ recuitMetro("rectangle", 64, 1, 0, 0.3, 10^5, 0.15)
 ## recuit simulé de Guyader
 
 
-```{r}
+```{r recuitSimule}
 #========================================================================================================
 
 
@@ -574,6 +436,102 @@ $E[L(X,\phi(y))|y]=1-P(X=\phi(y)|y)$
 ### estimateur TPM
 
 
+# Adaptabilité du calcul de potentiel
+
+## voisinage en étoile
+
+On va essayer d'augmenter la précision des algorithmes précédents en jouant sur la définition du voisinage. On définit le voisinage possible comme une étoile à huit branches. La longueur de chaque branche (et donc son poid dans le calcul de U) va dépendre de la continuité des pixels constituant cette branche. Ainsi d'un pixel à l'autre on n'aura pas forcément un voisinage de même ampleur.\ 
+La longeur d'un branche est égale au nombre de pixels côte à côte suivant l'orientation de la branche, de même valeur (pour une image en noir et blanc), partant de s.\ 
+Le poid d'une branche de voisinage est alors proportionel à sa longeur. On aurait:
+$U_s=Bx_s+\beta x_s\sum_{i=1}^{8}{a_il_i}$
+avec $(l_i)$ les 8 lead et $(a_i)$ leur longueur.
+
+On peut choisir laune longuer maximal pour les branches, avec comme longuer infini simplement une longeur supérieure ou égale à la largeur de l'image.
+
+### constitution du voisinage
+
+1. ajout des 4 plus proches voisins (habituel). On les note lead.
+2. pour chacun des lead, on regarde la valeur du pixel qui le jouxe dans l'orientation de la flêche auquel il appartient, opposément à s biensûr. Si ce pixel est de même valeur que le lead, on l'intègre à la branche. Sinon, la branche est terminée (cas d'une image en noir et blanc).
+
+#### Vbranch, Vstar
+Image pour tester les fonctions Vbranch() et Vstar
+```{r}
+img <- imageGenerator("rectangle", 50)
+
+imgaux <- matrix(data=0,nrow=52,ncol=52)
+imgaux[2:51,2:51] <- img
+image(img)
+#Vstar(imgaux, 50, 2, 2)
+
+```
+#### Vbranch()
+Fonction qui calcule le poid d'une seule branche, d'orientation donnée.
+
+
+```{r}
+#========================================================================================================
+vbranch=function(img, N, is, js, iv, jv, L){
+  #la taille de l'image N doit être précisée (à remplacer par méthode info image)
+  #L détermine la longueur maximale d'une branche
+  #(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)] ce qui donne le sens de la branche à partir de s
+  v = c()
+  vl = c()
+  if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
+  
+  #----récupération des L sites de la branche potentielles sans condition----
+  for(k in(1:L)){  
+    i <- is+k*iv
+    j <- js+k*jv
+    if(i>=1 && i<=N){ if(j>=1 && j<=N){ #teste si les coordonnées du candidat sont dans l'image
+      vl <- c(vl,img[i,j])
+    }}#if&if
+  }#for
+  #print(vl)
+  #print(length(vl))
+  if(is.null(vl[1])){return(0)}
+  
+  #----épuration selon la condition de valeur de site----
+  lead <- vl[1]
+  for(k in 1:length(vl)){ #parcours les L sites
+    if(vl[k]==lead){  v <- c(v,vl[k])  }#condition pour faire partie de la branche.
+  }#for
+  
+  #print(v)
+  #print(length(v))
+  return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
+}#func
+
+#vbranch(img, 50, 1,1, 0, -1, 50 )
+#========================================================================================================
+```
+
+#### Vstar()
+Fonction qui calcule le voisinage d'un site, selon le modèle en étoile à quatre branches.
+```{r}
+Vstar=function(img, N, i, j, L){
+  s <- 0
+  s <- s + vbranch(img, N, i, j, -1, 0, L)
+  s <- s + vbranch(img, N, i, j, 1, 0, L)
+  s <- s + vbranch(img, N, i, j, 0, -1, L)
+  s <- s + vbranch(img, N, i, j, 0, 1, L)
+  return(s)
+}#func
+
+#Vstar(img, 50, 50,2 , 5)
+#========================================================================================================
+```
+
+#### comparaison des performances
+On regarde comment évolue les performance de restauration en fonction de la taille du voisinage.
+```{r}
+#========================================================================================================
+
+
+```
+Il semble qu'une augmentation même faible de la longueur des branches permette déjà d'améliorer significativement le nombre de pixels bien restitués, mais que l'on ne peut pas augmenter encore ce nombre par un alongement de cette longeur de branche.
+
+#### algo déterministe
+On définit l'énergie d'une site comme $U(x)=\sum_{l\in H,\ t\in l}t$, avec $H_s$ l'ensemble des branches voisines de s. L'énergie est donc ici la somme du poid des branches du voisinage de s, qui ne tient pas compte de la valeur de s, contrairement au modèle d'Ising. On reprend l'algorithme de Metropolis pour essayer avec ce nouveau modèle d'énergie.
 
 
 
@@ -851,11 +809,10 @@ MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
 ```
 
  
-[//]: <> (===============================================================================================================) 
 # Les paramètres et leur estimation
-[//]: <> (===============================================================================================================)
+
 ## Modèle d'Ising
-[//]: <> (===============================================================================================================)
+
 
 On rappelle, pour le modèle d'Ising, $E={-1,1}$, et $U(x_s) = \beta -x_s\sum_{t\in V_s}{x_t} -  Bx_s$.
 Le choix du signe de beta est déterminant pour la valeur de $U_s(x_s)$. En effet, choisir un beta négatif va imposer que toutes les 2-cliques dont les pixels sont de signes différents auront pour potentiel $-1\times 1\times\beta$, donc un nombre positif, tandis que les 2-cliques de signes identiques auront un potentiel négatif. Or la mesure de Gibbs est telle que plus le potentiel pour un état est élevé, moins ce site est probable d'être dans cette état.
@@ -863,5 +820,5 @@ Le choix du signe de beta est déterminant pour la valeur de $U_s(x_s)$. En effe
 
 
 
-[//]: <> (===============================================================================================================) 
+
 # References

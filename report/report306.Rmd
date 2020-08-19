@@ -1,17 +1,28 @@
 ---
 title: "Restauration d'image à l'aide d'algorithme stochastiques par chaînes de Markov"
+fontsize: 11pt
+geometry: margin=3cm
 output:
-  html_notebook: default
   pdf_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+lang: fr
 bibliography: report.bib
+#knitr: opts_chunk$set(tidy.opts=list(width.cutoff=60), tidy=FALSE)
 ---
+\tableofcontents 
+\newpage
+
 ```{r}
+load("workspace.RData")
 #library(magrittr)
 #library(imager)
 library(stats)
 library(survival)
 library(ggplot2)
 ```
+
 [//]: <> (===============================================================================================================)
 
 >> **Différence entre l'approche bayésienne et non bayésienne**
@@ -20,7 +31,27 @@ Pour une configuration initiale donnée, on va pouvoir considérer de nouvelles 
 Pour une approche non bayésienne du problème, l'évaluation d'une configuration candidate est booléenne: soit on accepte le candidat, soit on le rejete, autrement dit la probabilité d'une nouvelle configuration vaut 0 ou 1, car on n'a aucune information apriori sur la configuration de l'image.  
 Différement, avec une analyse bayésienne d'une candidate, on dispose d'informations à priori sur cette dernière, et on lui attribuera ainsi une probabilité entre 0 et 1 d'être la meilleure.
 
-
+\[
+\begin{aligned}
+	P(X_s= x_s | X^s= x^s)
+		&= \dfrac{P(X_s= x_s, X^s= x^s)}{P(X^s= x^s)}  \text{  formule de Bayes}\\
+		&= \dfrac{P(X= x)}{P(X^s= x^s)}\\
+		&= \dfrac{e^{-U(x)}}{e^{-U(x^s)} }\\	
+		&\ \\ 	
+	\text{On a  } U(x^s)
+		&= U_{\bar{s}}(x) = \sum_{c\in C, s\notin c}{U_c(x)}\\
+		&\ \\
+	\text{Et  } U(x) 
+		&= \sum_{c\in C}{U_c(x)}\\
+		&= \sum_{c\in C, s\in c}{U_c(x)} + \sum_{c\in C, s\notin c}{U_c(x)}\\
+		&= U_s(x_s,V_s) + U_{\bar{s}}(x) \\
+		&\ \\
+	\text{Donc  }, P(X_s= x_s | X^s= x^s)
+		&=\dfrac{exp(-U_s(x_s,V_s) - U_{\bar{s}}(x))}  {exp(-U_{\bar{s}}(x))}\\
+		&=\dfrac{exp(-U_s(x_s,V_s)}{exp(-U_{\bar{s}}(x) + U_{\bar{s}}(x))}\\
+		&=exp(-U_s(x_s,V_s))   \text{   ce qui justifie l'hypthère markovienne}
+\end{aligned}
+\]
 
 # Méthodes non bayésiennes
 
@@ -30,6 +61,7 @@ Différement, avec une analyse bayésienne d'une candidate, on dispose d'informa
 
 #### Fonction de génération d'image
 ```{r}
+
 #========================================================================================================
 
 imageGenerator=function(forme, N){
@@ -45,7 +77,7 @@ imageGenerator=function(forme, N){
   if(forme== "losange"){
     for (i in 1:N){
       for (j in 1:N){
-        img[i,j]=-1+2*(abs(i-j)<=N/4)*(abs(i+j-N)<=N/4)  
+        sigma0[i,j]=-1+2*(abs(i-j)<=N/4)*(abs(i+j-N)<=N/4)  
       }
     }#for
   }#if
@@ -54,9 +86,6 @@ imageGenerator=function(forme, N){
   #----triangle----
   #----cercle----
   #----bande----
-  if(forme=="bande"){
-    for (j in 1:(N/2)){ img[,2*j]=rep(1,N) }
-  }#if
 
   
   return(img)
@@ -65,36 +94,32 @@ imageGenerator=function(forme, N){
 #========================================================================================================
 ```
 
-
 #### fonction de bruitage d'image
-```{r}
+```{r tidy=FALSE}
+
 #========================================================================================================
 
 bruiteur=function(image, br){
   #fonction qui revoit l'image donnée en argument par la même image mais bruité par la méthode "br"
   imgBr <- image
-  N <- dim(image)[1]
+  N <- #RECUP LONGEUR IMAGE
   bruit <- 0
   p <- 0.15
   #----binomiale----
   if(br== "rbinom"){bruit <- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)}
-  
   #----poisson----
-  
   #----normale----
   
-  imgBr <- image*bruit
+  imgBr <- image*br
   return(imgBr)
 }#func  A FINIR
 
 #========================================================================================================
 ```
 
-
-
-
 #### fonction de calcul de l'énergie générale d'une image
 ```{r}
+
 #========================================================================================================
 
 energie=function(S){
@@ -112,6 +137,7 @@ energie=function(S){
 
 #### fonction de calcul de correspondance pixel par pixel entre deux images
 ```{r}
+
 correspondance=function(img0, img1, N){
   #----pourcentage de correspondance----
   nok <- 0 #nombre de pixels divergents
@@ -126,139 +152,7 @@ correspondance=function(img0, img1, N){
 }#func
 ```
 
-# Adaptabilité du calcul de potentiel
 
-## voisinage en étoile
-
-On va essayer d'augmenter la précision des algorithmes précédents en jouant sur la définition du voisinage. On définit le voisinage possible comme une étoile à huit branches. La longueur de chaque branche (et donc son poid dans le calcul de U) va dépendre de la continuité des pixels constituant cette branche. Ainsi d'un pixel à l'autre on n'aura pas forcément un voisinage de même ampleur.\ 
-La longeur d'un branche est égale au nombre de pixels côte à côte suivant l'orientation de la branche, de même valeur (pour une image en noir et blanc), partant de s.\ 
-Le poid d'une branche de voisinage est alors proportionel à sa longeur. On aurait:
-$U_s=Bx_s+\beta x_s\sum_{i=1}^{8}{a_il_i}$
-avec $(l_i)$ les 8 lead et $(a_i)$ leur longueur.
-
-On peut choisir laune longuer maximal pour les branches, avec comme longuer infini simplement une longeur supérieure ou égale à la largeur de l'image.
-
-### constitution du voisinage
-
-1. ajout des 4 plus proches voisins (habituel). On les note lead.
-2. pour chacun des lead, on regarde la valeur du pixel qui le jouxe dans l'orientation de la flêche auquel il appartient, opposément à s biensûr. Si ce pixel est de même valeur que le lead, on l'intègre à la branche. Sinon, la branche est terminée (cas d'une image en noir et blanc).
-
-#### Vbranch, Vstar
-Image pour tester les fonctions Vbranch() et Vstar
-```{r}
-img <- imageGenerator("rectangle", 50)
-
-imgaux <- matrix(data=0,nrow=52,ncol=52)
-imgaux[2:51,2:51] <- img
-image(img)
-#Vstar(imgaux, 50, 2, 2)
-
-```
-#### Vbranch()
-Fonction qui calcule le poid d'une seule branche, d'orientation donnée.
-
-
-```{r}
-#========================================================================================================
-vbranch=function(img, N, is, js, iv, jv, L){
-  #la taille de l'image N doit être précisée (à remplacer par méthode info image)
-  #L détermine la longueur maximale d'une branche
-  #(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)] ce qui donne le sens de la branche à partir de s
-  v = c()
-  vl = c()
-  if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
-  
-  #----récupération des L sites de la branche potentielles sans condition----
-  for(k in(1:L)){  
-    i <- is+k*iv
-    j <- js+k*jv
-    if(i>=1 && i<=N){ if(j>=1 && j<=N){ #teste si les coordonnées du candidat sont dans l'image
-      vl <- c(vl,img[i,j])
-    }}#if&if
-  }#for
-  #print(vl)
-  #print(length(vl))
-  if(is.null(vl[1])){return(0)}
-  
-  #----épuration selon la condition de valeur de site----
-  lead <- vl[1]
-  for(k in 1:length(vl)){ #parcours les L sites
-    if(vl[k]==lead){  v <- c(v,vl[k])  }#condition pour faire partie de la branche.
-  }#for
-  
-  #print(v)
-  #print(length(v))
-  return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
-}#func
-
-#vbranch(img, 50, 1,1, 0, -1, 50 )
-#========================================================================================================
-```
-
-#### Vstar()
-Fonction qui calcule le voisinage d'un site, selon le modèle en étoile à quatre branches.
-```{r}
-Vstar=function(img, N, i, j, L){
-  s <- 0
-  s <- s + vbranch(img, N, i, j, -1, 0, L)
-  s <- s + vbranch(img, N, i, j, 1, 0, L)
-  s <- s + vbranch(img, N, i, j, 0, -1, L)
-  s <- s + vbranch(img, N, i, j, 0, 1, L)
-  return(s)
-}#func
-
-#Vstar(img, 50, 50,2 , 5)
-#========================================================================================================
-```
-
-#### comparaison des performances
-On regarde comment évolue les performance de restauration en fonction de la taille du voisinage.
-```{r}
-#========================================================================================================
-
-
-```
-Il semble qu'une augmentation même faible de la longueur des branches permette déjà d'améliorer significativement le nombre de pixels bien restitués, mais que l'on ne peut pas augmenter encore ce nombre par un alongement de cette longeur de branche.
-
-#### algo déterministe
-On définit l'énergie d'une site comme $U(x)=\sum_{l\in H,\ t\in l}t$, avec $H_s$ l'ensemble des branches voisines de s. L'énergie est donc ici la somme du poid des branches du voisinage de s, qui ne tient pas compte de la valeur de s, contrairement au modèle d'Ising. On reprend l'algorithme de Metropolis pour essayer avec ce nouveau modèle d'énergie.
-
-
-```{r}
-metropolisStar=function(forme, N, L, n){
-  #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
-  
-  #----création de l'image parfaite img0----
-  img0 = imageGenerator(forme, N)
-  image(img0)
-  #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
-  img1 = matrix(0, nrow=N+2, ncol=N+2)
-  img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom")
-  image(img1)
-  img3 = img1 #mémoire du bruit initiale
-  
-  for(k in 1:n){
-    #----choix d'un site---
-    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
-    j <- 1+ceiling(N*runif(1))
-    #i <- 2 + k%%N #de 2 à N+1
-    #j <- 2 + k%/%(N-1)%%N #de 2 à N+1
-    
-    #----voisinage----
-    v = Vstar(img1, N+2, i, j, L)
-    #----changement déterministe----
-    img1[i][j] <- v/abs(v) #-1 ou 1
-    
-  }#for
-  #----affichage----
-  #par(mfrow=c(1,3))
-  image(img1)
-  
-  corresp <- correspondance(img0, img1, N)
-  return(corresp) #utile pour MCdeMC_Vstar
-  #calcul de la correspondance
-}
-```
 
 ### Algorithme de métropolis (metropolisIsing)
 
@@ -272,6 +166,7 @@ Le parcours des sites peut se faire soit aléatoirement, soit ligne par ligne.
 
 
 ```{r}
+#knitr::opts_chunk$set(width = 20)
 #========================================================================================================
 
 metropolisIsing=function(forme, N, beta, B, alpha, L, n, p){
@@ -337,12 +232,14 @@ metropolisIsing("rectangle", 64, 1, 0, 1, 10, 10^4, 0.15)
 ### Algorithme de Gibbs (GibbsIsing)
 
 ```{r}
+
 #========================================================================================================
 
 GibbsIsing=function(forme, N, beta, B, alpha, n, p){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
   #----création de l'image parfaite img0----
+  par(mfrow=c(1,3))
   img0 = imageGenerator(forme, N)
   image(img0)
   #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
@@ -377,7 +274,6 @@ GibbsIsing=function(forme, N, beta, B, alpha, n, p){
     else{img2[i,j] <- img1[i,j]} #opération inverse, on ne retient pas le changement, et img2 redevient identique à img1
   }#for
   #----affichage----
-  #par(mfrow=c(1,3))
   image(img1)
 }
 
@@ -394,12 +290,14 @@ GibbsIsing("rectangle", 64, 2, 0, 0.5, 10^4, 0.15)
 #### recuitMetro
 On réalise un recuit simulé en faisant lentement réduire les paramètres B, beta et alpha, par division successive par t la temperature, qui diminue lentement au cours des itérations.
 ```{r}
+
 #========================================================================================================
 
 recuitMetro=function(forme, N, beta, B, alpha, n, p){
   #fonction qui réalise l'algorithme de Metropolis sur une image img0 qui est bruité en img1, et doit à la fin être restaurée en img2
   
   #----création de l'image parfaite img0----
+  par(mfrow=c(1,3))
   img0 = imageGenerator(forme, N)
   image(img0)
   #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
@@ -441,7 +339,6 @@ recuitMetro=function(forme, N, beta, B, alpha, n, p){
     }#else
   }#for
   #----affichage----
-  #par(mfrow=c(1,3))
   image(img1)
 }
 
@@ -460,6 +357,7 @@ recuitMetro("rectangle", 64, 1, 0, 0.3, 10^5, 0.15)
 
 
 ```{r}
+
 #========================================================================================================
 
 
@@ -576,6 +474,116 @@ $E[L(X,\phi(y))|y]=1-P(X=\phi(y)|y)$
 
 
 
+# Adaptabilité du calcul de potentiel
+
+## voisinage en étoile
+
+On va essayer d'augmenter la précision des algorithmes précédents en jouant sur la définition du voisinage. On définit le voisinage possible comme une étoile à huit branches. La longueur de chaque branche (et donc son poid dans le calcul de U) va dépendre de la continuité des pixels constituant cette branche. Ainsi d'un pixel à l'autre on n'aura pas forcément un voisinage de même ampleur.\ 
+La longeur d'un branche est égale au nombre de pixels côte à côte suivant l'orientation de la branche, de même valeur (pour une image en noir et blanc), partant de s.\ 
+Le poid d'une branche de voisinage est alors proportionel à sa longeur. On aurait:
+$U_s=Bx_s+\beta x_s\sum_{i=1}^{8}{a_il_i}$
+avec $(l_i)$ les 8 lead et $(a_i)$ leur longueur.
+
+On peut choisir laune longuer maximal pour les branches, avec comme longuer infini simplement une longeur supérieure ou égale à la largeur de l'image.
+
+### constitution du voisinage
+
+1. ajout des 4 plus proches voisins (habituel). On les note lead.
+2. pour chacun des lead, on regarde la valeur du pixel qui le jouxe dans l'orientation de la flêche auquel il appartient, opposément à s biensûr. Si ce pixel est de même valeur que le lead, on l'intègre à la branche. Sinon, la branche est terminée (cas d'une image en noir et blanc).
+
+#### Vbranch, Vstar
+Image pour tester les fonctions Vbranch() et Vstar
+```{r}
+
+img <- imageGenerator("rectangle", 50)
+
+imgaux <- matrix(data=0,nrow=52,ncol=52)
+imgaux[2:51,2:51] <- img
+#layout(matrix(c(1,4,2,5,3,0), nc=3))
+image(img)
+#Vstar(imgaux, 50, 2, 2)
+
+```
+#### Vbranch()
+Fonction qui calcule le poid d'une seule branche, d'orientation donnée.
+
+
+```{r}
+
+#========================================================================================================
+vbranch=function(img, N, is, js, iv, jv, L){
+  #la taille de l'image N doit être précisée (à remplacer par méthode info image)
+  #L détermine la longueur maximale d'une branche
+  #(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)] ce qui donne le sens de la branche à partir de s
+  v = c()
+  vl = c()
+  if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
+  
+  #----récupération des L sites de la branche potentielles sans condition----
+  for(k in(1:L)){  
+    i <- is+k*iv
+    j <- js+k*jv
+    if(i>=1 && i<=N){ if(j>=1 && j<=N){ #teste si les coordonnées du candidat sont dans l'image
+      vl <- c(vl,img[i,j])
+    }}#if&if
+  }#for
+  #print(vl)
+  #print(length(vl))
+  if(is.null(vl[1])){return(0)}
+  
+  #----épuration selon la condition de valeur de site----
+  lead <- vl[1]
+  for(k in 1:length(vl)){ #parcours les L sites
+    if(vl[k]==lead){  v <- c(v,vl[k])  }#condition pour faire partie de la branche.
+  }#for
+  
+  #print(v)
+  #print(length(v))
+  return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
+}#func
+
+#vbranch(img, 50, 1,1, 0, -1, 50 )
+#========================================================================================================
+```
+
+#### Vstar()
+Fonction qui calcule le voisinage d'un site, selon le modèle en étoile à quatre branches.
+```{r}
+
+Vstar=function(img, N, i, j, L){
+  s <- 0
+  s <- s + vbranch(img, N, i, j, -1, 0, L)
+  s <- s + vbranch(img, N, i, j, 1, 0, L)
+  s <- s + vbranch(img, N, i, j, 0, -1, L)
+  s <- s + vbranch(img, N, i, j, 0, 1, L)
+  return(s)
+}#func
+
+#Vstar(img, 50, 50,2 , 5)
+#========================================================================================================
+```
+
+#### comparaison des performances
+On regarde comment évolue les performance de restauration en fonction de la taille du voisinage.
+```{r}
+
+#========================================================================================================
+
+MCdeMC_Vstar=function(forme, N, beta, B, alpha, L, n, p){
+  corresp = c(1,L)
+  longueur = c(1:L)
+  for( l in(1:L)){ corresp[l] = metropolisIsing(forme, N, beta, B, alpha, l, n, p) }#for
+  rev <- data.frame(longeur = c(1:L), correspondance = corresp )
+  print(rev)
+  ggplot(data = rev, aes(x="taille_des_branches", y="pourcentage de correspondance")) + geom_point() + geom_smooth() #+ geom_line()
+}#func
+
+
+MCdeMC_Vstar("rectangle", 64, 1, 0, 1, 20, 10^4, 0.15)
+#========================================================================================================
+```
+Il semble qu'une augmentation même faible de la longueur des branches permette déjà d'améliorer significativement le nombre de pixels bien restitués, mais que l'on ne peut pas augmenter encore ce nombre par un alongement de cette longeur de branche.
+
 
 
 
@@ -607,6 +615,7 @@ Légère modification du recuit simulé de Guyader, affin que que l'on donner en
 
 
 ```{r}
+
 #========================================================================================================
 recuitSimuleFixe = function(n, beta, N, p, alpha, stop){
   
@@ -701,6 +710,7 @@ recuitSimuleFixe(10,2/3,64,0.2,0.3,0)
 
 
 ```{r}
+
 #========================================================================================================
 
 recuitSimule2 = function(n, beta, N, p, alpha, stop){
@@ -732,7 +742,7 @@ recuitSimule2 = function(n, beta, N, p, alpha, stop){
       
       
       #----voisinage----
-      #☻s <- Vstar(Saux, iaux, jaux)
+      #s <- Vstar(Saux, iaux, jaux)
       s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
       
       #----proba pour un recuit simul?----
@@ -806,6 +816,7 @@ recuitSimule2 = function(n, beta, N, p, alpha, stop){
 
 #### Montecarlo de Montecarlo (MCdeMC)
 ```{r}
+
 #========================================================================================================
 
 MCdeMC=function(pct, K, n, beta, N, p, alpha, stop){
@@ -832,9 +843,11 @@ MCdeMC=function(pct, K, n, beta, N, p, alpha, stop){
 #========================================================================================================
 ```
 ```{r}
+
 #MCdeMC(98,40,10,2/3,64,0.2,0.3,0)
 ```
 ```{r}
+
 MCdeMC_revo=function(n, beta, N, p, alpha, stop){
   corresp2 = c(1,n)
   revolution = c(1:n)
@@ -848,6 +861,7 @@ MCdeMC_revo=function(n, beta, N, p, alpha, stop){
 }#func
 
 MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
+save.image("workspace.RData")
 ```
 
  
