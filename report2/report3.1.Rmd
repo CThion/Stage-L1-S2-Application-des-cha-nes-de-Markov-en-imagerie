@@ -12,7 +12,7 @@ output:
 
 # Modélisation d'une image
 
-L'objectif final de ce stage est de restaurer algorithmiquement des images (assez simples) en noir et blanc ayant subi un bruitage. Pour cela on va utiliser les chaînes de Markov et des modèles énergétiques sur les images, principalement le modèle d'Ising et la mesure de Gibbs, afin de pouvoir estimer de manière probabiliste les meilleurs configurations pour la restauration.  
+L'objectif final de ce stage est de restaurer algorithmiquement des binaires (assez simples) en noir et blanc ayant subi un bruitage. Pour cela on va utiliser les chaînes de Markov et des modèles énergétiques sur les images, principalement le modèle d'Ising et la mesure de Gibbs, afin de pouvoir estimer de manière probabiliste les meilleurs configurations pour la restauration.  
 
 On utilise les notations et appellations suivantes:  
 - x : une configuration de la grille des pixels (une image donc), parmis l'ensemble des configurations possibles $\Omega$. On note X la variable aléatoire décrivant x.   
@@ -23,9 +23,22 @@ On utilise les notations et appellations suivantes:
 
 ## Hypothèse markovienne
 
-A priori pour "deviner" quelle est la bonne valeur pour un pixel dans une image donnée, le mieux à faire est de regarder tous le reste de l'image, donc la valeur de chacun des autres pixels de l'image, et alors d'en tirer une conclusion sur $P(X_s=x_s)$. On fait cependant l'hypothèse que connaître le voisinage proche de s est équivalent à connaître tous le reste de l'image, soit $P(X_s=x_s|\tilde X^s)=P(X_s=x_s|V_s)$. 
-La définition du voisinage proche peut varier. Le voisinage que nous utiliserons presque toujours par la suite est simplement l'ensemble des quatre plus proches voisins de s sur la verticale et l'horizontale. On ne considère pas les diagonales.
+A priori pour "deviner" quelle est la bonne valeur pour un pixel s dans une image donnée, le mieux à faire est de regarder tous le reste de l'image et essayer d'exprimer $X_s$.   
 
+On fait cependant l'hypothèse que connaître $V_s$ le voisinage proche de s est équivalent à connaître tous le reste de l'image, soit $P(X_s=x_s|\tilde X^s)=P(X_s=x_s|V_s)$. La définition du voisinage proche peut varier, par son étendu et sa forme; le voisinage que nous utiliserons presque toujours est simplement l'ensemble des quatre plus proches voisins de s sur la verticale et l'horizontale. On ne considère pas les diagonales.
+
+## La mesure de Gibbs
+
+Pour calculer la probabilité qu'une configuration donnée corresponde à l'image restaurée $P(X=x)$, on va utiliser la mesure de Gibbs.
+
+La mesure de Gibbs nous fournit une formule pour calculer, à partir du portentiel $U(x_s)$, la probabilité $P(X_s=x_s)$.
+
+\[P(X_s=x_s)=\frac{1}{Z}e^{-U(x_s)}\]
+\[P(X=x)=\frac{1}{Z}e^{-U(x)}\]  
+Avec \[Z=\sum_{x\in \Omega}e^{-U(x)}\] la fonction de partition.
+
+
+On voit ainsi que plus le potentiel d'un site pour une valeur donnée est grand, moins il est probable, et inversement.
 
 ## Potentiel d'un site: Le modèle d'Ising
 
@@ -33,16 +46,10 @@ Le modèle d'Ising nous fournit une formule pour calculer le potentiel d'un pixe
 
 \[U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s}\]
 
-On verra une de ses limites dans la partie sur l'estimation de $\beta$.
+C'est le paramètre $\beta$ qui détermine le poid accordé au voisinage, et B celui de la valeur de s.
 
-## La mesure de Gibbs
+On verra une de ses lqimites dans la partie sur l'estimation de $\beta$.
 
-La mesure de Gibbs nous fournit une formule pour calculer, à partir du portentiel $U(x_s)$, la probabilité $P(X_s=x_s)$.
-
-\[P(X_s=x_s)=\frac{e^{-U(x_s)}}{\sum_}=\frac{1}{Z}e^{-U(x_s)}\]
-
-
-On voit ainsi que plus le potentiel d'un site pour une valeur donnée est grand, moins il est probable.
 
 
 ## Adapation à la restauration d'image
@@ -116,6 +123,7 @@ imageGenerator=function(forme, N){
 
 ```
 
+Deux algorithmes existes pour simuler un champ de Markov.
 
 ## L'échantilloneur de Gibbs
 
@@ -333,14 +341,22 @@ On peut ainsi avoir des signes différents pour $\beta_h$ et $\beta_v$, et donc 
 
 # Amélioration de la rapidité des algorithmes
 
-Depuis le début, on fixe le nombre d'itérations de l'algorithme (souvent à $10^4$ ou $10^5$). Cependant, on peut supposer que parfois il ne soit pas nécessaire de faire autant d'itération pour arriver à un résultat correct. De plus, le bruitage est réalisé aléatoirement, et donc d'une exécution de d'algorithme à une autre, le nombre d'itération nécessaire pour restaurer l'image ne sera pas forcément le même.  
+Depuis le début, on fixe le nombre d'itérations de l'algorithme (souvent à $10^4$ ou $10^5$). Cependant, on peut supposer que parfois il ne soit pas nécessaire de faire autant d'itération pour arriver à un résultat correct. De plus, le bruitage est réalisé aléatoirement, et donc d'une exécution de d'algorithme à une autre, le nombre d'itérations nécessaires pour restaurer l'image ne sera pas forcément le même.  
 
-Une manière de rendre le nombre d'itération variable serait de le conditionner au nombre de parcours de site successifs sans changement de valeurs. On pourra ainsi déclarer arbitrairement que, dès que l'algorithme réalise dix itérations successive sans changement de valeur, il s'arrête. C'est ce que l'on fait dans l'algorithme de metropolis suivant:
+Une manière de rendre le nombre d'itérations variable serait de le conditionner au nombre de parcours de site successifs sans changement de valeurs. On pourra ainsi déclarer arbitrairement que, dès que l'algorithme réalise dix itérations successives sans changement de valeur, il s'arrête. Le mieux serait de déterminer a priori, étant donnée l'image bruitée, le nombre minimal d'itérations successives sans modification à réaliser pour la restaurer à un certain pourcentage.  
+
+C'est ce que l'on fait dans l'algorithme de metropolis suivant:
 
 ```{r}
 #algo qui va bien
 ```
-\fbox{\vbox{\textbf{Une idée :} pour aller encore plus vite, au lieu d'attendre dix itérations successives sans aucune modification, on pourrait arrêter l'algorithme dès que, au cours des dix dernières itérations, il y a au plus 1 modification. On peut jouer sur ces deux paramètres (taille de la "fenêtre coulissante", ici 10, et nombre maximum de changements, 0 dans votre exemple, et ici 1).}}
+
+Pour aller encore plus vite, au lieu d'attendre dix itérations successives sans aucune modification, on pourrait arrêter l'algorithme dès que, au cours des dix dernières itérations, il y a eu plus 1 modification. On peut jouer sur ces deux paramètres (taille de la "fenêtre coulissante", ici 10, et nombre maximum de changements, 0 dans votre exemple, et ici 1).
+
+```{r}
+#algo modifié
+```
+
 
 # Evolution de la restauration en fonction d'un nombre d'itérations
 

@@ -54,6 +54,10 @@ Pour la restauration d'image, on comprend qu'il manque quelque chose au modéle 
 \[ U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s} -\alpha x_s^0\]
 avec $x_s^0$ la valeur du site s de l'image bruitée de départ.
 
+
+On va parcourir $\Omega$ à la recherche de notre image restaurée en partant de notre image bruitée de départ, et en regardant ensuite une autre image de $\Omega$ au hasard en espérant que ce soit notre image restaurée. C'est la méthode basique "d'essaie erreur". Mais on ne choisis pas les images à comparer au hasard uniformément sur $\Omega$, on choisis à chaque fois une image casiment identique à l'image sélectionné actuelle, à un pixel près. Si cette image est moins probable d'être notre image restaurée, donc si son potentiel est plus élevé, on ne la conserve pas. Si par contre cette image est plus probable d'être l'image restaurée, on la conserve à la place de l'image précédente. Ensuite on recommence l'opération, en prenant un image casiment identique à un pixel près de l'image conservée actuelle, et on regarde si cette nouvelle image est meilleure ou non.  
+
+L'avantage de ne comparer des images différentes que d'un pixel est que l'on peut modéliser une chaîne de Markov
 # Des algorithmes pour la restauration d'image
 
 ## Boite à outils

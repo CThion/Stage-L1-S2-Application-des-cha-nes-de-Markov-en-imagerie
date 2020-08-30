@@ -42,7 +42,7 @@ imageGenerator=function(forme, N){
 
 ```{r bruiteur}
 bruiteur=function(image, br, p){
-  #fonction qui revoit l'image donnée en argument par la même image mais bruité par la méthode "br"
+  #fonction qui revoit l'image donnée en argument par la même image mais bruitée par la méthode demandée "br"
   imgBr <- image
   N <- dim(image)[1]
   bruit <- 0
@@ -147,9 +147,8 @@ GibbsIsing = function(forme, N, beta, B, alpha, n, p){
   #----création de l'image parfaite img0----
   img0 = imageGenerator(forme, N)
   #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
-  img1 = matrix(0, nrow=N+2, ncol=N+2)
-  bruit = matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)
-  img1[2:(N+1),2:(N+1)] = img0*bruit
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p) #création de l'image bruitée
   img2 = img1 #image tampon
   img3 = img1 #mémoire du bruit initiale
   
@@ -188,6 +187,8 @@ GibbsIsing = function(forme, N, beta, B, alpha, n, p){
   #image(img1)
 }
 
+
+GibbsIsing("rectangle", 64, 1, 0, 0.5, 10^5, 0.2)
 ```
 
 
