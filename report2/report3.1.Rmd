@@ -123,7 +123,7 @@ imageGenerator=function(forme, N){
 
 ```
 
-Deux algorithmes existes pour simuler un champ de Markov.
+Deux algorithmes existent pour simuler un champ de Markov.
 
 ## L'échantilloneur de Gibbs
 

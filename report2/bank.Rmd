@@ -371,7 +371,7 @@ recuitMetro=function(forme, N, beta, B, alpha, L, n, p){
     
     #----test----
     dU = U2-U1
-    p <- exp(-U2)
+    p <- exp(-dU)
     if(runif(1)<=p){img1[i,j]= -img1[i,j]}
     else{img2[i,j] <- img1[i,j]} #sinon on ne change pas
   }#for
