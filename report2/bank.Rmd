@@ -5,6 +5,14 @@ date: "12/07/2020"
 output: html_document
 ---
 
+#Modélisation d'une image
+##hypothèse makovienne
+##Mesure de Gibbs
+##Potentiel d'un site: le modèle d'Ising
+##Adaptation à la restauration d'image
+
+#Des algorithmes pour les restauration d'images
+##Boite à outil
 
 ```{r imageGenerator}
 imageGenerator=function(forme, N){
@@ -140,7 +148,14 @@ Vstar =function(img, N, i, j, L){
 ===============================================================================================================
 ===============================================================================================================
 ===============================================================================================================
+##Echantilloneur de Gibbs
+
 ```{r A_1_gibbsIsing}
+
+#parcours == aléatoire
+#voisinage == manuel
+#correspondance == sans 
+
 GibbsIsing = function(forme, N, beta, B, alpha, n, p){
   #fonction qui réalise l'algorithme de Metropolis sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
   
@@ -188,13 +203,15 @@ GibbsIsing = function(forme, N, beta, B, alpha, n, p){
 }
 
 
-GibbsIsing("rectangle", 64, 1, 0, 0.5, 10^5, 0.2)
+#GibbsIsing("rectangle", 64, 1, 0, 0.5, 10^5, 0.2)
 ```
 
 
-# METROPOLIS
+===============================================================================================================
+## L'algorithme de metropolis
 
-```{r metropolisIsing}
+référence pour tous les algo de métropolis
+```{r metropolisIsing-REFERENCE}
 
 #avec TOUT
 
@@ -290,7 +307,7 @@ metropolisIsing=function(forme, N, beta, B, alpha, n, p){
 	
 		#----test----
 		dU = U2-U1
-		p <- exp(-U2)
+		p <- exp(-dU)
 		
 		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#on change la valeur du pixel
 		else{img2[i,j] <- img1[i,j]} #on garde la valeur du pixel
@@ -311,6 +328,8 @@ metropolisIsing=function(forme, N, beta, B, alpha, n, p){
 ```
 
 
+===============================================================================================================
+===============================================================================================================
 # RECUIT SIMULE
 
 ```{r recuitMetro}
@@ -471,6 +490,12 @@ recuitSimuleGuyader = function(n, beta, N, p, alpha, stop){
 ```
 
 
+
+
+===============================================================================================================
+===============================================================================================================
+#Estimation du parametre beta
+
 ```{r restorStripe}
 energie=function(S){
   eligne=0
@@ -563,4 +588,5 @@ recuitMetro("rectangle", 64, 1, 0, 0.6, 1, 2*10^4, 0.3)
 
 
 ```
+
 

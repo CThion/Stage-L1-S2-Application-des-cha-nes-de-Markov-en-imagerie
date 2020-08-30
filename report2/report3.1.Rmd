@@ -132,6 +132,8 @@ Deux algorithmes existes pour simuler un champ de Markov.
 #algo de GibbsIsing
 #voisinage à la main
 #pas de correspondance
+
+
 ```
 
 
@@ -149,58 +151,11 @@ A l'itération n:
 
 En R voici une manière de coder cet algorithme :
 
-```{r A_2_metropolisIsing}
-#algo de Metropolis
-#voisinage à la main
-#pas de correspondance
-
-metropolisIsing=function(forme, N, beta, B, alpha, n, p){
-	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
-	
-	#----création de l'image parfaite img0----
-	img0 = imageGenerator(forme, N)
-	
-	#----création d'une image auxiliaire img1, avec bord plus long et bruitage----
-	img1 = matrix(0, nrow=N+2, ncol=N+2)
-	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
-	img2 = img1 #image tampon
-	img3 = img1 #mémoire du bruit initiale
-
-	for(k in 1:n){ #n visites de pixels
-	
-		#----choix d'un pixel au hasard----
-		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
-		j <- 1+ceiling(N*runif(1))
-		
-		#----tirage nouvelle valeure candidate----
-		img2[i,j] = -img1[i,j]
-	
-		#----voisinage----
-		v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
-	
-		#----potentiels----
-		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
-		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
-	
-		#----test----
-		dU = U2-U1
-		p <- exp(-U2)
-		
-		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#on change la valeur du pixel
-		else{img2[i,j] <- img1[i,j]} #on garde la valeur du pixel
-	}#for
-	
-	#----affichage----
-	img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
-	img1 <- img1[2:(N+1),2:(N+1)]
-	
-	par(mfrow=c(1,3))
-	image(1:N,1:N,img0)#image initiale
-	image(1:N+2,1:N+2,img3)#image bruitée
-	image(1:N+2,1:N+2,img1)#image restaurée
-  
-}#func
-
+```{r A_2_metropolisIsing_BASIQUE}
+#BASIQUE
+#tirage == aléatoire
+#voisinage == à la main
+#correspondance ==  SANS
 ```
 
 > **Le paramètre alpha** détermine l'importance donnée à l'image bruitée initiale dans la probabilité conditionnelle $P(X_s=x_s|V_s)$.  
