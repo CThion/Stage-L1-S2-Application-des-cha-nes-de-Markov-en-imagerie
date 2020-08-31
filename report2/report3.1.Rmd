@@ -202,60 +202,12 @@ metropolisIsing("rectangle", 64, -1, 0, 0.6, 10^5, 0.3)
 La question que l'on se pose: pourquoi modifier les paramètres à chaque itération permet de converger presque surement vers le minimum global d'énergie.
 
 ```{r recuitMetro}
-recuitMetro=function(forme, N, beta, B, alpha, L, n, p){
-  
-  #----création de l'image parfaite img0----
-  img0 = imageGenerator(forme, N)
-  
-  #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
-  img1 = matrix(0, nrow=N+2, ncol=N+2)
-  img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
-  img2 = img1 #image tampon
-  img3 = img1 #mémoire du bruit initiale
-  
-  for(k in 1:n){
-    
-    #---recuit des parametres----
-    t <- 1/log(k)
-    Br <- B/t
-    betar <- beta/t
-    alphar <- alpha/t    
-    
-    #----choix d'un site---
-    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
-    j <- 1+ceiling(N*runif(1))
-    
-    #----tirage nouvelle valeure candidate----
-    img2[i,j] = -img1[i,j]
-    
-    #----voisinage----
-    v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
-    
-    #----potentiels----
-    U1 = -Br*img1[i,j]-img1[i,j]*(betar*v + alphar*img3[i,j])#potentiel actuel
-    U2 = -Br*img2[i,j]-img2[i,j]*(betar*v + alphar*img3[i,j])#potentiel candidat
-    
-    #----test----
-    dU = U2-U1
-    p <- exp(-U2)
-    if(runif(1)<=p){img1[i,j]= -img1[i,j]}
-    else{img2[i,j] <- img1[i,j]} #sinon on ne change pas
-  }#for
-  
-  #----affichage----
-  img3 <- img3[2:(N+1),2:(N+1)] #on retire les contours
-  img1 <- img1[2:(N+1),2:(N+1)]
-  par(mfrow=c(1,3))
-  image(1:N,1:N,img0)#image initiale
-  image(1:N+2,1:N+2,img3)#image bruitée
-  image(1:N+2,1:N+2,img1)#image restaurée
-
-}#func
+#recuit Simulé perso, avec -dU/T 
 ```
 
 
 ```{r, echo=FALSE}
-recuitMetro("rectangle", 64, 1, 0, 0.6, 1, 2*10^4, 0.3)
+#recuitMetro("rectangle", 64, 1, 0, 0.6, 1, 2*10^4, 0.3)
 ```
 
 On peut comparer les performances entre le recuit simulé et l'algorithme de Metropolis en comparant le pourcentage de restauration des deux algorithmes, à paramètres et image bruitée identique.
@@ -278,14 +230,14 @@ L'algorithme de recuit précédent marche plutôt bien pour des images pleines (
 
 ## Distinction des énergies verticales et horizontales
 
-Une idée que l'on peut avoir pour palier au problème est de séparer les calcules de potentiels entre la verticale et l'horizontale, en appliquant à chaque terme un facteur beta dédié à une orientation, $\beta_{horizontal}$ et $\beta_{vertical}$. On a ainsi: $U(x_s)= -x_s[\beta_h(x_d+x_g)+\beta_v(x_h+x_b)+\alpha x_s^0]$ avec $x_d,x_g,x_h,x_b$ les valeurs des pixels voisins du site s respectivement à droite, gauche, haut, bas. On modifie l'algorithme de recuit pour essayer:
+Une idée que l'on peut avoir pour palier au problème est de séparer les calcules de potentiels entre la verticale et l'horizontale, en appliquant à chaque terme un facteur beta dédié à une orientation, $\beta_h$ pour l'horizontale et $\beta_v$ pour la verticale. On a ainsi: $U(x_s)= -x_s[\beta_h(x_d+x_g)+\beta_v(x_h+x_b)+\alpha x_s^0]$ avec $x_d,x_g,x_h,x_b$ les valeurs des pixels voisins du site s respectivement à droite, gauche, haut, bas. On modifie l'algorithme de recuit pour essayer:
 
 ```{r}
 
 ```
 
 
-On peut ainsi avoir des signes différents pour $\beta_h$ et $\beta_v$, et donc privilégier les lignes pour une direction et les alternances blanc/noir dans l'autre direction. Pour l'exemple précédent avec des lignes horizontales, on va choisir $\beta_h > 0$ pour privilégier les lignes sur l'horizontale et $\beta_v < 0$ pour privilégier l'alternance des pixels sur la verticale. 
+On peut ainsi avoir des signes différents pour $\beta_h$ et $\beta_v$, et donc privilégier les lignes pour une direction et les alternances blanc/noir dans l'autre direction. Pour l'exemple précédent avec des lignes horizontales, on va choisir $\beta_h > 0$ pour privilégier les lignes sur l'horizontale et $\beta_v < 0$ pour privilégier l'alternance des pixels sur la verticale. CE N'EST PAS CA!!! CALCUL AUTOMATIQUE
 
 ```{r}
 #algo qui va bien

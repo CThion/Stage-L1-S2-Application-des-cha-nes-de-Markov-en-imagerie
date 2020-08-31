@@ -33,15 +33,14 @@ imageGenerator=function(forme, N){
     }#for
   }#if
   
-  #----damier----
-  #----triangle----
-  #----cercle----
   #----bande----
   if(forme=="bande"){
     for (j in 1:(N/2)){ img[,2*j]=rep(1,N) }
   }#if
   
-  
+  #----damier----
+  #----triangle----
+  #----cercle----
   return(img)
 }#func
 ```
@@ -203,7 +202,7 @@ GibbsIsing = function(forme, N, beta, B, alpha, n, p){
 }
 
 
-GibbsIsing("rectangle", 64, 1, 0, 0.5, 10^5, 0.2)
+#GibbsIsing("rectangle", 64, 1, 0, 0.5, 10^5, 0.2)
 ```
 
 
@@ -267,7 +266,7 @@ metropolisIsing=function(forme, N, beta, B, alpha, L, n, p){
 	return(corresp) 
 }#func
 
-metropolisIsing("rectangle", 64, 1, 1, 0.6, 1, 10^4, 0.3)
+#metropolisIsing("rectangle", 64, 1, 1, 0.6, 1, 10^4, 0.3)
 ```
 
 
@@ -324,7 +323,7 @@ metropolisIsing=function(forme, N, beta, B, alpha, n, p){
   
 }#func
 
-metropolisIsing("rectangle", 64, 1, 0, 0.6, 10^4, 0.3)
+#metropolisIsing("rectangle", 64, 1, 0, 0.6, 10^4, 0.3)
 ```
 
 
@@ -488,40 +487,9 @@ recuitSimuleGuyader = function(n, beta, N, p, alpha, stop){
 }#function
 
 
-recuitSimuleGuyader(10^4, 2/3, 64, 0.25, 1/3, 0)
+#recuitSimuleGuyader(10^4, 2/3, 64, 0.25, 1/3, 0)
 ```
 
-
-```{r recuitDeCorrection}
-n <- 10^4
-alpha <- 1/3
-beta <- 2/3
-N <- 40
-p <- 0.25
-
-sigma0 <- matrix(-1,nrow=N,ncol=N)
-sigma0[10:30,10:30] <- 1
-bruit <- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)
-sigma <- sigma0*bruit
-
-Saux <- matrix(0,nrow=N+2,ncol=N+2)
-Saux[2:(N+1),2:(N+1)] <- sigma
-sigmaaux <- Saux
-
-for (k in (1:n)){
-  T <- 1/k
-  iaux <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
-  jaux <- 1+ceiling(N*runif(1))
-  s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
-  r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
-  if(runif(1)<r){Saux[iaux,jaux] <- -Saux[iaux,jaux]}}
-  
-S <- Saux[2:(N+1),2:(N+1)]
-par(mfrow=c(1,3))
-image(1:N,1:N,sigma0)
-image(1:N,1:N,sigma)
-image(1:N,1:N,S)
-```
 
 
 ```{r recuitSimule_BASIQUE}
@@ -544,7 +512,7 @@ recuitSimule_BASIQUE=function(forme, N, beta, B, alpha, n, p){
 
 	for(k in 1:n){ #n visites de pixels
 	  
-	  T <- 1/n #T tend vers 0
+	  T <- 1/log(n) #T tend vers 0
 	  
 		#----choix d'un pixel au hasard----
 		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
@@ -574,50 +542,32 @@ recuitSimule_BASIQUE=function(forme, N, beta, B, alpha, n, p){
 	
 	par(mfrow=c(1,3))
 	image(1:N,1:N,img0)#image initiale
-	image(1:N+2,1:N+2,img3)#image bruitée
+	image(1:N+2,1:N+2,img3)#image  bruitée
 	image(1:N+2,1:N+2,img1)#image restaurée
   
 }#func
 
-recuitSimule_BASIQUE("rectangle", 64, 1, 0, 0.6, 10^5, 0.3)
+#recuitSimule_BASIQUE("rectangle", 64, 1, 0, 0.6, 10^5, 0.3)
 ```
-```{r}
-recuitSimule_BASIQUE("rectangle", 40, 2/3, 0, 1/3, 10^4, 0.25)
-```
+
 
 
 ===============================================================================================================
 ===============================================================================================================
 #Estimation du parametre beta
+## Distinction des énergies verticales et horizontales
 
 ```{r restorStripe}
-energie=function(S){
-  eligne=0
-  for (i in 1:N) {for (j in 1:(N-1)){eligne=eligne+S[i,j]*S[i,j+1]}}
-  ecolonne=0
-  for (j in 1:N) {for (i in 1:(N-1)){ecolonne=ecolonne+S[i,j]*S[i+1,j]}}
-  return(-beta*(eligne+ecolonne))
-}#func
 
-
-energiehv=function(S){
+energiehv=function(img){
   eligne=0
   ecolonne=0
-  for (i in 1:N) {for (j in 1:(N-1)){eligne=eligne+S[i,j]*S[i,j+1]}}
-  for (j in 1:N) {for (i in 1:(N-1)){ecolonne=ecolonne+S[i,j]*S[i+1,j]}}
+  for (i in 1:N) {for (j in 1:(N-1)){eligne=eligne+img[i,j]*img[i,j+1]}}
+  for (j in 1:N) {for (i in 1:(N-1)){ecolonne=ecolonne+img[i,j]*img[i+1,j]}}
   return(c(eligne,ecolonne))
 }#func
 
-
-energie_bayes=function(S,S0){
-  eligne=0
-  for (i in 1:N) {for (j in 1:(N-1)){eligne=eligne+S[i,j]*S[i,j+1]}}
-  ecolonne=0
-  for (j in 1:N) {for (i in 1:(N-1)){ecolonne=ecolonne+S[i,j]*S[i+1,j]}}
-  return(-beta*((eligne+ecolonne)+alpha*sum((S-S0)*(S-S0))))
-}#func
-
-restorStripe=function(forme, N, beta, B, alpha, L, n, p){
+restorStripe=function(forme, N, beta, B, alpha, n, p){
   
   #----création de l'image parfaite img0----
   img0 = imageGenerator(forme, N)
@@ -629,40 +579,36 @@ restorStripe=function(forme, N, beta, B, alpha, L, n, p){
   img3 = img1 #mémoire du bruit initiale
   
   #----calcul des deux beta horizontal et vertical----
-  betah=2*energiehv(sigma)[2]/(abs(energiehv(sigma)[1])+abs(energiehv(sigma)[2]))
-  betav=2*energiehv(sigma)[1]/(abs(energiehv(sigma)[1])+abs(energiehv(sigma)[2]))
+  betah=2*energiehv(img1)[2]/(abs(energiehv(img1)[1])+abs(energiehv(img1)[2]))
+  betav=2*energiehv(img1)[1]/(abs(energiehv(img1)[1])+abs(energiehv(img1)[2]))
+
+	for(k in 1:n){ #n visites de pixels
+	  
+	  T <- 1/log(n) #T tend vers 0
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+    #----calcule du voisinage séparément entre horizontale (Vh) et verticale (Vv)
+    Vh <- img1[i-1,j]+img1[i+1,j]
+    Vv <- img1[i,j-1]+img1[i,j+1]
+	
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(betah*Vh + betav*Vv + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(betah*Vh + betav*Vv + alpha*img3[i,j])#potentiel candidat
+	
+		#----test----
+		dU = U2-U1
+		p <- exp(-dU/T)
+		
+		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#on change la valeur du pixel
+		else{img2[i,j] <- img1[i,j]} #on garde la valeur du pixel
+	}#for
   
-  for(k in 1:n){
-    
-    #---recuit des parametres----
-    t <- 1/log(k)
-    Br <- B/t
-    betar <- beta/t
-    alphar <- alpha/t    
-    
-    #----choix d'un site---
-    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
-    j <- 1+ceiling(N*runif(1))
-    
-    #----tirage nouvelle valeure candidate----
-    img2[i,j] = -img1[i,j]
-    
-    #----calcule du voisinage séparément entre horizontale (sh) et verticale (sv)
-    sh <- img1[i-1,j]+img1[i+1,j]
-    sv <- img1[i,j-1]+img1[i,j+1]
-    
-    #----potentiels----
-  #----proba pour un recuit simule----
-  r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+betah*sh+betav*sv)/T)
-  
-  if(runif(1)<r){Saux[iaux,jaux] <- -Saux[iaux,jaux]}}
-    
-    #----test----
-    dU = U2-U1
-    p <- exp(-2*img1[i,j]*(2*alpha*T*img3[i,j]+betah*sh+betav*sv)/T)
-    if(runif(1)<=p){img1[i,j]= -img1[i,j]}
-    else{img2[i,j] <- img1[i,j]} #sinon on ne change pas
-  }#for
   
   #----affichage----
   img3 <- img3[2:(N+1),2:(N+1)] #on retire les contours
@@ -677,7 +623,7 @@ restorStripe=function(forme, N, beta, B, alpha, L, n, p){
   return(corresp) 
 }#func
 
-#recuitMetro("rectangle", 64, 1, 0, 0.6, 1, 2*10^4, 0.3)
+restorStripe("bande", 64, 1, 0, 0.6, 4*10^4, 0.3)
 
 
 
