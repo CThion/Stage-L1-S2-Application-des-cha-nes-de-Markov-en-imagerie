@@ -744,9 +744,75 @@ recuitSimule_smartStop=function(forme, N, beta, B, alpha, n, p){
 	print(it)
 }#func
 
-recuitSimule_smartStop("rectangle", 64, 1, 0, 0.6, 200, 0.3)
+#recuitSimule_smartStop("rectangle", 64, 1, 0, 0.6, 200, 0.3)
 ```
 
-```{r smartStopLight}
 
+```{r smartStopLight}
+smartStopLight=function(forme, N, beta, B, alpha, n, m, p){
+	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
+	
+	#----création de l'image parfaite img0----
+	img0 = imageGenerator(forme, N)
+	
+	#----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+	
+  X<-0 #nombre d'itérations consécutives sans changement de spin
+  Y <- 0 #nombre de changements de spin, remis à 0 dès que Y==m.
+  it<-0 #compteur d'itération général
+  
+  while(X<=n) { 
+	  
+    it <- it+1
+	  T <- 1/log(n) #T tend vers 0
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage----
+	  v = Vstar(img1, N+2, i, j, 5) # L arbitrairement fixé à 5
+		
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----test----
+		dU = U2-U1
+		p <- exp(-dU/T)
+		
+		if(runif(1)<=p){#on change la valeur du pixel
+		  img1[i,j]= -img1[i,j]
+		  Y <- Y+1
+		  if(Y==m+1){ #dépassement du cota de changement de valeur m
+		    X <- 0
+		    Y <- 0}
+		  else{X <- X+1}
+		}#if 
+		  
+		else{ #on garde la valeur du pixel
+		  img2[i,j] <- img1[i,j]
+		  X <- X+1} 
+	}#for
+	
+	#----affichage----
+	img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
+	img1 <- img1[2:(N+1),2:(N+1)]
+	
+	par(mfrow=c(1,3))
+	image(1:N,1:N,img0)#image initiale
+	image(1:N+2,1:N+2,img3)#image  bruitée
+	image(1:N+2,1:N+2,img1)#image restaurée
+  
+	print(it)
+}#func
+
+smartStopLight("rectangle", 64, 2/3, 0, 1/3, 500, 15, 0.25)
 ```
