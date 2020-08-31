@@ -256,6 +256,9 @@ Une autre manière de résoudre ce problème de restoration de bandes pourrait a
 #algo de recuit avec calcul de voisinage étendu et donc parametre L
 ```
 
+
+REMARQUE A FAIRE QUAND MEME: en augmentant l'amplitude du voisinage comme on le fait là, on constate que la restauration des images est plus propre (confère au graphique que l'on avait fait, essayer de les remettre)
+
 # Amélioration de la rapidité des algorithmes
 
 Depuis le début, on fixe le nombre d'itérations de l'algorithme (souvent à $10^4$ ou $10^5$). Cependant, on peut supposer que parfois il ne soit pas nécessaire de faire autant d'itération pour arriver à un résultat correct. De plus, le bruitage est réalisé aléatoirement, et donc d'une exécution de d'algorithme à une autre, le nombre d'itérations nécessaires pour restaurer l'image ne sera pas forcément le même.  
