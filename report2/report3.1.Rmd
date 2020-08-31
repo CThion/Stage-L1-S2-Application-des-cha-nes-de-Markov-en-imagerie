@@ -201,7 +201,7 @@ metropolisIsing("rectangle", 64, -1, 0, 0.6, 10^5, 0.3)
 
 La question que l'on se pose: pourquoi modifier les paramètres à chaque itération permet de converger presque surement vers le minimum global d'énergie.
 
-```{r}
+```{r recuitMetro}
 recuitMetro=function(forme, N, beta, B, alpha, L, n, p){
   
   #----création de l'image parfaite img0----
