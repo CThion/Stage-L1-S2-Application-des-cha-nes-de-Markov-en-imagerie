@@ -85,51 +85,6 @@ correspondance=function(img0, img1, N){
 
 
 
-```{r Vbranch}
-vbranch=function(img, N, is, js, iv, jv, L){
-	#la taille de l'image N doit être précisée (à remplacer par méthode info image)
-	#L détermine la longueur maximale d'une branche
-	#(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)] ce qui donne le sens de la branche à partir de s
-
-	v = c()
-	vl = c()
-	if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
-
-	#----récupération des L sites de la branche potentielles sans condition----
-	for(k in(1:L)){
-		i <- is+k*iv
-		j <- js+k*jv
-		if(i>=1 && i<=N){ if(j>=1 && j<=N){ #teste si les coordonnées du candidat sont dans l'image
-			vl <- c(vl,img[i,j])
-		}}#if&if
-	}#for
-	if(is.null(vl[1])){return(0)} #si on est sur le bord
-	
-	#----épuration selon la condition de valeur de site----
-	lead <- vl[1]
-	for(k in 1:length(vl)){ #parcours les L sites
-		if(vl[k]==lead){ v <- c(v,vl[k]) }#condition pour faire partie de la branche.
-	}#for
-	
-	#print(v)
-	#print(length(v))
-	return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
-}#func
-```
-
-
-
-```{r Vstar}
-Vstar =function(img, N, i, j, L){
-	s <- 0
-	s <- s + vbranch(img, N, i, j, -1, 0, L)
-	s <- s + vbranch(img, N, i, j, 1, 0, L)
-	s <- s + vbranch(img, N, i, j, 0, -1, L)
-	s <- s + vbranch(img, N, i, j, 0, 1, L)
-	return(s)
-}#func
-```
-
 ===============================================================================================================
 ===============================================================================================================
 ===============================================================================================================
@@ -266,7 +221,7 @@ metropolisIsing=function(forme, N, beta, B, alpha, L, n, p){
 	return(corresp) 
 }#func
 
-#metropolisIsing("rectangle", 64, 1, 1, 0.6, 1, 10^4, 0.3)
+metropolisIsing("rectangle", 64, 1, 1, 0.6, 1, 10^4, 0.3)
 ```
 
 
@@ -625,8 +580,107 @@ restorStripe=function(forme, N, beta, B, alpha, n, p){
 
 restorStripe("bande", 64, 1, 0, 0.6, 4*10^4, 0.3)
 
+```
 
+===============================================================================================================
+## Voisinage de taille variable
+
+```{r Vbranch}
+vbranch=function(img, N, is, js, iv, jv, L){
+	#la taille de l'image N doit être précisée (à remplacer par méthode info image)
+	#L détermine la longueur maximale d'une branche
+	#(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)] ce qui donne le sens de la branche à partir de s
+
+	v = c()
+	vl = c()
+	if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
+
+	#----récupération des L sites de la branche potentielles sans condition----
+	for(k in(1:L)){
+		i <- is+k*iv
+		j <- js+k*jv
+		if(i>=1 && i<=N){ if(j>=1 && j<=N){ #teste si les coordonnées du candidat sont dans l'image
+			vl <- c(vl,img[i,j])
+		}}#if&if
+	}#for
+	if(is.null(vl[1])){return(0)} #si on est sur le bord
+	
+	#----épuration selon la condition de valeur de site----
+	lead <- vl[1]
+	for(k in 1:length(vl)){ #parcours les L sites
+		if(vl[k]==lead){ v <- c(v,vl[k]) }#condition pour faire partie de la branche.
+	}#for
+	
+	#print(v)
+	#print(length(v))
+	return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
+}#func
+
+
+Vstar =function(img, N, i, j, L){
+	s <- 0
+	s <- s + vbranch(img, N, i, j, -1, 0, L)
+	s <- s + vbranch(img, N, i, j, 1, 0, L)
+	s <- s + vbranch(img, N, i, j, 0, -1, L)
+	s <- s + vbranch(img, N, i, j, 0, 1, L)
+	return(s)
+}#func
+```
+
+```{r recuitSimule_Vstar}
+recuitSimule_Vstar=function(forme, N, beta, B, alpha, n, p, L){
+	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
+	
+	#----création de l'image parfaite img0----
+	img0 = imageGenerator(forme, N)
+	
+	#----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+
+	for(k in 1:n){ #n visites de pixels
+	  
+	  T <- 1/log(n) #T tend vers 0
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage----
+		#v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+	  v = Vstar(img1, N+2, i, j, L)
+		
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----test----
+		dU = U2-U1
+		p <- exp(-dU/T)
+		
+		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#on change la valeur du pixel
+		else{img2[i,j] <- img1[i,j]} #on garde la valeur du pixel
+	}#for
+	
+	#----affichage----
+	img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
+	img1 <- img1[2:(N+1),2:(N+1)]
+	
+	par(mfrow=c(1,3))
+	image(1:N,1:N,img0)#image initiale
+	image(1:N+2,1:N+2,img3)#image  bruitée
+	image(1:N+2,1:N+2,img1)#image restaurée
+  
+}#func
+
+recuitSimule_Vstar("bande", 64, 1, 0, 0.6, 10^5, 0.3, 10)
 
 ```
+
 
 

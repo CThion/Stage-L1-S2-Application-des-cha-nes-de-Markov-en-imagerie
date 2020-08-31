@@ -246,6 +246,16 @@ On peut ainsi avoir des signes différents pour $\beta_h$ et $\beta_v$, et donc 
 
 ## Voisinage de taille variable
 
+Une autre manière de résoudre ce problème de restoration de bandes pourrait aussi se trouver dans l'étendue du voisinage. 
+
+```{r}
+#algo vbranche vstart
+```
+
+```{r}
+#algo de recuit avec calcul de voisinage étendu et donc parametre L
+```
+
 # Amélioration de la rapidité des algorithmes
 
 Depuis le début, on fixe le nombre d'itérations de l'algorithme (souvent à $10^4$ ou $10^5$). Cependant, on peut supposer que parfois il ne soit pas nécessaire de faire autant d'itération pour arriver à un résultat correct. De plus, le bruitage est réalisé aléatoirement, et donc d'une exécution de d'algorithme à une autre, le nombre d'itérations nécessaires pour restaurer l'image ne sera pas forcément le même.  
