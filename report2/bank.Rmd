@@ -617,7 +617,7 @@ recuitSimule_Vstar=function(forme, N, p, B, beta, alpha, n, L){
 ```
 
 
-```{r graph_Vstar}
+```{r disp_Vstar}
 MCdeMC_Vstar=function(forme, N, p, B, beta, alpha, n, k){
   #fonction qui renvoie le pourcentage de restauration en fonction de la longeur L des branches du voisinage.
   
@@ -635,13 +635,13 @@ MCdeMC_Vstar=function(forme, N, p, B, beta, alpha, n, k){
     # + geom_smooth()  
 }#func
 
-MCdeMC_Vstar("rectangle", 64, 0.25, 0, 0.66, 0.33, 10^4, 10)
+#MCdeMC_Vstar("rectangle", 64, 0.25, 0, 0.66, 0.33, 10^4, 10)
 ```
 
 # Amelioration de la rapidité des algorithmes
 
 ```{r smartStop}
-recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, n){
+recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, S){
 	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
 	
 	#----création de l'image parfaite img0----
@@ -656,10 +656,10 @@ recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, n){
   X<-0 #nombre d'itérations consécutives sans changement de spin
   it<-0 #compteur
   
-  while(X<=n) { 
+  while(X<=S) { 
 	  
     it <- it+1
-	  T <- 1/log(n) #T tend vers 0
+	  T <- 1/log(it) #T tend vers 0
 	  
 		#----choix d'un pixel au hasard----
 		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
@@ -705,7 +705,7 @@ recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, n){
 
 
 ```{r smartStopLight}
-smartStopLight=function(forme, N, beta, B, alpha, n, m, p){
+smartStopLight=function(forme, N, p, B, beta, alpha, S, m){
 	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
 	
 	#----création de l'image parfaite img0----
@@ -721,10 +721,10 @@ smartStopLight=function(forme, N, beta, B, alpha, n, m, p){
   Y <- 0 #nombre de changements de spin, remis à 0 dès que Y==m.
   it<-0 #compteur d'itération général
   
-  while(X<=n) { 
+  while(X<=S) { 
 	  
     it <- it+1
-	  T <- 1/log(n) #T tend vers 0
+	  T <- 1/log(it) #T tend vers 0
 	  
 		#----choix d'un pixel au hasard----
 		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
@@ -770,9 +770,95 @@ smartStopLight=function(forme, N, beta, B, alpha, n, m, p){
 	print(it)
 }#func
 
-#smartStopLight("rectangle", 64, 2/3, 0, 1/3, 500, 15, 0.25)
+smartStopLight("rectangle", 64,0.25, 0, 2/3, 1/3, 500, 15)
 ```
 
+
+```{r include=FALSE recuit_smartStop}
+recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, pct){
+	
+	img0 = imageGenerator(forme, N)
+	
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	
+	img00 = matrix(0, nrow=N+2, ncol=N+2) #ajout contour à img0 pour correspondance() dans le while
+	img00[2:(N+1),2:(N+1)] = img0
+	
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+	
+  corresp <- 0
+	it<-0 #compteur
+  
+  while(corresp<pct) { #tant que le pourcentage de restoration est inférieure à celui demandé
+	  
+    it <- it+1
+	  T <- 1/log(it) 
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage----
+	  v = Vstar(img1, N+2, i, j, 5) # L arbitrairement fixé à 5
+		
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----test----
+		dU = U2-U1
+		p <- exp(-dU/T)
+		
+		if(runif(1)<=p){#on change la valeur du pixel
+		  img1[i,j]= -img1[i,j]
+		  X <- 0} #on a changé un pixel, retour à la case départ
+		  
+		else{
+		  img2[i,j] <- img1[i,j]
+		  X <- X+1} #on garde la valeur du pixel
+		
+		#----actualisation corresp----
+		corresp <- correspondance(img0, img1, N)
+		#print(corresp)
+	}#while
+	
+	return(it)
+}#func
+
+#recuitSimule_smartStop("rectangle", 64, 0.25, 0, 0.66, 0.33, 90)
+```
+
+
+
+```{r disp_smartStop}
+MCdeMC_smartStop=function(forme, N, p, B, beta, alpha, n, pct, k){
+  #fonction qui renvoie le nombre d'itérations réalisées pour atteindre un pourcentage de restauration pct donné
+  
+  tirage = c(1:k) #numérotation des tirages
+  iter = c(1,k) #stock des quantités d'itérations
+  
+  for( L in longueur){
+    print(L)
+    corresp[L] = recuitSimule_Vstar(forme, N, p, B, beta, alpha, n, L)
+  }#for
+  
+  rev <- data.frame(longeur_branche = c(1:k), correspondance = corresp )
+  print(rev)
+  ggplot(data = rev, aes(x="longeur des branches de voisinage",y="pourcentage de correspondance"))+geom_line()+geom_point() 
+    # + geom_smooth()  
+}#func
+
+MCdeMC_Vstar("rectangle", 64, 0.25, 0, 0.66, 0.33, 10^4, 10)
+```
+
+
+
+##comparaison des différents algorithmes vus jusqu'ici (A FAIRE)
 
 ```{r mcMc}
 MCdeMC=function(pct, K, n, beta, N, p, alpha, stop){
@@ -815,7 +901,7 @@ MCdeMC_revo=function(n, beta, N, p, alpha, stop){
 MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
 ```
 
-##comparaison des différents algorithmes vus jusqu'ici (A FAIRE)
+
 
 
 
