@@ -10,22 +10,33 @@ output:
 
 
 
-# Modélisation d'une image
+# Introduction
 
-L'objectif final de ce stage est de restaurer algorithmiquement des binaires (assez simples) en noir et blanc ayant subi un bruitage. Pour cela on va utiliser les chaînes de Markov et des modèles énergétiques sur les images, principalement le modèle d'Ising et la mesure de Gibbs, afin de pouvoir estimer de manière probabiliste les meilleurs configurations pour la restauration.  
+L'objectif final de ce stage est de restaurer algorithmiquement des images binaires (assez simples) en noir et blanc ayant subi un bruitage. Pour cela on utilise les chaînes de Markov et des modèles énergétiques sur les images, principalement le modèle d'Ising et la mesure de Gibbs, afin de pouvoir estimer de manière probabiliste les meilleurs configurations pour la restauration. Les algorithmes ainsi constitués sont ensuite codés en R pour être éprouvés.    
 
-On utilise les notations et appellations suivantes:  
-- x : une configuration de la grille des pixels (une image donc), parmis l'ensemble des configurations possibles $\Omega$. On note X la variable aléatoire décrivant x.   
-- s : un pixel de l'image (on appelle aussi les pixels des sites), avec $x_s$ sa valeur. $x_s\in E$ l'ensemble des valeurs possibles possibles d'un pixel. E varie selon le type d'image (couleur, noir et blanc). Pour faciliter le travail, on ne manipule ici que des images en noir et blanc, donc $E=\{-1,1\}$.On note $X_s$ la variable aléatoire décrivant $x_s$.  
-- $\tilde X^s$ :la variable aléatoire décrivant la configuration de l'image privée du pixel $s$.  
+Dans dans son état actuel, ce rapport abborde plusieurs question en lien avec le sujet mais est très très loin d'être complet. Une grande part des observations sont encore d'ordre empirique et nécessiteraient d'être approfondies sur le plan théorique.
+
+## Modélisation d'une image
+
+Afin de pouvoir manipuler des images, on utilise les notations et appellations suivantes:  
+- x : une configuration d'une grille de pixels donnée (une image donc), parmis l'ensemble des configurations possibles $\Omega$. On note X la variable aléatoire décrivant x.   
+- s : un pixel de l'image (on appelle aussi les pixels des "sites"), avec $x_s$ sa valeur. $x_s\in E$ l'ensemble des valeurs possibles possibles d'un pixel. E varie selon le type d'image (couleur, noir et blanc). Pour faciliter le travail, on ne manipule ici que des images en noir et blanc, donc $E=\{-1,1\}$.On note $X_s$ la variable aléatoire décrivant $x_s$.  
+- $X^s$ :la variable aléatoire décrivant la configuration de l'image privée du pixel $s$. $x^s$ est donc une fonfiguration x donnée, privée de s.  
 - $V_s$ : le voisinage de s, que l'on définira plus tard.
 - $U$ : le potentiel de x ou s, appelé aussi énergie, pour la valeur $x_s$.  
 
-## Hypothèse markovienne
+## Hypothèse markovienne 
 
-A priori pour "deviner" quelle est la bonne valeur pour un pixel s dans une image donnée, le mieux à faire est de regarder tous le reste de l'image et essayer d'exprimer $X_s$.   
+Considérons une image bruitée; une approche intuitive pour restaurer cette image consiste à restaurer chaque pixel de l'image un par un. A priori pour "deviner" quelle est la bonne valeur pour un pixel s, le mieux à faire est de regarder tous le reste de l'image $x^s$, et à partir de $x^s$ essayer d'exprimer $X_s$ pour trouver quelle valeur $x_s$ est la plus probable sachant $x^s$.   
 
-On fait cependant l'hypothèse que connaître $V_s$ le voisinage proche de s est équivalent à connaître tous le reste de l'image, soit $P(X_s=x_s|\tilde X^s)=P(X_s=x_s|V_s)$. La définition du voisinage proche peut varier, par son étendu et sa forme; le voisinage que nous utiliserons presque toujours est simplement l'ensemble des quatre plus proches voisins de s sur la verticale et l'horizontale. On ne considère pas les diagonales.
+Etant donnée la taille des images aujourd'hui, à huit ou seize millions de pixels, l'idée ne parraît plus si bonne. Pour pallier au problème de la taille des images, on fait l'hypothèse que connaître $V_s$ le voisinage proche de s est équivalent à connaître $x^s$, soit $P(X_s=x_s| X^s) = P(X_s=x_s|V_s)$. C'est l'hypothèse de Markov.
+
+La définition du voisinage proche peut varier, par son étendu et sa forme; le voisinage que nous utiliserons presque toujours est simplement l'ensemble des quatre plus proches voisins de s sur la verticale et l'horizontale. On essaira par la suite de modifier ce voisinage.
+
+
+
+
+
 
 ## La mesure de Gibbs
 
@@ -48,7 +59,7 @@ Le modèle d'Ising nous fournit une formule pour calculer le potentiel d'un pixe
 
 C'est le paramètre $\beta$ qui détermine le poid accordé au voisinage, et B celui de la valeur de s.
 
-On verra une de ses lqimites dans la partie sur l'estimation de $\beta$.
+On verra une de ses limites dans la partie sur l'estimation de $\beta$.
 
 
 
@@ -160,7 +171,7 @@ En R voici une manière de coder cet algorithme :
 metropolisIsing avec $\alpha = 5$ et $\beta = 1$
 
 ```{r alpha_grand, echo=FALSE}
-metropolisIsing("rectangle", 64, 1, 0, 5, 10^5, 0.3)
+#metropolisIsing("rectangle", 64, 1, 0, 5, 10^5, 0.3)
 ```
 
 
@@ -169,7 +180,7 @@ metropolisIsing("rectangle", 64, 1, 0, 5, 10^5, 0.3)
 metropolisIsing avec $\alpha = 0$
 
 ```{r alpha_nul, echo=FALSE}
-metropolisIsing("rectangle", 64, 1, 0, 0, 2*10^5, 0.3)
+#metropolisIsing("rectangle", 64, 1, 0, 0, 2*10^5, 0.3)
 ```
 
 
@@ -178,13 +189,13 @@ metropolisIsing("rectangle", 64, 1, 0, 0, 2*10^5, 0.3)
 
 metropolisIsing avec $\beta > 0$
 ```{r, echo=FALSE}
-metropolisIsing("rectangle", 64, 1, 0, 0.6, 10^5, 0.3)
+#metropolisIsing("rectangle", 64, 1, 0, 0.6, 10^5, 0.3)
 ```
 
 
 metropolisIsing avec $\beta < 0$
 ```{r, echo=FALSE}
-metropolisIsing("rectangle", 64, -1, 0, 0.6, 10^5, 0.3)
+#metropolisIsing("rectangle", 64, -1, 0, 0.6, 10^5, 0.3)
 ```
 
 
