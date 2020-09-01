@@ -34,18 +34,14 @@ imageGenerator=function(forme, N){
     for (i in 1:N){
       for (j in 1:N){
         img[i,j]=-1+2*(abs(i-j)<=N/4)*(abs(i+j-N)<=N/4)  
-      }
-    }#for
+      }}#for#for
   }#if
   
-  #----bande----
+  #----bandes verticales----
   if(forme=="bande"){
     for (j in 1:(N/2)){ img[,2*j]=rep(1,N) }
   }#if
   
-  #----damier----
-  #----triangle----
-  #----cercle----
   return(img)
 }#func
 ```
@@ -62,8 +58,7 @@ bruiteur=function(image, br, p){
   #----binomiale----
   if(br== "rbinom"){bruit <- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)}
   
-  #----poisson----
-  
+  #----poisson----      #futurs bruitages différents possibles
   #----normale----
   
   imgBr <- image*bruit
@@ -75,9 +70,10 @@ bruiteur=function(image, br, p){
 
 ```{r correspondance}
 correspondance=function(img0, img1, N){
-	#----pourcentage de correspondance----
+  #fonction qui renvoit le pourcentage de correspondance entre deux images de mêmes tailles.
+	
 	nok <- 0 #nombre de pixels divergents
-	correspondance <- 0 #pourcentage sur nb pixels total
+	
 	for (i in (1:N)){
 		for (j in (1:N)){
 			if(img0[i,j] != img1[i,j]){nok <- nok+1}
@@ -115,36 +111,35 @@ correspondance=function(img0, img1, N){
 #voisinage == manuel
 #correspondance == sans 
 
-GibbsIsing = function(forme, N, beta, B, alpha, n, p){
-  #fonction qui réalise l'algorithme de Metropolis sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
+GibbsIsing = function(forme, N, p, B, beta, alpha, n){
+  # fonction qui réalise l'échantilloneur de Gibbs, sur le modèle d'Ising, avec une image img1 bruitée à partir de img0, afin de restaurer cette image.
   
   #----création de l'image parfaite img0----
   img0 = imageGenerator(forme, N)
-  #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+  #----création de l'image bruitée, avec ajout d'une bordure.
 	img1 = matrix(0, nrow=N+2, ncol=N+2)
-	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p) #création de l'image bruitée
-  img2 = img1 #image tampon
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p) 
+	img2 = img1 #image tampon
   img3 = img1 #mémoire du bruit initiale
   
-  for(k in 1:n){
-    #----choix d'un site---
-    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+  for(k in 1:n){ #n parcours de pixels
+    #----choix d'un site au hasard---
+    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1 pour éviter le contour
     j <- 1+ceiling(N*runif(1))
     
-    #----changement de valeur au site choisi sur img2 (1ou-1) pour représenter E en entier avec img1 et img2 (cas d'une image en noir et blanc)----
+    #----changement de valeur au site choisi sur img2 (1 ou -1) pour représenter E en entier avec img1 et img2 (cas d'une image en noir et blanc)----
     img2[i,j] = -img1[i,j]
     
     #----voisinage----
     v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
     
-    #----potentiels----
+    #----potentiels (modele d'ising)----
     U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])
     U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])
     
     #----calcule de la proba conditionnelle locale----
     P <- exp(-U2)/(exp(-U1)+exp(-U2))
     
-    #----test----
     if(runif(1)<= P){img1[i,j]= img2[i,j]}#on change la valeur du pixel
     else{img2[i,j] <- img1[i,j]} #on garde la valeur du pixel
   }#for
@@ -152,17 +147,15 @@ GibbsIsing = function(forme, N, beta, B, alpha, n, p){
   #----affichage----
   par(mfrow=c(1,3))
   
-  img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
+  img3 <- img3[2:(N+1),2:(N+1)] #on retire les contours
 	img1 <- img1[2:(N+1),2:(N+1)]
   
 	image(1:N,1:N,img0)#image initiale
 	image(1:N+2,1:N+2,img3)#image bruitée
 	image(1:N+2,1:N+2,img1)#image restaurée
-  #image(img1)
 }
 
 
-#GibbsIsing("rectangle", 64, 1, 0, 0.5, 10^5, 0.2)
 ```
 
 
@@ -236,8 +229,8 @@ metropolisIsing("rectangle", 64, 1, 1, 0.6, 1, 10^4, 0.3)
 #voisinage == à la main
 #correspondance ==  SANS
 
-metropolisIsing=function(forme, N, beta, B, alpha, n, p){
-	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
+metropolisIsing=function(forme, N, p, B, beta, alpha, n){
+	#fonction qui réalise l'algorithme de Metropolis sur une image bruitée img1 (à partir de img0), pour restaurer cette image.
 	
 	#----création de l'image parfaite img0----
 	img0 = imageGenerator(forme, N)
@@ -264,7 +257,7 @@ metropolisIsing=function(forme, N, beta, B, alpha, n, p){
 		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
 		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
 	
-		#----test----
+		#----proba conditionnelle locale----
 		dU = U2-U1
 		p <- exp(-dU)
 		
@@ -290,67 +283,6 @@ metropolisIsing=function(forme, N, beta, B, alpha, n, p){
 ===============================================================================================================
 ===============================================================================================================
 # RECUIT SIMULE
-
-```{r recuitMetro}
-recuitMetro=function(forme, N, beta, B, alpha, L, n, p){
-  
-  #----création de l'image parfaite img0----
-  img0 = imageGenerator(forme, N)
-  
-  #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
-  img1 = matrix(0, nrow=N+2, ncol=N+2)
-  img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
-  img2 = img1 #image tampon
-  img3 = img1 #mémoire du bruit initiale
-  
-  for(k in 1:n){
-    
-    #---recuit des parametres----
-    t <- 1/log(k)
-    Br <- B/t
-    betar <- beta/t
-    alphar <- alpha/t    
-    
-    #----choix d'un site---
-    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
-    j <- 1+ceiling(N*runif(1))
-    #i <- 2 + k%%N #de 2 à N+1
-    #j <- 2 + k%/%(N-1)%%N #de 2 à N+1
-    
-    #----tirage nouvelle valeure candidate----
-    img2[i,j] = -img1[i,j]
-    
-    #----voisinage----
-    #v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
-    v = Vstar(img1, N+2, i, j, L)
-    
-    #----potentiels----
-    U1 = -Br*img1[i,j]-img1[i,j]*(betar*v + alphar*img3[i,j])#potentiel actuel
-    U2 = -Br*img2[i,j]-img2[i,j]*(betar*v + alphar*img3[i,j])#potentiel candidat
-    
-    #----test----
-    dU = U2-U1
-    p <- exp(-dU)
-    if(runif(1)<=p){img1[i,j]= -img1[i,j]}
-    else{img2[i,j] <- img1[i,j]} #sinon on ne change pas
-  }#for
-  
-  #----affichage----
-  img3 <- img3[2:(N+1),2:(N+1)] #on retire les contours
-  img1 <- img1[2:(N+1),2:(N+1)]
-  par(mfrow=c(1,3))
-  image(1:N,1:N,img0)#image initiale
-  image(1:N+2,1:N+2,img3)#image bruitée
-  image(1:N+2,1:N+2,img1)#image restaurée
-  
-  #----observation des performance de restauration----
-  corresp <- correspondance(img0, img1, N)
-  return(corresp) 
-}#func
-
-#recuitMetro("rectangle", 64, 1, 0, 0.6, 1, 2*10^4, 0.3)
-```
-
 
 ```{r recuitSimuleGuyader}
 recuitSimuleGuyader = function(n, beta, N, p, alpha, stop){
@@ -451,20 +383,19 @@ recuitSimuleGuyader = function(n, beta, N, p, alpha, stop){
 ```
 
 
-
 ```{r recuitSimule_BASIQUE}
 #BASIQUE
 #tirage == aléatoire
 #voisinage == à la main
 #correspondance ==  SANS
 
-recuitSimule_BASIQUE=function(forme, N, beta, B, alpha, n, p){
-	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
+recuitSimule_BASIQUE=function(forme, N, p, B, beta, alpha, n){
+	#fonction qui réalise l'algorithme de recuit simulé, pour restaurer img1
 	
 	#----création de l'image parfaite img0----
 	img0 = imageGenerator(forme, N)
 	
-	#----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+	#----création d'une image auxiliaire img1, avec bordure et bruit----
 	img1 = matrix(0, nrow=N+2, ncol=N+2)
 	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
 	img2 = img1 #image tampon
@@ -472,7 +403,7 @@ recuitSimule_BASIQUE=function(forme, N, beta, B, alpha, n, p){
 
 	for(k in 1:n){ #n visites de pixels
 	  
-	  T <- 1/log(n) #T tend vers 0
+	  T <- 1/log(n) #T tend lentement vers 0
 	  
 		#----choix d'un pixel au hasard----
 		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
@@ -488,16 +419,16 @@ recuitSimule_BASIQUE=function(forme, N, beta, B, alpha, n, p){
 		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
 		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
 	
-		#----test----
+		#----probabilité conditionnelle locale, "recuite" à chaque itération----
 		dU = U2-U1
 		p <- exp(-dU/T)
 		
-		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#on change la valeur du pixel
-		else{img2[i,j] <- img1[i,j]} #on garde la valeur du pixel
+		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#changement
+		else{img2[i,j] <- img1[i,j]} #inchangé
 	}#for
 	
 	#----affichage----
-	img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
+	img3 <- img3[2:(N+1),2:(N+1)] #retire le contour
 	img1 <- img1[2:(N+1),2:(N+1)]
 	
 	par(mfrow=c(1,3))
@@ -507,7 +438,6 @@ recuitSimule_BASIQUE=function(forme, N, beta, B, alpha, n, p){
   
 }#func
 
-#recuitSimule_BASIQUE("rectangle", 64, 1, 0, 0.6, 10^5, 0.3)
 ```
 
 
@@ -520,6 +450,7 @@ recuitSimule_BASIQUE=function(forme, N, beta, B, alpha, n, p){
 ```{r restorStripe}
 
 energiehv=function(img){
+  #fonction qui renvoie, dans un tuple, les sommes des doubles produits sur les lignes, et sur les colonnes.
   eligne=0
   ecolonne=0
   for (i in 1:N) {for (j in 1:(N-1)){eligne=eligne+img[i,j]*img[i,j+1]}}
@@ -527,27 +458,28 @@ energiehv=function(img){
   return(c(eligne,ecolonne))
 }#func
 
-restorStripe=function(forme, N, beta, B, alpha, n, p){
+restorStripe=function(forme, N, p, B, beta, alpha, n){
+  #fonction de recuit simulé, pensé pour restaurer une image en bandes alternées, grâce à une disjonction de cas dans les calculs, entre l'horizontale et la verticale.
   
-  #----création de l'image parfaite img0----
+  #----img0, initiale----
   img0 = imageGenerator(forme, N)
   
-  #----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+  #----img1, avec bordure et bruit----
   img1 = matrix(0, nrow=N+2, ncol=N+2)
   img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
-  img2 = img1 #image tampon
-  img3 = img1 #mémoire du bruit initiale
+  img2 = img1 #tampon
+  img3 = img1 #bruit initiale
   
-  #----calcul des deux beta horizontal et vertical----
+  #----calcul des deux beta, horizontal et vertical----
   betah=2*energiehv(img1)[2]/(abs(energiehv(img1)[1])+abs(energiehv(img1)[2]))
   betav=2*energiehv(img1)[1]/(abs(energiehv(img1)[1])+abs(energiehv(img1)[2]))
 
 	for(k in 1:n){ #n visites de pixels
 	  
-	  T <- 1/log(n) #T tend vers 0
+	  T <- 1/log(n)
 	  
 		#----choix d'un pixel au hasard----
-		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		i <- 1+ceiling(N*runif(1))
 		j <- 1+ceiling(N*runif(1))
 		
 		#----tirage nouvelle valeure candidate----
@@ -565,25 +497,20 @@ restorStripe=function(forme, N, beta, B, alpha, n, p){
 		dU = U2-U1
 		p <- exp(-dU/T)
 		
-		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#on change la valeur du pixel
-		else{img2[i,j] <- img1[i,j]} #on garde la valeur du pixel
+		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#changé
+		else{img2[i,j] <- img1[i,j]} #inchangé
 	}#for
   
   
   #----affichage----
-  img3 <- img3[2:(N+1),2:(N+1)] #on retire les contours
+  img3 <- img3[2:(N+1),2:(N+1)] 
   img1 <- img1[2:(N+1),2:(N+1)]
   par(mfrow=c(1,3))
   image(1:N,1:N,img0)#image initiale
   image(1:N+2,1:N+2,img3)#image bruitée
   image(1:N+2,1:N+2,img1)#image restaurée
   
-  #----observation des performance de restauration----
-  corresp <- correspondance(img0, img1, N)
-  return(corresp) 
 }#func
-
-restorStripe("bande", 64, 1, 0, 0.6, 4*10^4, 0.3)
 
 ```
 
@@ -592,15 +519,15 @@ restorStripe("bande", 64, 1, 0, 0.6, 4*10^4, 0.3)
 
 ```{r Vstar}
 
-Vstar =function(img, N, i, j, L){
+Vstar=function(img, N, i, j, L){
+  #fonction qui calcule le voisinage du pixel (i,j), selon le modèle de voisinage en étoile variable.
   
   vbranch=function(img, N, is, js, iv, jv, L){
-	  #la taille de l'image N doit être précisée (à remplacer par méthode info image)
 	  #L détermine la longueur maximale d'une branche
-	  #(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)] ce qui donne le sens de la branche à partir de s
+	  #(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)], c'est ce qui donne le sens de la branche à partir de s
 
-	  v = c()
-	  vl = c()
+	  v = c() #branche finale
+	  vl = c() #branche brute
 	  if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
 
 	  #----récupération des L sites de la branche potentielles sans condition----
@@ -614,7 +541,7 @@ Vstar =function(img, N, i, j, L){
 	  if(is.null(vl[1])){return(0)} #si on est sur le bord
 	
 	  #----épuration selon la condition de valeur de site----
-	  lead <- vl[1]
+	  lead <- vl[1] #base de la branche, à côté du site
 	  for(k in 1:length(vl)){ #parcours les L sites
 		  if(vl[k]==lead){ v <- c(v,vl[k]) }#condition pour faire partie de la branche.
 	  }#for
@@ -622,7 +549,7 @@ Vstar =function(img, N, i, j, L){
 	  return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
   }#func
   
-  
+  #somme des quatre branches
 	s <- 0
 	s <- s + vbranch(img, N, i, j, -1, 0, L)
 	s <- s + vbranch(img, N, i, j, 1, 0, L)
@@ -634,31 +561,30 @@ Vstar =function(img, N, i, j, L){
 
 
 ```{r recuitSimule_Vstar}
-recuitSimule_Vstar=function(forme, N, beta, B, alpha, n, p, L){
-	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
+recuitSimule_Vstar=function(forme, N, p, B, beta, alpha, n, L){
+	#fonction qui réalise l'algorithme de recuit, mais dont le calcul de voisinage se faite selon le modèle en étoile variable.
 	
-	#----création de l'image parfaite img0----
+	#----image parfaite img0----
 	img0 = imageGenerator(forme, N)
 	
-	#----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+	#----image auxiliaire img1, avec bordure et bruitage----
 	img1 = matrix(0, nrow=N+2, ncol=N+2)
 	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
-	img2 = img1 #image tampon
-	img3 = img1 #mémoire du bruit initiale
+	img2 = img1 #tampon
+	img3 = img1 #bruit initiale
 
-	for(k in 1:n){ #n visites de pixels
+	for(k in 1:n){
 	  
-	  T <- 1/log(n) #T tend vers 0
+	  T <- 1/log(n)
 	  
 		#----choix d'un pixel au hasard----
-		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		i <- 1+ceiling(N*runif(1))
 		j <- 1+ceiling(N*runif(1))
 		
 		#----tirage nouvelle valeure candidate----
 		img2[i,j] = -img1[i,j]
 	
-		#----voisinage----
-		#v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+		#----voisinage selon le modèle en étoile----
 	  v = Vstar(img1, N+2, i, j, L)
 		
 		#----potentiels----
@@ -669,48 +595,53 @@ recuitSimule_Vstar=function(forme, N, beta, B, alpha, n, p, L){
 		dU = U2-U1
 		p <- exp(-dU/T)
 		
-		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#on change la valeur du pixel
-		else{img2[i,j] <- img1[i,j]} #on garde la valeur du pixel
+		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#changé
+		else{img2[i,j] <- img1[i,j]} #inchangé
 	}#for
 	
 	#----affichage----
 	img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
 	img1 <- img1[2:(N+1),2:(N+1)]
 	
-	#par(mfrow=c(1,3))
-	#image(1:N,1:N,img0)#image initiale
-	#image(1:N+2,1:N+2,img3)#image  bruitée
-	#image(1:N+2,1:N+2,img1)#image restaurée
+	par(mfrow=c(1,3))
+	image(1:N,1:N,img0)#image initiale
+	image(1:N+2,1:N+2,img3)#image  bruitée
+	image(1:N+2,1:N+2,img1)#image restaurée
 	
-	return(correspondance(img0, img1, N))
+	#return(correspondance(img0, img1, N))
   
 }#func
 
 
-#recuitSimule_Vstar("losange", 64, 1, 0, 0.6, 2*10^4, 0.2, 5)
-
+recuitSimule_Vstar("rectangle", 64, 0.25, 0, 0.66,0.33,10^5,5)
 ```
 
+
 ```{r graph_Vstar}
-MCdeMC_revo=function(forme, N, p, beta, B, alpha, n, k){
-  corresp = c(1,k)
-  longueur = c(1:k)
-  for( L in(1:k)){ #
-    corresp[L] = recuitSimule_Vstar(forme, N, beta, B, alpha, n, p, L)
+MCdeMC_Vstar=function(forme, N, p, B, beta, alpha, n, k){
+  #fonction qui renvoie le pourcentage de restauration en fonction de la longeur L des branches du voisinage.
+  
+  corresp = c(1,k) #stock des pourcentages
+  longueur = c(1:k) #stock des valeurs de L
+  
+  for( L in longueur){
+    print(L)
+    corresp[L] = recuitSimule_Vstar(forme, N, p, B, beta, alpha, n, L)
   }#for
+  
   rev <- data.frame(longeur_branche = c(1:k), correspondance = corresp )
-  #print(rev)
+  print(rev)
   ggplot(data = rev, aes(x="longeur des branches de voisinage",y="pourcentage de correspondance"))+geom_line()+geom_point() 
     # + geom_smooth()  
 }#func
 
-MCdeMC_revo("rectangle", 64, 0.25, 0.66, 0, 0.33, 2*10^4, 10)
+MCdeMC_Vstar("rectangle", 64, 0.25, 0, 0.66, 0.33, 10^5, 10)
 ```
 
 # Amelioration de la rapidité des algorithmes
 
 ```{r smartStop}
-recuitSimule_smartStop=function(forme, N, beta, B, alpha, n, p){
+recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, n){
 	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
 	
 	#----création de l'image parfaite img0----
