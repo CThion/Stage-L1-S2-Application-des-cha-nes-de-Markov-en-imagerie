@@ -171,7 +171,7 @@ metropolisIsing=function(forme, N, beta, B, alpha, L, n, p){
 
 
 #metropolisIsing(forme, N, beta, B, alpha, L, n, p)
-metropolisIsing("bande", 64, 1, 0, 0.3, 5, 2*10^4, 0.15)
+#metropolisIsing("bande", 64, 1, 0, 0.3, 5, 2*10^4, 0.15)
 
 
 

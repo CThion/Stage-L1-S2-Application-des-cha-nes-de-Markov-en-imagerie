@@ -4,6 +4,11 @@ author: "Clément Thion"
 date: "12/07/2020"
 output: html_document
 ---
+```{r}
+library(ggplot2)
+```
+
+
 
 #Modélisation d'une image
 ##hypothèse makovienne
@@ -585,39 +590,39 @@ restorStripe("bande", 64, 1, 0, 0.6, 4*10^4, 0.3)
 ===============================================================================================================
 ## Voisinage de taille variable
 
-```{r Vbranch}
-vbranch=function(img, N, is, js, iv, jv, L){
-	#la taille de l'image N doit être précisée (à remplacer par méthode info image)
-	#L détermine la longueur maximale d'une branche
-	#(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)] ce qui donne le sens de la branche à partir de s
-
-	v = c()
-	vl = c()
-	if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
-
-	#----récupération des L sites de la branche potentielles sans condition----
-	for(k in(1:L)){
-		i <- is+k*iv
-		j <- js+k*jv
-		if(i>=1 && i<=N){ if(j>=1 && j<=N){ #teste si les coordonnées du candidat sont dans l'image
-			vl <- c(vl,img[i,j])
-		}}#if&if
-	}#for
-	if(is.null(vl[1])){return(0)} #si on est sur le bord
-	
-	#----épuration selon la condition de valeur de site----
-	lead <- vl[1]
-	for(k in 1:length(vl)){ #parcours les L sites
-		if(vl[k]==lead){ v <- c(v,vl[k]) }#condition pour faire partie de la branche.
-	}#for
-	
-	#print(v)
-	#print(length(v))
-	return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
-}#func
-
+```{r Vstar}
 
 Vstar =function(img, N, i, j, L){
+  
+  vbranch=function(img, N, is, js, iv, jv, L){
+	  #la taille de l'image N doit être précisée (à remplacer par méthode info image)
+	  #L détermine la longueur maximale d'une branche
+	  #(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)] ce qui donne le sens de la branche à partir de s
+
+	  v = c()
+	  vl = c()
+	  if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
+
+	  #----récupération des L sites de la branche potentielles sans condition----
+	  for(k in(1:L)){
+		  i <- is+k*iv
+		  j <- js+k*jv
+		  if(i>=1 && i<=N){ if(j>=1 && j<=N){ #teste si les coordonnées du candidat sont dans l'image
+			  vl <- c(vl,img[i,j])
+		  }}#if&if
+	  }#for
+	  if(is.null(vl[1])){return(0)} #si on est sur le bord
+	
+	  #----épuration selon la condition de valeur de site----
+	  lead <- vl[1]
+	  for(k in 1:length(vl)){ #parcours les L sites
+		  if(vl[k]==lead){ v <- c(v,vl[k]) }#condition pour faire partie de la branche.
+	  }#for
+	
+	  return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
+  }#func
+  
+  
 	s <- 0
 	s <- s + vbranch(img, N, i, j, -1, 0, L)
 	s <- s + vbranch(img, N, i, j, 1, 0, L)
@@ -626,6 +631,7 @@ Vstar =function(img, N, i, j, L){
 	return(s)
 }#func
 ```
+
 
 ```{r recuitSimule_Vstar}
 recuitSimule_Vstar=function(forme, N, beta, B, alpha, n, p, L){
@@ -671,15 +677,34 @@ recuitSimule_Vstar=function(forme, N, beta, B, alpha, n, p, L){
 	img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
 	img1 <- img1[2:(N+1),2:(N+1)]
 	
-	par(mfrow=c(1,3))
-	image(1:N,1:N,img0)#image initiale
-	image(1:N+2,1:N+2,img3)#image  bruitée
-	image(1:N+2,1:N+2,img1)#image restaurée
+	#par(mfrow=c(1,3))
+	#image(1:N,1:N,img0)#image initiale
+	#image(1:N+2,1:N+2,img3)#image  bruitée
+	#image(1:N+2,1:N+2,img1)#image restaurée
+	
+	return(correspondance(img0, img1, N))
   
 }#func
 
-#recuitSimule_Vstar("bande", 64, 1, 0, 0.6, 10^5, 0.3, 10)
 
+#recuitSimule_Vstar("losange", 64, 1, 0, 0.6, 2*10^4, 0.2, 5)
+
+```
+
+```{r graph_Vstar}
+MCdeMC_revo=function(forme, N, p, beta, B, alpha, n, k){
+  corresp = c(1,k)
+  longueur = c(1:k)
+  for( L in(1:k)){ #
+    corresp[L] = recuitSimule_Vstar(forme, N, beta, B, alpha, n, p, L)
+  }#for
+  rev <- data.frame(longeur_branche = c(1:k), correspondance = corresp )
+  #print(rev)
+  ggplot(data = rev, aes(x="longeur des branches de voisinage",y="pourcentage de correspondance"))+geom_line()+geom_point() 
+    # + geom_smooth()  
+}#func
+
+MCdeMC_revo("rectangle", 64, 0.25, 0.66, 0, 0.33, 2*10^4, 10)
 ```
 
 # Amelioration de la rapidité des algorithmes
@@ -814,5 +839,159 @@ smartStopLight=function(forme, N, beta, B, alpha, n, m, p){
 	print(it)
 }#func
 
-smartStopLight("rectangle", 64, 2/3, 0, 1/3, 500, 15, 0.25)
+#smartStopLight("rectangle", 64, 2/3, 0, 1/3, 500, 15, 0.25)
+```
+
+
+```{r mcMc}
+MCdeMC=function(pct, K, n, beta, N, p, alpha, stop){
+  #algo de montecarlo sur celui de recuit simul?, pour estimer la proba de correspodnance
+  #a pct% d'une image reconstitu?e, en fonction du nombre d'it?rations dans le recuitsimul?
+  P <- 0
+  E <- 0
+  corresp=rep(0,K) #conteneur des résultats
+  for (k in (1:K)) { #on fait K recuitSimul?
+    corresp[k] = recuitSimule(n, beta, N, p, alpha, stop)
+    if(corresp[k]>=pct){E <- E+1} #si le pourcentage de correspondance convient a la condition pct
+  }
+  
+  P <- E/K  #les recuitSimule sont a priori ind?pendants les uns des autres, et r?alis?s identiquement
+  print(P)
+  
+  plot(ecdf(corresp))
+
+  survie=function(x){1-ecdf(corresp)(x)}
+  x <- seq(min(corresp)-4,100,0.1)
+  #plot.Surv(corresp)
+  plot(x,survie(x),type="S")
+}
+```
+
+
+```{r MCdeMC_revo}
+MCdeMC_revo=function(n, beta, N, p, alpha, stop){
+  corresp2 = c(1,n)
+  revolution = c(1:n)
+  for( revo in(1:n)){ #on va tester le recuit en faisant varier le nombre de révolution de 1 à 50 (cas ou stop = 0)
+    corresp2[revo] = recuitSimuleFixe(revo, beta, N, p, alpha, stop)
+  }#for
+  rev <- data.frame(revo = c(1:n), correspondance = corresp2 )
+  print(rev)
+  ggplot(data = rev, aes(x="nombre_de_revolution", y="pourcentage de correspondance")) + geom_line()    # + geom_point() 
+    # + geom_smooth()  
+}#func
+
+MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
+```
+
+##comparaison des différents algorithmes vus jusqu'ici (A FAIRE)
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+recuitSimuleFixe = function(n, beta, N, p, alpha, stop){
+  
+  #----cr?ation de sigma0 le rectangle initial----
+  sigma0 <- matrix(-1,nrow=N,ncol=N)  
+  sigma0[(N/4):(N*3/4),(N/4):(N*3/4)] <- 1
+  
+  #----cr?ation de sigma le rectangle bruit?----
+  bruit <- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N) 
+  sigma <- sigma0*bruit  
+  
+  #----cr?ation image auxiliaire, avec contour supl?mentaire pour calculer U plus facilement----
+  Saux <- matrix(0, nrow=N+2, ncol=N+2) 
+  Saux[2:(N+1),2:(N+1)] <- sigma
+  sigmaaux <- Saux #sugmaaux = matrice auxiliaire pour le calcule de U, garde la valeur initiale de Saux (qui lui change)
+
+  
+  #--------le recuit simul?--------
+  if(stop==0){ #cas o? on s'arr?te simplement apr?s n it?rations
+    for (k in (1:(N*N*n))) {#N*N*n = nombre d'itération nécessaires pour faire n révolutions
+      #T <- 1/sqrt(sqrt((1+log(k))))
+      T <- 1/k #T tend lentement vers 0
+      #iaux <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+      #jaux <- 1+ceiling(N*runif(1))
+      iaux <- 2 + k%%N #de 2 ? N+1
+      jaux <- 2 + k%/%(N-1)%%N #de 2 ? N+1
+      
+      
+      #----voisinage----
+      #s <- Vstar(Saux, iaux, jaux)
+      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      
+      #----proba pour un recuit simul?----
+      r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
+      
+      #----changement ou non de spin selon la proba r---
+      #rmc[k]=r
+      if(runif(1)<r){Saux[iaux,jaux] <- -Saux[iaux,jaux]}
+    }#for
+  }#if
+    
+  if(stop==1){#cas ou on s'arr?te apr?s n it?rations sans changement de spin
+    X<-0 #nombre d'it?rations cons?cutives sans changement de spin
+    it<-0 #nb itération
+    revo<-0 #nb de révolution
+    while(X<=n) {
+      it<-it+1
+      revo <- it%/%N*N
+      #T <- 1/sqrt(sqrt((1+log(k))))
+      T <- 1/it #T tend lentement vers 0
+      iaux <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+      jaux <- 1+ceiling(N*runif(1))
+      #iaux <- 2 + k%%N #de 2 ? N+1
+      #jaux <- 2 + k%/%(N-1)%%N #de 2 ? N+1
+      
+      
+      #----voisinage----
+      #s <- Vstar(Saux, iaux, jaux)
+      s <- Saux[iaux-1,jaux]+Saux[iaux+1,jaux]+Saux[iaux,jaux-1]+Saux[iaux,jaux+1]
+      
+      #----proba pour un recuit simul?----
+      r <- exp(-2*Saux[iaux,jaux]*(2*alpha*T*sigmaaux[iaux,jaux]+beta*s)/T)
+      
+      #----changement ou non de spin selon la proba r---
+      #rmc[k]=r
+      if(runif(1)<r){
+        Saux[iaux,jaux] <- -Saux[iaux,jaux]
+        X <- 0#on vient de changer un spin, donc la condition d'arr?t retombe ? 0
+      }#if
+      else{X <-X+1 } 
+    }#while
+    print(c("ItÃ©rations",it))
+  }#if
+  
+  S <- Saux[2:(N+1),2:(N+1)] #image finale (on retire le contour auxiliaire)
+    
+    
+  #----pourcentage de correspondance----
+  corresp <- correspondance(S, sigma0, N)
+  return(corresp)
+  
+}#function
+
+
+MCdeMC_revo=function(n, beta, N, p, alpha, stop){
+  corresp2 = c(1,n)
+  revolution = c(1:n)
+  for( revo in(1:n)){ #on va tester le recuit en faisant varier le nombre de révolution de 1 à 50 (cas ou stop = 0)
+    corresp2[revo] = recuitSimuleFixe(revo, beta, N, p, alpha, stop)
+  }#for
+  rev <- data.frame(revo = c(1:n), correspondance = corresp2 )
+  print(rev)
+  ggplot(data = rev, aes(x="nombre_de_revolution", y="pourcentage de correspondance")) + geom_line()    # + geom_point() 
+    # + geom_smooth()  
+}#func
+
+MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
 ```

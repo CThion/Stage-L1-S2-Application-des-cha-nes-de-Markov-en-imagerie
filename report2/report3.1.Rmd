@@ -265,19 +265,19 @@ Depuis le début, on fixe le nombre d'itérations de l'algorithme (souvent à $1
 
 Une manière de rendre le nombre d'itérations variable serait de le conditionner au nombre de parcours de site successifs sans changement de valeurs. On pourra ainsi déclarer arbitrairement que, dès que l'algorithme réalise dix itérations successives sans changement de valeur, il s'arrête. Le mieux serait de déterminer a priori, étant donnée l'image bruitée, le nombre minimal d'itérations successives sans modification à réaliser pour la restaurer à un certain pourcentage.  
 
-C'est ce que l'on fait dans l'algorithme de metropolis suivant:
+C'est ce que l'on fait dans l'algorithme de recuit simulé suivant:
 
-```{r}
+```{r nconsécutif}
 #algo qui va bien
 ```
 
 Pour aller encore plus vite, au lieu d'attendre dix itérations successives sans aucune modification, on pourrait arrêter l'algorithme dès que, au cours des dix dernières itérations, il y a eu plus 1 modification. On peut jouer sur ces deux paramètres (taille de la "fenêtre coulissante", ici 10, et nombre maximum de changements, 0 dans votre exemple, et ici 1).
 
-```{r}
+```{r nminimum}
 #algo modifié
 ```
 
-
+  
 # Evolution de la restauration en fonction d'un nombre d'itérations
 
 Avec des algorithmes dont le nombre d'itération varie, on peut se demander quelle est la probabilité d'avoir une image restaurée à un H%, après n itérations consécutives sans changements.
