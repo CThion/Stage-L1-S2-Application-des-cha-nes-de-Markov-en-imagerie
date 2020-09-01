@@ -608,12 +608,12 @@ recuitSimule_Vstar=function(forme, N, p, B, beta, alpha, n, L){
 	image(1:N+2,1:N+2,img3)#image  bruitée
 	image(1:N+2,1:N+2,img1)#image restaurée
 	
-	#return(correspondance(img0, img1, N))
+	return(correspondance(img0, img1, N))
   
 }#func
 
 
-recuitSimule_Vstar("rectangle", 64, 0.25, 0, 0.66,0.33,10^5,5)
+#recuitSimule_Vstar("rectangle", 64, 0.25, 0, 0.66,0.33,10^5,5)
 ```
 
 
@@ -635,7 +635,7 @@ MCdeMC_Vstar=function(forme, N, p, B, beta, alpha, n, k){
     # + geom_smooth()  
 }#func
 
-MCdeMC_Vstar("rectangle", 64, 0.25, 0, 0.66, 0.33, 10^5, 10)
+MCdeMC_Vstar("rectangle", 64, 0.25, 0, 0.66, 0.33, 10^4, 10)
 ```
 
 # Amelioration de la rapidité des algorithmes

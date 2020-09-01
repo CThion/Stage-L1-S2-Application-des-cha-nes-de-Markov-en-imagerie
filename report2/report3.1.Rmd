@@ -91,6 +91,7 @@ bruiteur=function(image, br, p){
 
 
 imageGenerator=function(forme, N){
+  #fonction permettant de générer une matrice-image de forme choisie, et de taille N*N
   
   img <- matrix(-1, nrow= N, ncol= N)
   
@@ -103,18 +104,13 @@ imageGenerator=function(forme, N){
     for (i in 1:N){
       for (j in 1:N){
         img[i,j]=-1+2*(abs(i-j)<=N/4)*(abs(i+j-N)<=N/4)  
-      }
-    }#for
+      }}#for#for
   }#if
   
-  #----bande----
+  #----bandes verticales----
   if(forme=="bande"){
     for (j in 1:(N/2)){ img[,2*j]=rep(1,N) }
   }#if
-  
-  #----damier----
-  #----triangle----
-  #----cercle----
   
   return(img)
 }#func
