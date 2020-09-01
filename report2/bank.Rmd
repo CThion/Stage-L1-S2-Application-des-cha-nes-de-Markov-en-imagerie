@@ -769,11 +769,8 @@ smartStopLight=function(forme, N, p, B, beta, alpha, S, m){
 	print(it)
 }#func
 
-smartStopLight("rectangle", 64,0.25, 0, 2/3, 1/3, 500, 15)
+#smartStopLight("rectangle", 64,0.25, 0, 2/3, 1/3, 500, 15)
 ```
-
-
-
 
 
 ```{r include=FALSE smartStop_RETURN}
@@ -832,23 +829,70 @@ smartStop=function(forme, N, p, B, beta, alpha, S){
 }#func
 ```
 
+```{r include=FALSE smartStopLight_RETURN}
+smartStopLight=function(forme, N, p, B, beta, alpha, S, m){
+
+	img0 = imageGenerator(forme, N)
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+  X<-0 #nombre d'itérations consécutives sans changement de spin
+  Y <- 0 #nombre de changements de spin, remis à 0 dès que Y==m.
+  it<-0 #compteur d'itération général
+  while(X<=S) { 
+    it <- it+1
+	  T <- 1/log(it) #T tend vers 0
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		img2[i,j] = -img1[i,j]
+	  v = Vstar(img1, N+2, i, j, 5) # L arbitrairement fixé à 5
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+		dU = U2-U1
+		p <- exp(-dU/T)
+		if(runif(1)<=p){#on change la valeur du pixel
+		  img1[i,j]= -img1[i,j]
+		  Y <- Y+1
+		  if(Y==m+1){ #dépassement du cota de changement de valeur m
+		    X <- 0
+		    Y <- 0}
+		  else{X <- X+1}
+		}#if 
+		else{ #on garde la valeur du pixel
+		  img2[i,j] <- img1[i,j]
+		  X <- X+1} 
+	}#for
+	
+	#----RETURN----
+	img1 <- img1[2:(N+1),2:(N+1)]
+	corresp <- correspondance(img0, img1, N)
+	return(c(corresp,it)) #(pourcentage de restauration, nombre d'itérations nécessaires)
+}#func
+```
+
+
+
 
 ```{r disp_smartStop}
 disp_smartStop=function(forme, N, p, B, beta, alpha, S, pas){
   
   plage = seq(pas,S,pas) #plage S des tirages successifs sans changement
-  l <- length(plage)
+  l = length(plage)
+  error = c(1:l) #stock du nombre d'erreurs maximal accepté
   corresp = c(1:l) #stock des pourcentages de restauration
   iter = c(1:l) #stock des quantités d'itérations
   
   for( ss in plage){
-    result = smartStop(forme, N, p, B, beta, alpha, ss)
+    m = 0.01*ss
+    result = smartStopLight(forme, N, p, B, beta, alpha, ss, m)
+    error[ss/pas] <- m
     corresp[ss/pas] <- result[1]
     iter[ss/pas] <- result[2]
 
   }#for
   
-  rev <- data.frame(plage_evaluation=plage, correspondance=corresp, nombre_iteration=iter )
+  rev <- data.frame(plage_evaluation=plage, erreur_maximal=error, correspondance=corresp, nombre_iteration=iter )
 
   ggplot(data = rev, aes(x="largeur de la plage",y="nombre d'itération"))+geom_line()+geom_point() 
     # + geom_smooth()  
