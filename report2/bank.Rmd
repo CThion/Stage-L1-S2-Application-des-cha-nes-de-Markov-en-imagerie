@@ -641,7 +641,7 @@ MCdeMC_Vstar=function(forme, N, p, B, beta, alpha, n, k){
 # Amelioration de la rapidité des algorithmes
 
 ```{r smartStop}
-recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, S){
+smartStop=function(forme, N, p, B, beta, alpha, S){
 	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
 	
 	#----création de l'image parfaite img0----
@@ -697,7 +697,6 @@ recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, S){
 	image(1:N+2,1:N+2,img3)#image  bruitée
 	image(1:N+2,1:N+2,img1)#image restaurée
   
-	print(it)
 }#func
 
 #recuitSimule_smartStop("rectangle", 64, 1, 0, 0.6, 200, 0.3)
@@ -774,7 +773,145 @@ smartStopLight("rectangle", 64,0.25, 0, 2/3, 1/3, 500, 15)
 ```
 
 
-```{r include=FALSE recuit_smartStop}
+
+
+
+```{r include=FALSE smartStop_RETURN}
+smartStop=function(forme, N, p, B, beta, alpha, S){
+	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
+	
+	#----création de l'image parfaite img0----
+	img0 = imageGenerator(forme, N)
+	
+	#----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+	
+  X<-0 #nombre d'itérations consécutives sans changement de spin
+  it<-0 #compteur
+  
+  while(X<=S) { 
+	  
+    it <- it+1
+	  T <- 1/log(it) #T tend vers 0
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage----
+	  v = Vstar(img1, N+2, i, j, 5) # L arbitrairement fixé à 5
+		
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----test----
+		dU = U2-U1
+		p <- exp(-dU/T)
+		
+		if(runif(1)<=p){#on change la valeur du pixel
+		  img1[i,j]= -img1[i,j]
+		  X <- 0} #on a changé un pixel, retour à la case départ
+		  
+		else{
+		  img2[i,j] <- img1[i,j]
+		  X <- X+1} #on garde la valeur du pixel
+	}#for
+	
+	#----RETURN----
+	img1 <- img1[2:(N+1),2:(N+1)]
+	corresp <- correspondance(img0, img1, N)
+	return(c(corresp,it)) #(pourcentage de restauration, nombre d'itérations nécessaires)
+  
+}#func
+```
+
+
+```{r disp_smartStop}
+disp_smartStop=function(forme, N, p, B, beta, alpha, S, pas){
+  
+  plage = seq(pas,S,pas) #plage S des tirages successifs sans changement
+  l <- length(plage)
+  corresp = c(1:l) #stock des pourcentages de restauration
+  iter = c(1:l) #stock des quantités d'itérations
+  
+  for( ss in plage){
+    result = smartStop(forme, N, p, B, beta, alpha, ss)
+    corresp[ss/pas] <- result[1]
+    iter[ss/pas] <- result[2]
+
+  }#for
+  
+  rev <- data.frame(plage_evaluation=plage, correspondance=corresp, nombre_iteration=iter )
+
+  ggplot(data = rev, aes(x="largeur de la plage",y="nombre d'itération"))+geom_line()+geom_point() 
+    # + geom_smooth()  
+  print(rev)
+}#func
+
+disp_smartStop("rectangle", 64, 0.25, 0, 0.66, 0.33, 2000, 200)
+```
+
+
+
+##comparaison des différents algorithmes vus jusqu'ici (A FAIRE)
+
+```{r mcMc}
+MCdeMC=function(pct, K, n, beta, N, p, alpha, stop){
+  #algo de montecarlo sur celui de recuit simul?, pour estimer la proba de correspodnance
+  #a pct% d'une image reconstitu?e, en fonction du nombre d'it?rations dans le recuitsimul?
+  P <- 0
+  E <- 0
+  corresp=rep(0,K) #conteneur des résultats
+  for (k in (1:K)) { #on fait K recuitSimul?
+    corresp[k] = recuitSimule(n, beta, N, p, alpha, stop)
+    if(corresp[k]>=pct){E <- E+1} #si le pourcentage de correspondance convient a la condition pct
+  }
+  
+  P <- E/K  #les recuitSimule sont a priori ind?pendants les uns des autres, et r?alis?s identiquement
+  print(P)
+  
+  plot(ecdf(corresp))
+
+  survie=function(x){1-ecdf(corresp)(x)}
+  x <- seq(min(corresp)-4,100,0.1)
+  #plot.Surv(corresp)
+  plot(x,survie(x),type="S")
+}
+```
+
+
+```{r MCdeMC_revo}
+MCdeMC_revo=function(n, beta, N, p, alpha, stop){
+  corresp2 = c(1,n)
+  revolution = c(1:n)
+  for( revo in(1:n)){ #on va tester le recuit en faisant varier le nombre de révolution de 1 à 50 (cas ou stop = 0)
+    corresp2[revo] = recuitSimuleFixe(revo, beta, N, p, alpha, stop)
+  }#for
+  rev <- data.frame(revo = c(1:n), correspondance = corresp2 )
+  print(rev)
+  ggplot(data = rev, aes(x="nombre_de_revolution", y="pourcentage de correspondance")) + geom_line()    # + geom_point() 
+    # + geom_smooth()  
+}#func
+
+MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
+```
+
+
+
+
+
+
+
+
+
+```{r include=FALSE recuit_smartStop_corresp}
 recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, pct){
 	
 	img0 = imageGenerator(forme, N)
@@ -832,84 +969,6 @@ recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, pct){
 
 #recuitSimule_smartStop("rectangle", 64, 0.25, 0, 0.66, 0.33, 90)
 ```
-
-
-
-```{r disp_smartStop}
-MCdeMC_smartStop=function(forme, N, p, B, beta, alpha, n, pct, k){
-  #fonction qui renvoie le nombre d'itérations réalisées pour atteindre un pourcentage de restauration pct donné
-  
-  tirage = c(1:k) #numérotation des tirages
-  iter = c(1,k) #stock des quantités d'itérations
-  
-  for( L in longueur){
-    print(L)
-    corresp[L] = recuitSimule_Vstar(forme, N, p, B, beta, alpha, n, L)
-  }#for
-  
-  rev <- data.frame(longeur_branche = c(1:k), correspondance = corresp )
-  print(rev)
-  ggplot(data = rev, aes(x="longeur des branches de voisinage",y="pourcentage de correspondance"))+geom_line()+geom_point() 
-    # + geom_smooth()  
-}#func
-
-MCdeMC_Vstar("rectangle", 64, 0.25, 0, 0.66, 0.33, 10^4, 10)
-```
-
-
-
-##comparaison des différents algorithmes vus jusqu'ici (A FAIRE)
-
-```{r mcMc}
-MCdeMC=function(pct, K, n, beta, N, p, alpha, stop){
-  #algo de montecarlo sur celui de recuit simul?, pour estimer la proba de correspodnance
-  #a pct% d'une image reconstitu?e, en fonction du nombre d'it?rations dans le recuitsimul?
-  P <- 0
-  E <- 0
-  corresp=rep(0,K) #conteneur des résultats
-  for (k in (1:K)) { #on fait K recuitSimul?
-    corresp[k] = recuitSimule(n, beta, N, p, alpha, stop)
-    if(corresp[k]>=pct){E <- E+1} #si le pourcentage de correspondance convient a la condition pct
-  }
-  
-  P <- E/K  #les recuitSimule sont a priori ind?pendants les uns des autres, et r?alis?s identiquement
-  print(P)
-  
-  plot(ecdf(corresp))
-
-  survie=function(x){1-ecdf(corresp)(x)}
-  x <- seq(min(corresp)-4,100,0.1)
-  #plot.Surv(corresp)
-  plot(x,survie(x),type="S")
-}
-```
-
-
-```{r MCdeMC_revo}
-MCdeMC_revo=function(n, beta, N, p, alpha, stop){
-  corresp2 = c(1,n)
-  revolution = c(1:n)
-  for( revo in(1:n)){ #on va tester le recuit en faisant varier le nombre de révolution de 1 à 50 (cas ou stop = 0)
-    corresp2[revo] = recuitSimuleFixe(revo, beta, N, p, alpha, stop)
-  }#for
-  rev <- data.frame(revo = c(1:n), correspondance = corresp2 )
-  print(rev)
-  ggplot(data = rev, aes(x="nombre_de_revolution", y="pourcentage de correspondance")) + geom_line()    # + geom_point() 
-    # + geom_smooth()  
-}#func
-
-MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
-```
-
-
-
-
-
-
-
-
-
-
 
 
 
