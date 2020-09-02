@@ -59,10 +59,12 @@ imageGenerator=function(forme, N){
       }}#for#for
   }#if
   
-  #----bandes verticales----
+  #----bandes horizontales----
   if(forme=="bande"){
     for (j in 1:(N/2)){ img[,2*j]=rep(1,N) }
   }#if
+  
+  #----bandes verticales----
   
   return(img)
 }#func

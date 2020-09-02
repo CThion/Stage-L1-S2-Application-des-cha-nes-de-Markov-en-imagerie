@@ -271,7 +271,7 @@ metropolisIsing=function(forme, N, p, B, beta, alpha, n){
 	image(1:N,1:N,img0)#image initiale
 	image(1:N+2,1:N+2,img3)#image bruitée
 	image(1:N+2,1:N+2,img1)#image restaurée
-	return(c("pourcentage de restauration", correspondance(img0,img1,N)))
+	return(c("pourcentage de restauration par metropolisIsing", correspondance(img0,img1,N)))
   
 }#func
 ```
@@ -296,7 +296,7 @@ metropolisIsing("losange", 64, 0.25, 0, 0.66, 0, 5*10^5)
 ```
 
 
-> **Le paramètre $\beta$** quant à lui détermine quel motifs seront les plus probables, entre des pixels de mêmes valeurs ($\beta > 0$) ou bien une alternance de pixel banc et noir ($\beta < 0$). Illustration:
+> **Le paramètre $\beta$** quant à lui détermine quel motifs seront les plus probables, entre des pixels de mêmes valeurs ($\beta > 0$) ou bien une alternance de pixel banc et noir ($\beta < 0$). Par exemple pour restaurer le rectangle, on constate bien que le $\beta$ positif est nettement préférable au $\beta$ négatif, du fait que le rectangle est une image d'un seul bloc. Illustration avec $\beta=+-0.66$
 
 ```{r, echo=FALSE}
 metropolisIsing("rectangle", 64, 0.25, 0, -0.66, 0.33, 10^5)
@@ -366,13 +366,13 @@ recuitSimule=function(forme, N, p, B, beta, alpha, n){
 	image(1:N,1:N,img0)#image initiale
 	image(1:N+2,1:N+2,img3)#image  bruitée
 	image(1:N+2,1:N+2,img1)#image restaurée
-	return(c("pourcentage de restauration", correspondance(img0,img1,N)))
+	return(c("pourcentage de restauration par recuitSimule", correspondance(img0,img1,N)))
   
 }#func
 ```
 
 
-> **Comparaison de performance** entre l'algorithme de recuit et celui de Metropolis. On ajoute la fonction de correspondance au deux pour comparer numériquement.
+> **Comparaison de performance** entre l'algorithme de recuit et celui de Metropolis. On ajoute la fonction de correspondance au deux pour comparer numériquement. On constate que la difference est quasiment nulle.
 
 ```{r include=FALSE}
 
@@ -385,37 +385,102 @@ metropolisIsing("rectangle", 64, 0.25, 0, 0.66, 0.33, 5*10^4)
 ```
 
 
-On peut comparer les performances entre le recuit simulé et l'algorithme de Metropolis en comparant le pourcentage de restauration des deux algorithmes, à paramètres et image bruitée identique.
-
-```{r}
-#peut être afficher le code, mais on pourrait juste donner le résultat, et les images.
-
-```
-
-
 # Estimation du paramètre $\beta$
 
-L'algorithme de recuit précédent marche plutôt bien pour des images pleines (rectangle, losange), mais si on éssaie de restaurer une image en plusieurs parties, une succession de bandes par exemple, ou un damier, l'algorithme ne fonctionne plus du tout. 
+L'algorithme de recuit précédent marche plutôt bien pour des images pleines (rectangle, losange), mais si on éssaie de restaurer une image en plusieurs parties, une succession de bandes par exemple, ou un damier, l'algorithme ne fonctionne plus du tout, peu importe le signe de $\beta$ : 
 
 ```{r}
-#metropolisIsing("ligne", 64, 1, 0, 1, 10, 10^4, 0.15)
+recuitSimule("bande", 64, 0.25, 0, 0.66, 0.33, 5*10^4)
+```
 
+```{r}
+recuitSimule("bande", 64, 0.25, 0, -0.66, 0.33, 5*10^4)
 ```
 
 
 ## Distinction des énergies verticales et horizontales
 
-Une idée que l'on peut avoir pour palier au problème est de séparer les calcules de potentiels entre la verticale et l'horizontale, en appliquant à chaque terme un facteur beta dédié à une orientation, $\beta_h$ pour l'horizontale et $\beta_v$ pour la verticale. On a ainsi: $U(x_s)= -x_s[\beta_h(x_d+x_g)+\beta_v(x_h+x_b)+\alpha x_s^0]$ avec $x_d,x_g,x_h,x_b$ les valeurs des pixels voisins du site s respectivement à droite, gauche, haut, bas. On modifie l'algorithme de recuit pour essayer:
+Une idée que l'on peut avoir pour palier au problème est de séparer les calcules de potentiels entre la verticale et l'horizontale, en appliquant à chaque terme un facteur $\beta$ dédié à une orientation. On modifie l'algorithme de recuit pour essayer, en changeant le chose comme suit:     
+
+- le calcule de voisinage est divisé en deux termes, les voisins sur l'horizontale Vh et ceux sur la verticale Vv.
+- Le terme concernant le voisinage dans le calcul de U est maintenant cindé en deux, avec deux $\beta$ différents, $\betah$ pour l'horizontale et $\betav$ pour la verticale. On a ainsi: $U(x_s)= -x_s[\beta_h(x_d+x_g)+\beta_v(x_h+x_b)+\alpha x_s^0]$ avec $x_d,x_g,x_h,x_b$ les valeurs des pixels voisins du site s respectivement à droite, gauche, haut, bas.
+- Les signes respectifs des deux $\beta$ sont calculés en faisant une analyse du signe globale de l'image sur l'orizontale et la verticale. Pour se faire on utilise la fonction ernergiehv(), qui réalise les somme des doubles produit des couple de pixels voisins, sur la verticale pour une somme et sur l'horizontale pour l'autre. Dans le cas des bandes horizontales par exemple, on voudrait avoir un $\beta_h>0$ et un $\beta_v<0$. En effet une ligne horizontale de l'image est constituée de pixel identiques, on veut donc que soit privilégié l'égalité de valeur entre $x_s$ et $x_t,\ t\in V_s$. Sur une ligne verticale, c'est l'inverse.
+
 
 ```{r}
+energiehv=function(img){
+  #fonction qui renvoie, dans un tuple, les sommes des doubles produits sur les lignes, et sur les colonnes. Le résultats sert au calcul des betah et betav
+  eligne=0
+  ecolonne=0
+  for (i in 1:N) {for (j in 1:(N-1)){eligne=eligne+img[i,j]*img[i,j+1]}}  #somme des doubles produits de ligne
+  for (j in 1:N) {for (i in 1:(N-1)){ecolonne=ecolonne+img[i,j]*img[i+1,j]}}  #somme des doubles produits de colonne
+  return(c(eligne,ecolonne))
+}#func
 
+restorStripe=function(forme, N, p, B, beta, alpha, n){
+  #fonction de recuit simulé modifiée pour restaurer une image en bandes horizontales noir et blanche alternées, grâce à une disjonction de cas entre l'horizontale et la verticale pour les calculs de potentiel.
+  
+  #----img0, initiale----
+  img0 = imageGenerator(forme, N)
+  
+  #----img1, avec bordure et bruit----
+  img1 = matrix(0, nrow=N+2, ncol=N+2)
+  img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+  img2 = img1 #tampon
+  img3 = img1 #bruit initiale
+  
+  #----calcul des deux beta, horizontal et vertical----
+  betah=2*energiehv(img1)[2]/(abs(energiehv(img1)[1])+abs(energiehv(img1)[2]))
+  betav=2*energiehv(img1)[1]/(abs(energiehv(img1)[1])+abs(energiehv(img1)[2]))
+
+	for(k in 1:n){ #n visites de pixels
+	  
+	  T <- 1/log(n)
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1))
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+    #----calcule du voisinage séparément entre horizontale (Vh) et verticale (Vv)
+    Vh <- img1[i-1,j]+img1[i+1,j]
+    Vv <- img1[i,j-1]+img1[i,j+1]
+	
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(betah*Vh + betav*Vv + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(betah*Vh + betav*Vv + alpha*img3[i,j])#potentiel candidat
+	
+		#----test----
+		dU = U2-U1
+		p <- exp(-dU/T)
+		
+		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#changé
+		else{img2[i,j] <- img1[i,j]} #inchangé
+	}#for
+  
+  
+  #----affichage----
+  img3 <- img3[2:(N+1),2:(N+1)] 
+  img1 <- img1[2:(N+1),2:(N+1)]
+  par(mfrow=c(1,3))
+  image(1:N,1:N,img0)#image initiale
+  image(1:N+2,1:N+2,img3)#image bruitée
+  image(1:N+2,1:N+2,img1)#image restaurée
+  
+  return(c("pourcentage de restauration par restorStripe",correspondance(img0,img1,N),"betah",betah,"betav",betav))
+  
+}#func
 ```
 
-
-On peut ainsi avoir des signes différents pour $\beta_h$ et $\beta_v$, et donc privilégier les lignes pour une direction et les alternances blanc/noir dans l'autre direction. Pour l'exemple précédent avec des lignes horizontales, on va choisir $\beta_h > 0$ pour privilégier les lignes sur l'horizontale et $\beta_v < 0$ pour privilégier l'alternance des pixels sur la verticale. CE N'EST PAS CA!!! CALCUL AUTOMATIQUE
+```{r}
+abc = imageGenerator("bande",64)
+energiehv(abc)
+```
 
 ```{r}
-#algo qui va bien
+restorStripe("bande",64,0.25,0,0.66,0.33,5*10^4)
 ```
 
 
