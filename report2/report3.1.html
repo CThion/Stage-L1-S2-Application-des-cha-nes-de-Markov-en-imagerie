@@ -1655,40 +1655,69 @@ summary {
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>L’objectif final de ce stage est de restaurer algorithmiquement des images binaires (assez simples) en noir et blanc ayant subi un bruitage. Pour cela on utilise les chaînes de Markov et des modèles énergétiques sur les images, principalement le modèle d’Ising et la mesure de Gibbs, afin de pouvoir estimer de manière probabiliste les meilleurs configurations pour la restauration. Les algorithmes ainsi constitués sont ensuite codés en R pour être éprouvés.</p>
-<p>Dans dans son état actuel, ce rapport abborde plusieurs question en lien avec le sujet mais est très très loin d’être complet. Une grande part des observations sont encore d’ordre empirique et nécessiteraient d’être approfondies sur le plan théorique.</p>
+<p>L’objectif final de ce stage est de restaurer algorithmiquement des images binaires (assez simples) en noir et blanc ayant subi un bruitage. Pour cela on utilise les chaînes de Markov et des modèles énergétiques sur les images, principalement le modèle d’Ising et la mesure de Gibbs, afin de pouvoir estimer de manière probabiliste les meilleures configurations pour la restauration. Les algorithmes ainsi constitués sont ensuite codés en R pour être testés.</p>
+<p>Dans dans son état actuel, ce rapport abborde plusieurs question en lien avec le sujet mais est très loin d’être complet. Une grande part des observations sont encore d’ordre empirique et nécessiteraient d’être approfondies sur le plan théorique. Pour autant on dispose déjà de plusieurs algorithmes fonctionnels permettant une restauration satisfaisante d’images simples.</p>
 <div id="modélisation-dune-image" class="section level2">
 <h2>Modélisation d’une image</h2>
 <p>Afin de pouvoir manipuler des images, on utilise les notations et appellations suivantes:<br />
 - x : une configuration d’une grille de pixels donnée (une image donc), parmis l’ensemble des configurations possibles <span class="math inline">\(\Omega\)</span>. On note X la variable aléatoire décrivant x.<br />
-- s : un pixel de l’image (on appelle aussi les pixels des “sites”), avec <span class="math inline">\(x_s\)</span> sa valeur. <span class="math inline">\(x_s\in E\)</span> l’ensemble des valeurs possibles possibles d’un pixel. E varie selon le type d’image (couleur, noir et blanc). Pour faciliter le travail, on ne manipule ici que des images en noir et blanc, donc <span class="math inline">\(E=\{-1,1\}\)</span>.On note <span class="math inline">\(X_s\)</span> la variable aléatoire décrivant <span class="math inline">\(x_s\)</span>.<br />
+- s : un pixel de l’image (on appelle aussi les pixels des “sites”), avec <span class="math inline">\(x_s\)</span> sa valeur. <span class="math inline">\(x_s\in E\)</span> l’ensemble des valeurs possibles possibles d’un pixel. E varie selon le type d’image (couleur, noir et blanc). Pour faciliter le travail, on ne manipule ici que des images en noir et blanc, donc <span class="math inline">\(E=\{-1,1\}\)</span>.On note <span class="math inline">\(X_s\)</span> la variable aléatoire décrivant les différents états de <span class="math inline">\(x_s\)</span>.<br />
 - <span class="math inline">\(X^s\)</span> :la variable aléatoire décrivant la configuration de l’image privée du pixel <span class="math inline">\(s\)</span>. <span class="math inline">\(x^s\)</span> est donc une fonfiguration x donnée, privée de s.<br />
-- <span class="math inline">\(V_s\)</span> : le voisinage de s, que l’on définira plus tard. - <span class="math inline">\(U\)</span> : le potentiel de x ou s, appelé aussi énergie, pour la valeur <span class="math inline">\(x_s\)</span>.</p>
+- <span class="math inline">\(V_s\)</span> : le voisinage de s, que l’on définira plus tard. - <span class="math inline">\(U\)</span> : le potentiel d’un pixel ou d’une image dans une configuration donnée, appelé aussi énergie.</p>
 </div>
-<div id="hypothèse-markovienne" class="section level2">
-<h2>Hypothèse markovienne</h2>
-<p>Considérons une image bruitée; une approche intuitive pour restaurer cette image consiste à restaurer chaque pixel un par un. A priori pour “deviner” quelle est la bonne valeur pour un pixel s de cette image, le mieux à faire est de regarder tous le reste de l’image <span class="math inline">\(x^s\)</span>, et à partir de <span class="math inline">\(x^s\)</span> essayer d’exprimer <span class="math inline">\(X_s\)</span> pour trouver quel valeur <span class="math inline">\(x_s\)</span> est la plus probable sachant <span class="math inline">\(x^s\)</span>.</p>
-<p>On fait cependant l’hypothèse que connaître <span class="math inline">\(V_s\)</span> le voisinage proche de s est équivalent à connaître tous le reste de l’image, soit <span class="math inline">\(P(X_s=x_s|\tilde X^s)=P(X_s=x_s|V_s)\)</span>. La définition du voisinage proche peut varier, par son étendu et sa forme; le voisinage que nous utiliserons presque toujours est simplement l’ensemble des quatre plus proches voisins de s sur la verticale et l’horizontale. On ne considère pas les diagonales.</p>
+<div id="le-modèle-dising" class="section level2">
+<h2>Le modèle d’Ising</h2>
+<p>Afin de calculer des probabilités sur les configurations possibles, on introduit la notion de potentiel U. Le potentiel d’une configuration de pixels, que ce soit l’image en entier ou localement un pixel de l’image et son voisinage, c’est une valeur numérique qui dépend des valeurs des pixels de la configuration.</p>
+<p>Il existe plusieurs modèle pour le calculer, et celui que l’on utilisera est le modèle d’Ising.</p>
+<p><span class="math display">\[U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s}\]</span></p>
+<p>Littéralement, le potentiel de s quand <span class="math inline">\(X=x_s\)</span> est la somme de la valeur des états de ses voisins multiplié par un facteur <span class="math inline">\(-\beta\)</span>, plus la somme des valeurs de tous les sites de l’image multiplié par un facteur <span class="math inline">\(-B\)</span>.</p>
+<p>On remarquera par la suite que le plus important ce sont les signes des facteurs, et non leur valeur absolue. En effet, un <span class="math inline">\(\beta &lt; 0\)</span> donnera <span class="math inline">\(U(x_s)\)</span> positif pour le cas où <span class="math inline">\(x_s\)</span> est globalement opposé à <span class="math inline">\(V_s\)</span>, et vice versa pour <span class="math inline">\(\beta &gt; 0\)</span>.<br />
+Le terme <span class="math inline">\(-B\sum_{s\in S}{x_s}\)</span> quant à lui n’a pas parru nécessaire pour le cas particulier de la restauration d’image, au vu de nos propre test et de la littérature sur le sujet. C’est pourquoi dans la majorité des algorithmes qui suivront, il est mis à zero.</p>
 </div>
 <div id="la-mesure-de-gibbs" class="section level2">
 <h2>La mesure de Gibbs</h2>
-<p>Pour calculer la probabilité qu’une configuration donnée corresponde à l’image restaurée <span class="math inline">\(P(X=x)\)</span>, on va utiliser la mesure de Gibbs.</p>
-<p>La mesure de Gibbs nous fournit une formule pour calculer, à partir du portentiel <span class="math inline">\(U(x_s)\)</span>, la probabilité <span class="math inline">\(P(X_s=x_s)\)</span>.</p>
-<p><span class="math display">\[P(X_s=x_s)=\frac{1}{Z}e^{-U(x_s)}\]</span> <span class="math display">\[P(X=x)=\frac{1}{Z}e^{-U(x)}\]</span><br />
-Avec <span class="math display">\[Z=\sum_{x\in \Omega}e^{-U(x)}\]</span> la fonction de partition.</p>
-<p>On voit ainsi que plus le potentiel d’un site pour une valeur donnée est grand, moins il est probable, et inversement.</p>
+<p>Maintenant, comment utiliser ce calcul de potentiel local pour calculer les probabilités qui nous interessent ? Considérons une image bruitée; la première idée qu’il vient pour retrouver la bonne image est d’essayer une par une toutes les configurations de <span class="math inline">\(\Omega\)</span>, mais ce n’est pas envisageable devant son cardinal. Rien que pour une image en noir et blanc on part déjà sur des puissances de deux, une petite image de sept cent vingt pixels aura <span class="math inline">\(2^720\)</span> configurations différentes…</p>
+<p>Pour autant, si on voulait essayer, il existe un outil, la mesure de Gibbs, qui permet justement de calculer la probabilité <span class="math inline">\(P(X=x)\)</span>.</p>
+<p><span class="math display">\[P(X=x)=\frac{1}{Z}e^{-U(x)}\]</span>.</p>
+<p>Cependant <span class="math display">\[Z=\sum_{x\in \Omega}e^{-U(x)}\]</span> représente une somme beaucoup trop grande pour être calculer en pratique, justement à cause de la taille de <span class="math inline">\(\Omega\)</span>.</p>
 </div>
-<div id="potentiel-dun-site-le-modèle-dising" class="section level2">
-<h2>Potentiel d’un site: Le modèle d’Ising</h2>
-<p>Le modèle d’Ising nous fournit une formule pour calculer le potentiel d’un pixel, pour un état donné, en fonction de son voisinage. On a:</p>
-<p><span class="math display">\[U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s}\]</span></p>
-<p>C’est le paramètre <span class="math inline">\(\beta\)</span> qui détermine le poid accordé au voisinage, et B celui de la valeur de s.</p>
-<p>On verra une de ses lqimites dans la partie sur l’estimation de <span class="math inline">\(\beta\)</span>.</p>
+<div id="lhypothèse-markovienne" class="section level2">
+<h2>L’hypothèse markovienne</h2>
+<p>Pour pallier au problème, une autre approche aussi intuitive pour restaurer cette image consiste à restaurer chaque pixel de l’image un par un, plutôt que considérer l’image dans son ensemble directement.</p>
+<p>A priori pour “deviner” quelle est la bonne valeur pour un pixel s, le mieux à faire est de regarder tous le reste de l’image <span class="math inline">\(x^s\)</span>, et à partir de <span class="math inline">\(x^s\)</span> essayer d’exprimer <span class="math inline">\(X_s\)</span> pour trouver quelle valeur <span class="math inline">\(x_s\)</span> est la plus probable sachant <span class="math inline">\(x^s\)</span>. Cependant, on fait l’hypothèse que connaître <span class="math inline">\(V_s\)</span> le voisinage proche de s est équivalent à connaître <span class="math inline">\(x^s\)</span>, soit <span class="math inline">\(P(X_s=x_s| X^s) = P(X_s=x_s|V_s)\)</span>. C’est l’hypothèse de Markov, et elle est assez naturelle quand on observe une image; un pixel blanc isolé avec autour de lui seulement des pixels rouges est une situation assez rare, les différentes parties de couleur uniforme d’une images étant souvent grande de plusieurs pixels, d’autant plus pour une image en noir et blanc dépourvue de dégradé. Faire l’hypothèse de Markov ne semble donc pas à priori ridicul. Et c’est grâce à cette hypothèse que l’on va pouvoir utiliser le modèle d’Ising pour le calcul de potentiel local.</p>
+<p>La définition du voisinage de s peut varier, par son étendu et sa forme; le voisinage que nous utiliserons presque toujours est simplement l’ensemble des quatre plus proches voisins de s sur la verticale et l’horizontale. On essaira par la suite de modifier ce voisinage.</p>
+</div>
+<div id="la-mesure-de-gibbs-locale" class="section level2">
+<h2>La mesure de Gibbs locale</h2>
+<p>On sait la chose suivante:<br />
+<span class="math display">\[P(X_s=x_s)=\frac{1}{Z}e^{-U(x_s)}\]</span> <span class="math display">\[P(X=x)=\frac{1}{Z}e^{-U(x)}\]</span><br />
+Avec <span class="math display">\[Z=\sum_{x\in \Omega}e^{-U(x)}\]</span> la fonction de partition.</p>
+<p><span class="math display">\[
+\begin{aligned}
+    P(X_s= x_s | X^s= x^s)
+        &amp;= \dfrac{P(X_s= x_s, X^s= x^s)}{P(X^s= x^s)}  \text{  formule de Bayes}\\
+        &amp;= \dfrac{P(X= x)}{P(X^s= x^s)}\\
+        &amp;= \dfrac{e^{-U(x)}}{e^{-U(x^s)} }\\    
+        &amp;\ \\   
+    \text{On a  } U(x^s)
+        &amp;= U_{\bar{s}}(x) = \sum_{c\in C, s\notin c}{U_c(x)}\\
+        &amp;\ \\
+    \text{Et  } U(x) 
+        &amp;= \sum_{c\in C}{U_c(x)}\\
+        &amp;= \sum_{c\in C, s\in c}{U_c(x)} + \sum_{c\in C, s\notin c}{U_c(x)}\\
+        &amp;= U_s(x_s,V_s) + U_{\bar{s}}(x) \\
+        &amp;\ \\
+    Donc, P(X_s= x_s | X^s= x^s)
+        &amp;=\dfrac{exp(-U_s(x_s,V_s) - U_{\bar{s}}(x))}  {exp(-U_{\bar{s}}(x))}\\
+        &amp;=\dfrac{exp(-U_s(x_s,V_s)}{exp(-U_{\bar{s}}(x) + U_{\bar{s}}(x))}\\
+        &amp;=exp(-U_s(x_s,V_s))   \text{   ce qui justifie l&#39;hypthère markovienne}
+\end{aligned}
+\]</span></p>
+<p>OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO</p>
 </div>
 <div id="adapation-à-la-restauration-dimage" class="section level2">
 <h2>Adapation à la restauration d’image</h2>
-<p>Ainsi avec le modèle d’Ising et la mesure de Gibbs, on pourrait essayer de restaurer une image en utilisant un algorithme de Montecarlo. En partant de l’image de départ, on réalise</p>
-<p>Pour la restauration d’image, on comprend qu’il manque quelque chose au modéle d’Ising. Tel qu’il est, avec un algorithme de metropolis, notre image tendrait irrémédiablement vers l’image blanche, qui est bien l’image de plus faible énergie dans l’absolu. Il nous faut passer à la probabilité conditionnée par la configuration de départ que l’on note <span class="math inline">\(X^0\)</span>: <span class="math inline">\(P(X_s=x_s|X^0,V_s)\)</span>. Pour se faire on ajoute un paramètre pour ternir compte de l’image bruitée de départ, de sorte que la configuration de plus basse énergie ne soit plus l’image blanche mais bien l’image que l’on souhaite restaurer. Ainsi on modifie <span class="math inline">\(U(x_s)\)</span> par: <span class="math display">\[ U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s} -\alpha x_s^0\]</span> avec <span class="math inline">\(x_s^0\)</span> la valeur du site s de l’image bruitée de départ.</p>
+<p>Pour la restaurer une image, on comprend qu’il manque quelque chose au modèle d’Ising. Tel qu’il est, avec un algorithme de metropolis, notre image tendrait irrémédiablement vers l’image blanche, qui est bien l’image de plus faible énergie dans l’absolu. Il nous faut passer à la probabilité conditionnée par la configuration de départ que l’on note <span class="math inline">\(X^0\)</span>: <span class="math inline">\(P(X_s=x_s|X^0,V_s)\)</span>. Pour se faire on ajoute un paramètre pour ternir compte de l’image bruitée de départ, de sorte que la configuration de plus basse énergie ne soit plus l’image blanche mais bien l’image que l’on souhaite restaurer. Ainsi on modifie <span class="math inline">\(U(x_s)\)</span> par: <span class="math display">\[ U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s} -\alpha x_s^0\]</span> avec <span class="math inline">\(x_s^0\)</span> la valeur du site s de l’image bruitée de départ.</p>
 </div>
 </div>
 <div id="des-algorithmes-pour-la-restauration-dimage" class="section level1">

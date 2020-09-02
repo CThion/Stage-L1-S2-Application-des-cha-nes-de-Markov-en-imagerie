@@ -13,6 +13,28 @@ library(ggplot2)
 #Modélisation d'une image
 ##hypothèse makovienne
 ##Mesure de Gibbs
+\[
+\begin{aligned}
+	P(X_s= x_s | X^s= x^s)
+		&= \dfrac{P(X_s= x_s, X^s= x^s)}{P(X^s= x^s)}  \text{  formule de Bayes}\\
+		&= \dfrac{P(X= x)}{P(X^s= x^s)}\\
+		&= \dfrac{e^{-U(x)}}{e^{-U(x^s)} }\\	
+		&\ \\ 	
+	\text{On a  } U(x^s)
+		&= U_{\bar{s}}(x) = \sum_{c\in C, s\notin c}{U_c(x)}\\
+		&\ \\
+	\text{Et  } U(x) 
+		&= \sum_{c\in C}{U_c(x)}\\
+		&= \sum_{c\in C, s\in c}{U_c(x)} + \sum_{c\in C, s\notin c}{U_c(x)}\\
+		&= U_s(x_s,V_s) + U_{\bar{s}}(x) \\
+		&\ \\
+	Donc, P(X_s= x_s | X^s= x^s)
+		&=\dfrac{exp(-U_s(x_s,V_s) - U_{\bar{s}}(x))}  {exp(-U_{\bar{s}}(x))}\\
+		&=\dfrac{exp(-U_s(x_s,V_s)}{exp(-U_{\bar{s}}(x) + U_{\bar{s}}(x))}\\
+		&=exp(-U_s(x_s,V_s))   \text{   ce qui justifie l'hypthère markovienne}
+\end{aligned}
+\]
+
 ##Potentiel d'un site: le modèle d'Ising
 ##Adaptation à la restauration d'image
 

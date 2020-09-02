@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.21)  10 JUL 2020 10:27
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2019.12.21)  2 SEP 2020 10:11
 entering extended mode
 **./report2-annote.tex
 (report2-annote.tex
@@ -19,7 +19,8 @@ File: size10.clo 2019/10/25 v1.4k Standard LaTeX file (size option)
 \abovecaptionskip=\skip41
 \belowcaptionskip=\skip42
 \bibindent=\dimen102
-) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/lm\lmodern.sty
+)
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/lm\lmodern.sty
 Package: lmodern 2009/10/30 v1.6 Latin Modern Fonts
 LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
 (Font)                  OT1/cmr/m/n --> OT1/lmr/m/n on input line 22.
@@ -53,8 +54,8 @@ LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
 (Font)                  OT1/cmr/bx/it --> OT1/lmr/bx/it on input line 37.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
 (Font)                  OT1/cmtt/m/n --> OT1/lmtt/m/n on input line 38.
-) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/amsfonts\amssymb.st
-y
+)
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/amsfonts\amssymb.sty
 Package: amssymb 2013/01/14 v3.01 AMS font symbols
 
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/amsfonts\amsfonts.sty
@@ -65,21 +66,25 @@ Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
 LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
 LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 (Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
-)) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/amsmath\amsmath.st
-y
+))
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/amsmath\amsmath.sty
 Package: amsmath 2019/11/16 v2.17d AMS math features
 \@mathmargin=\skip43
+
 For additional information on amsmath, use the `?' option.
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/amsmath\amstext.sty
 Package: amstext 2000/06/29 v2.01 AMS text
+
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/amsmath\amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0 generic functions
 \@emptytoks=\toks15
 \ex@=\dimen103
-)) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/amsmath\amsbsy.sty
+))
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/amsmath\amsbsy.sty
 Package: amsbsy 1999/11/29 v1.2d Bold Symbols
 \pmbraise@=\dimen104
-) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/amsmath\amsopn.sty
+)
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/amsmath\amsopn.sty
 Package: amsopn 2016/03/08 v2.02 operator names
 )
 \inf@bad=\count88
@@ -119,23 +124,28 @@ LaTeX Font Info:    Redeclaring font encoding OMS on input line 734.
 \mathdisplay@stack=\toks19
 LaTeX Info: Redefining \[ on input line 2858.
 LaTeX Info: Redefining \] on input line 2859.
-) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/generic/iftex\ifxetex.sty
+)
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/generic/iftex\ifxetex.sty
 Package: ifxetex 2019/10/25 v0.7 ifxetex legacy package. Use iftex instead.
+
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/generic/iftex\iftex.sty
 Package: iftex 2019/11/07 v1.0c TeX engine tests
-)) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/generic/iftex\ifluatex.s
-ty
+))
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/generic/iftex\ifluatex.sty
 Package: ifluatex 2019/10/25 v1.5 ifluatex legacy package. Use iftex instead.
 ) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/base\fontenc.sty
 Package: fontenc 2018/08/11 v2.0j Standard LaTeX package
+
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/base\t1enc.def
 File: t1enc.def 2018/08/11 v2.0j Standard LaTeX file
 LaTeX Font Info:    Redeclaring font encoding T1 on input line 48.
-)) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/base\inputenc.sty
+))
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/base\inputenc.sty
 Package: inputenc 2018/08/11 v1.3c Input encoding file
 \inpenc@prehook=\toks20
 \inpenc@posthook=\toks21
-) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/base\textcomp.sty
+)
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/base\textcomp.sty
 Package: textcomp 2018/08/11 v2.0j Standard LaTeX package
 Package textcomp Info: Sub-encoding information:
 (textcomp)               5 = only ISO-Adobe without \textcurrency
@@ -149,10 +159,12 @@ Package textcomp Info: Sub-encoding information:
 (textcomp)             Family '?' is the default used for unknown fonts.
 (textcomp)             See the documentation for details.
 Package textcomp Info: Setting ? sub-encoding to TS1/1 on input line 79.
+
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/base\ts1enc.def
 File: ts1enc.def 2001/06/05 v3.0e (jk/car/fm) Standard LaTeX file
 Now handling font encoding TS1 ...
 ... processing UTF-8 mapping file for font encoding TS1
+
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/base\ts1enc.dfu
 File: ts1enc.dfu 2019/07/11 v1.2j UTF-8 support for inputenc
    defining Unicode char U+00A2 (decimal 162)
@@ -291,10 +303,12 @@ Package textcomp Info: Setting pplx sub-encoding to TS1/3 on input line 406.
 Package textcomp Info: Setting pplj sub-encoding to TS1/3 on input line 407.
 Package textcomp Info: Setting ptmx sub-encoding to TS1/4 on input line 408.
 Package textcomp Info: Setting ptmj sub-encoding to TS1/4 on input line 409.
-) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/upquote\upquote.sty
+)
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/upquote\upquote.sty
 Package: upquote 2012/04/19 v1.3 upright-quote and grave-accent glyphs in verba
 tim
-) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/xcolor\xcolor.sty
+)
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/xcolor\xcolor.sty
 Package: xcolor 2016/05/11 v2.12 LaTeX color extensions (UK)
 
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/graphics-cfg\color.cf
@@ -336,7 +350,8 @@ Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
 Package pdftexcmds Info: \pdf@primitive is available.
 Package pdftexcmds Info: \pdf@ifprimitive is available.
 Package pdftexcmds Info: \pdfdraftmode found.
-) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/graphics\keyval.sty
+)
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/graphics\keyval.sty
 Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
 \KV@toks@=\toks22
 )
@@ -355,21 +370,22 @@ Package: kvdefinekeys 2016/05/16 v1.4 Define keys (HO)
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/generic/pdfescape\pdfescape
 .sty
 Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
-) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/oberdiek\hycolor.st
-y
+)
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/oberdiek\hycolor.sty
 Package: hycolor 2016/05/16 v1.8 Color options for hyperref/bookmark (HO)
 
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/oberdiek\xcolor-patch
 .sty
 Package: xcolor-patch 2016/05/16 xcolor patch
+
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/oberdiek\hopatch.sty
 Package: hopatch 2016/05/16 v1.3 Wrapper for package hooks (HO)
 )))
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/letltxmacro\letltxmac
 ro.sty
 Package: letltxmacro 2019/12/03 v1.6 Let assignment for LaTeX macros (HO)
-) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/oberdiek\auxhook.st
-y
+)
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/oberdiek\auxhook.sty
 Package: auxhook 2016/05/16 v1.4 Hooks for auxiliary files (HO)
 )
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/kvoptions\kvoptions.s
@@ -379,6 +395,7 @@ Package: kvoptions 2019/11/29 v3.13 Key value format for package options (HO)
 \@linkdim=\dimen112
 \Hy@linkcounter=\count100
 \Hy@pagecounter=\count101
+
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/hyperref\pd1enc.def
 File: pd1enc.def 2019/11/10 v7.00c Hyperref: PDFDocEncoding definition (HO)
 Now handling font encoding PD1 ...
@@ -394,7 +411,7 @@ Package: intcalc 2016/05/16 v1.2 Expandable calculations with integers (HO)
 File: hyperref.cfg 2002/06/06 v1.2 hyperref configuration of TeXLive
 )
 Package hyperref Info: Option `unicode' set `true' on input line 4409.
-(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/hyperref\puenc.def
+ (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/hyperref\puenc.def
 File: puenc.def 2019/11/10 v7.00c Hyperref: PDF Unicode definition (HO)
 Now handling font encoding PU ...
 ... no UTF-8 mapping file for font encoding PU
@@ -413,6 +430,7 @@ Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
 LaTeX Info: Redefining \url on input line 5147.
 \XeTeXLinkMargin=\dimen113
+
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/generic/bitset\bitset.sty
 Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
 
@@ -443,6 +461,7 @@ Package: atbegshi 2019/12/05 v1.19 At begin shipout hook (HO)
 \c@Hfootnote=\count107
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
+
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/latex/hyperref\hpdftex.def
 File: hpdftex.def 2019/11/10 v7.00c Hyperref driver for pdfTeX
 
@@ -471,7 +490,8 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 Package: geometry 2018/04/16 v5.8 Page Geometry
 (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/generic/iftex\ifpdf.sty
 Package: ifpdf 2019/10/25 v3.4 ifpdf legacy package. Use iftex instead.
-) (C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/generic/iftex\ifvtex.sty
+)
+(C:\Users\geeka\Desktop\LATEX\Latex_instalation\tex/generic/iftex\ifvtex.sty
 Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
 )
 \Gm@cnth=\count110
@@ -510,7 +530,10 @@ Enter file name:
 <read *> 
          
 l.52 \definecolor
-                 {shadecolor}{RGB}{248,248,248} 
+                 {shadecolor}{RGB}{248,248,248}
+*** (cannot \read from terminal in nonstop modes)
+
+ 
 Here is how much of TeX's memory you used:
  10505 strings out of 492449
  146969 string characters out of 3120952
@@ -519,10 +542,4 @@ Here is how much of TeX's memory you used:
  4403 words of font info for 15 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
  39i,0n,37p,241b,271s stack positions out of 5000i,500n,10000p,200000b,50000s
-
 !  ==> Fatal error occurred, no output PDF file produced!
-
-
-! Unfortunately, the package microtype could not be installed.
-! Please check the log file:
-! C:\Users\geeka\AppData\Local\MiKTeX\2.9\miktex\log\pdflatex.log
