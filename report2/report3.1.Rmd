@@ -87,38 +87,45 @@ Pour restaurer des images à l'aide des outils que l'on a vu, on peut utiliser l
 ### L'algorithme de métropolis
 
 **étape 1** On choisit un site s de l'image. La façon de choisir est libre du moment que l'on est assuré de parcourir tous les sites de l'image.  
-**étape 2** On tire au hasard une nouvelle valeur $\lambda$ dans $E$ privé de $x_s^0$  
+**étape 2** On tire au hasard une nouvelle valeur $\lambda$ dans $E$ privé de $x_s^0$   
 **étape 3** On calcule les potentiels $U(x_s)$ et $U(\lambda)$  
-**étape 4** On calcule le rapport $P(X_s=x_s)/P(X_s=\lambda)=exp(U(x_s)-U(\lambda))$
-**étape 5** On tire un nombre entre zero et un pour simuler la loi. S'il est inférieur au rapport de Metropolis, on refuse le changement; s'il est supérieur ou égale on l'accept.
+**étape 4** On calcule le rapport $P(X_s=x_s)/P(X_s=\lambda)=exp(U(x_s)-U(\lambda))$  
+**étape 5** On tire un nombre entre zero et un pour simuler la loi $exp(U(x_s)-U(\lambda))$. S'il est inférieur au rapport de Metropolis, on refuse le changement; s'il est supérieur ou égale on l'accept.  
+
+### L'algorithme de Gibbs
+**étape 1** Tirage d'un site comme pour Metropolis  
+**étape 2** Calcul des potentiel pour toutes les valeurs de E  
+**étape 3** Calcul de la probabilité conditionnelle locale  $P(X_s=x_s|V_s)=\frac{-exp(U(x_s|V_s))}{\sum_{\lambda \in E}exp(-U(\lambda|V_s))}$
+**étape 4** Simulation de la loi ainsi faite, par tirage aléatoire, et mise à jour du site
+
 
 ## Boite à outils
 
-Pour faciliter la manipulation des algorithmes, on crée quelques fonctions utiles.  
-- bruiteur() prend une image en argument et la retourne bruitée de la manière souhaitée. Pour l'instant on n'a étudié qu'un bruit consistant en une inversion de valeur des pixels avec la probabilité donnée en argument (souvent $p=0.3$). À l'avenir on pourra tester les performances de nos algorithmes pour des bruits différents  
-- imageGenerator() regroupe les différentes images que l'on bruitera avec bruiteur() pour ensuite essayer de les restaurer.  
+Avant de commencer à coder ces algorithmes, on a décider de créer quelques fonctions utiles pour faciliter la manipulation du code, et son amélioration.
+
+- **bruiteur()** prend une image en argument et la retourne bruitée de la manière souhaitée. Pour l'instant on n'a étudié qu'un bruit consistant en une inversion de valeur des pixels avec la probabilité d'inversion p donnée en argument (souvent $p=0.25$). À l'avenir on pourra tester les performances de nos algorithmes pour des bruits différents, il suffira d'ajouter quelques lignes de code à cette fonction.  
+- **imageGenerator()** regroupe les différentes images que l'on bruitera avec bruiteur() pour ensuite essayer de les restaurer. Logiquement un logiciel de restauration ne fait pas l'offre et la demande dans ses images, mais c'est beaucoup plus simple pour nous de fabriquer et bruiter les images que l'on veut restaurer, pour travailler les algorithmes. Comme image on a pour l'instant le rectangle, le losange, et une image constituée d'une alternance de bandes noire et blanche horizontales. Là encore de nouvelles formes peuvent être ajoutées plus tard à la fonction pour pouvoir les tester dans les différents algorithmes.  
+- **correspondance()** permet de calculer de pourcentage de correspondance entre deux image données en arguments, donc dans notre cas l'image bruitée et l'image restaurée. Cela permet d'évaluler numériquement l'efficacité des algorithmes et de faire des comparaisons. 
   
-L'avantage d'utiliser des fonctions est que l'on pourra facilement ajouter de nouvelles valeurs pour effectuer des tests, sans avoir à modifier les algorithmes directement. 
 
 ```{r boiteOutils}
 bruiteur=function(image, br, p){
-  
-  imgBr <- image #future image bruitée
-  N <- dim(image)[1] #longueur de l'image
+  #fonction qui revoit l'image donnée en argument par la même image mais bruitée par la méthode demandée "br"
+  imgBr <- image
+  N <- dim(image)[1]
   bruit <- 0
   p <- 0.15
   #----binomiale----
   if(br== "rbinom"){bruit <- matrix(2*rbinom(N^2,1,1-p)-1,nrow=N,ncol=N)}
   
-  #----poisson----
-  
+  #----poisson----      #futurs bruitages différents possibles
   #----normale----
   
   imgBr <- image*bruit
   return(imgBr)
 }#func
 
-
+#=====================================================================================================================
 
 imageGenerator=function(forme, N){
   #fonction permettant de générer une matrice-image de forme choisie, et de taille N*N
@@ -145,8 +152,21 @@ imageGenerator=function(forme, N){
   return(img)
 }#func
 
+#=====================================================================================================================
 
-
+correspondance=function(img0, img1, N){
+  #fonction qui renvoit le pourcentage de correspondance entre deux images de mêmes tailles.
+	
+	nok <- 0 #nombre de pixels divergents
+	
+	for (i in (1:N)){
+		for (j in (1:N)){
+			if(img0[i,j] != img1[i,j]){nok <- nok+1}
+		}#for
+	}#for
+	correspondance <- ((N^2)-nok)/(N^2)*100
+	return(correspondance)
+}#func
 ```
 
 Deux algorithmes existent pour simuler un champ de Markov.
