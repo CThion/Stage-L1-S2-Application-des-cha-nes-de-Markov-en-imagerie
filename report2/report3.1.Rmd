@@ -46,7 +46,7 @@ Pour autant, si on voulait essayer, il existe un  outil, la mesure de Gibbs, qui
 
 \[P(X=x)=\frac{1}{Z}e^{-U(x)}\].  
 
-Cependant \[Z=\sum_{x\in \Omega}e^{-U(x)}\] représente une somme beaucoup trop grande pour être calculer en pratique, justement à cause de la taille de $\Omega$.
+Cependant $Z=\sum_{x\in \Omega}e^{-U(x)}$ représente une somme beaucoup trop grande pour être calculer en pratique, justement à cause de la taille de $\Omega$.
 
 ## L'hypothèse markovienne
 
@@ -78,7 +78,7 @@ OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 
 ## Adapation à la restauration d'image
 
-Pour la restaurer une image, on comprend qu'il manque quelque chose au modèle d'Ising. Tel qu'il est, l'image bruitée initiale n'entre pas en ligne de compte pour le calcul du pententiel locale. Et étant donnée que c'est la configuration de plus basse énergie qui est la plus probable, avec ce modèle toute image bruitée devrait logiquement être restaurée en une l'image blanche ou un damier de pixel, qui sont bien les configurations de plus basse énergie selon le signe de $\beta$. Il faut donc ajouter un terme au modèle d'Ising pour que l'image bruitée initiale entre en ligne de compte. On pose: $ U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s} -\alpha x_s^0$ avec $x_s^0$ la valeur du site s de l'image bruitée initiale, et $\alpha$ le facteur qui déterminera le poid que l'on accord à la configuration initiale.
+Pour la restaurer une image, on comprend qu'il manque quelque chose au modèle d'Ising. Tel qu'il est, l'image bruitée initiale n'entre pas en ligne de compte pour le calcul du pententiel locale. Et étant donnée que c'est la configuration de plus basse énergie qui est la plus probable, avec ce modèle toute image bruitée devrait logiquement être restaurée en une l'image blanche ou un damier de pixel, qui sont bien les configurations de plus basse énergie selon le signe de $\beta$. Il faut donc ajouter un terme au modèle d'Ising pour que l'image bruitée initiale entre en ligne de compte. On pose: $U(x_s) = -\beta\  x_s\sum_{t\in V_s}{x_t}-B\ \sum_{s\in S}{x_s}-\alpha\ x_s^0$ avec $x_s^0$ la valeur du site s de l'image bruitée initiale, et $\alpha$ le facteur qui déterminera le poid que l'on accord à la configuration initiale.
 
 # Des algorithmes pour la restauration d'image: Gibbs et Metropolis
 
@@ -99,7 +99,8 @@ Pour restaurer des images à l'aide des outils que l'on a vu, on peut utiliser l
 **étape 4** Simulation de la loi ainsi faite, par tirage aléatoire, et mise à jour du site
 
 
-## Boite à outils
+## Codage en R
+### Boite à outils
 
 Avant de commencer à coder ces algorithmes, on a décider de créer quelques fonctions utiles pour faciliter la manipulation du code, et son amélioration.
 
@@ -125,7 +126,7 @@ bruiteur=function(image, br, p){
   return(imgBr)
 }#func
 
-#=====================================================================================================================
+#================================================================================================================
 
 imageGenerator=function(forme, N){
   #fonction permettant de générer une matrice-image de forme choisie, et de taille N*N
@@ -152,7 +153,7 @@ imageGenerator=function(forme, N){
   return(img)
 }#func
 
-#=====================================================================================================================
+#================================================================================================================
 
 correspondance=function(img0, img1, N){
   #fonction qui renvoit le pourcentage de correspondance entre deux images de mêmes tailles.
@@ -169,92 +170,220 @@ correspondance=function(img0, img1, N){
 }#func
 ```
 
-Deux algorithmes existent pour simuler un champ de Markov.
 
-## L'échantilloneur de Gibbs
+### L'algorithme de Gibbs
 
+On propose un code en R pour l'algorithme de Gibbs. Des racourcis ont étés possibles du fait que s ne puisse prendre que deux états en tout. Si on voulait aujour passre à des images en nuance de gris ou même en couleur, il faudrait faire des modifications.
 
 ```{r A_1_gibbsIsing}
-#algo de GibbsIsing
-#voisinage à la main
-#pas de correspondance
-
-
+GibbsIsing = function(forme, N, p, B, beta, alpha, n){
+  # fonction qui réalise l'échantilloneur de Gibbs, sur le modèle d'Ising, avec une image img1 bruitée à partir de img0, afin de restaurer cette image.
+  
+  #----création de l'image parfaite img0----
+  img0 = imageGenerator(forme, N)
+  #----création de l'image bruitée, avec ajout d'une bordure.
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p) 
+	img2 = img1 #image tampon
+  img3 = img1 #mémoire du bruit initiale
+  
+  for(k in 1:n){ #n parcours de pixels
+    #----choix d'un site au hasard---
+    i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1 pour éviter le contour
+    j <- 1+ceiling(N*runif(1))
+    
+    #----changement de valeur au site choisi sur img2 (1 ou -1) pour représenter E en entier avec img1 et img2 (cas d'une image en noir et blanc)----
+    img2[i,j] = -img1[i,j]
+    
+    #----voisinage----
+    v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+    
+    #----potentiels (modele d'ising)----
+    U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])
+    U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])
+    
+    #----calcule de la proba conditionnelle locale----
+    P <- exp(-U2)/(exp(-U1)+exp(-U2))
+    
+    if(runif(1)<= P){img1[i,j]= img2[i,j]}#on change la valeur du pixel
+    else{img2[i,j] <- img1[i,j]} #on garde la valeur du pixel
+  }#for
+  
+  #----affichage----
+  par(mfrow=c(1,3))
+  
+  img3 <- img3[2:(N+1),2:(N+1)] #on retire les contours
+	img1 <- img1[2:(N+1),2:(N+1)]
+  
+	image(1:N,1:N,img0)#image initiale
+	image(1:N+2,1:N+2,img3)#image bruitée
+	image(1:N+2,1:N+2,img1)#image restaurée
+}
 ```
 
 
-## L'algorithme de Metropolis
-
-
-L'algorithme que l'on va principalement utiliser pour la restauration d'image s'appelle l'algorithme de Metropolis.
-
-A l'itération n:  
-1 -  tirage d'un site, aléatoirement ou non, l'important étant que tous les sites puissent être visités. Pour la suite on choisira majoritairement un parcours aléatoire de l'image suivant une loi uniforme sur le nombre de pixels, mais on pourra aussi choisir un parcours systématisé ligne par ligne.  
-2 -  tirage d'un état $\lambda$ de E différent de $x_s$ l'état actuel du site tiré. Dans notre cas $E=\{-1, 1\}$, donc on choisira systématiquement le complémentaire de $x_s$ dans E.  
-3 -  calcul des deux potentiels $U(x_s)$ et $U(\lambda)$, pour la valeur actuelle de $x_s$ et pour la valeur tirée, donc ici systématiquement $U(-1)$ et $U(1)$.  
-4 -  calcul de la probabilité $P(x_s=\lambda) = e^{U(\lambda)-U(x_s)}$.  
-5 -  tirage aléatoire selon la loi uniforme sur $[0,1]$. Si le tirage est inférieure à la probabilité précédemment calculée,$x_s$ prend la valeur $\lambda$, sinon $x_s$ reste inchangé.  
+### L'algorithme de Metropolis
 
 En R voici une manière de coder cet algorithme :
 
 ```{r A_2_metropolisIsing_BASIQUE}
-#BASIQUE
-#tirage == aléatoire
-#voisinage == à la main
-#correspondance ==  SANS
+metropolisIsing=function(forme, N, p, B, beta, alpha, n){
+	#fonction qui réalise l'algorithme de Metropolis sur une image bruitée img1 (à partir de img0), pour restaurer cette image.
+	
+	#----création de l'image parfaite img0----
+	img0 = imageGenerator(forme, N)
+	
+	#----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+
+	for(k in 1:n){ #n visites de pixels
+	
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage----
+		v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+	
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----proba conditionnelle locale----
+		dU = U2-U1
+		p <- exp(-dU)
+		
+		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#on change la valeur du pixel
+		else{img2[i,j] <- img1[i,j]} #on garde la valeur du pixel
+	}#for
+	
+	#----affichage----
+	img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
+	img1 <- img1[2:(N+1),2:(N+1)]
+	
+	par(mfrow=c(1,3))
+	image(1:N,1:N,img0)#image initiale
+	image(1:N+2,1:N+2,img3)#image bruitée
+	image(1:N+2,1:N+2,img1)#image restaurée
+	return(c("pourcentage de restauration", correspondance(img0,img1,N)))
+  
+}#func
 ```
+
+
+## Test du code et observation et résultats
 
 > **Le paramètre alpha** détermine l'importance donnée à l'image bruitée initiale dans la probabilité conditionnelle $P(X_s=x_s|V_s)$.  
-- Si alpha est trop grand devant $\beta$, les valeurs les plus probables seront toujours celles de l'image bruitée, et donc l'algorithme ne fera rien.
-
-metropolisIsing avec $\alpha = 5$ et $\beta = 1$
+- Si alpha est trop grand devant $\beta$, les valeurs les plus probables seront toujours celles de l'image bruitée, et donc l'algorithme ne fera rien. Un exemple avec $\alpha = 5$ et $\beta = 1$, on voit en effet que l'image restaurée (à droite) n'est presque pas différente de celle bruitée:
 
 ```{r alpha_grand, echo=FALSE}
-#metropolisIsing("rectangle", 64, 1, 0, 5, 10^5, 0.3)
+metropolisIsing("rectangle", 64, 0.25, 0, 0.66, 5, 10^5)
 ```
 
 
-> S'il est trop petit voir nul, la configuration initiale va être oubliée itération après itération, et on va tendre vers l'image blanche, soit donc la configuration d'énergie minimale parmi toutes les configurations possibles. 
+> Si $\alpha$ est trop petit voir nul, la configuration initiale va être oubliée itération après itération (on retombe sur le modèle d'Ising initial), et on va tendre vers l'image blanche, peu importe l'image de départ. Exemple avec $\alpha=0$, pour deux images différentes: on voit bien que les formes commencent à être détruites.
 
-metropolisIsing avec $\alpha = 0$
 
 ```{r alpha_nul, echo=FALSE}
-#metropolisIsing("rectangle", 64, 1, 0, 0, 2*10^5, 0.3)
+metropolisIsing("rectangle", 64, 0.25, 0, 0.66, 0, 5*10^5)
+metropolisIsing("losange", 64, 0.25, 0, 0.66, 0, 5*10^5)
 ```
 
 
-> **Le paramètre $\beta$** quant à lui détermine quel motifs seront les plus probables, entre des pixels de mêmes valeurs ($\beta > 0$) ou bien une alternance de pixel banc et noir ($\beta < 0$).
+> **Le paramètre $\beta$** quant à lui détermine quel motifs seront les plus probables, entre des pixels de mêmes valeurs ($\beta > 0$) ou bien une alternance de pixel banc et noir ($\beta < 0$). Illustration:
 
-
-metropolisIsing avec $\beta > 0$
 ```{r, echo=FALSE}
-#metropolisIsing("rectangle", 64, 1, 0, 0.6, 10^5, 0.3)
+metropolisIsing("rectangle", 64, 0.25, 0, -0.66, 0.33, 10^5)
 ```
 
 
-metropolisIsing avec $\beta < 0$
 ```{r, echo=FALSE}
-#metropolisIsing("rectangle", 64, -1, 0, 0.6, 10^5, 0.3)
+metropolisIsing("rectangle", 64, 0.25, 0, 0.66, 0.33, 10^5)
 ```
 
 
-> **Le calcul du voisinage** se fait assez facilement en R, on regarde la valeur des quatre pixels à gauche à droit en haut et en bas du pixel. Plus tard on utilisera la fonction Vstar(), qui permet d'étendre ce voisinage.
+> **Le calcul du voisinage** se fait assez facilement en R, on regarde la valeur des quatre pixels à gauche à droit en haut et en bas du pixel. Plus tard on utilise la fonction Vstar(), qui permet en plus d'étendre ce voisinage.
 
 > **Le parcours des sites_** peut se faire soit aléatoirement, soit systématiquement (ligne par ligne par exemple).
 
 
 ## Le recuit simulé
 
-La question que l'on se pose: pourquoi modifier les paramètres à chaque itération permet de converger presque surement vers le minimum global d'énergie.
+Il existe un autre algorithme sur la base de l'algorithme de métropolis, plus performant, et que l'on retrouve imanquablement dans la littérature sur le sujet, c'est l'algorithme de recuit simulé. Par rapport à Metropolis, on introduit une "température", c'est à dire un paramètre T qui va intervenir dans le calcul de la probabilité comme $P_T(X=x)=\frac{exp(\frac{-U(x)}{T})}{\sum_{\lambda \in S}exp(\frac{-U(\lambda)}{T})}$. Le rapport de métropolis devient alors $exp(\frac{U(x_s)-U(\lambda)}{T})$. Après chaque itération, on fait tendre T un peu plus vers 0. Le principe est que, en partant d'un T "grand" et en le faisant tendre "lentement" vers 0, on doit nécessairement tendre vers le minima global d'énergie.  
+Reste à déterminer quellle valeur de T choisir au départ comme grande, à quelle vitesse le faire tendre vers 0... Pour l'instant on fait ces choix arbitrairement et en s'inspirant de la littérature sur le sujet. Il reste aussi à démontrer dans ce rapport comment modifier les paramètres à chaque itération permet de converger presque surement vers le minimum global d'énergie.
+
 
 ```{r recuitMetro}
-#recuit Simulé perso, avec -dU/T 
+recuitSimule=function(forme, N, p, B, beta, alpha, n){
+	#fonction qui réalise l'algorithme de recuit simulé, pour restaurer img1
+	
+	#----création de l'image parfaite img0----
+	img0 = imageGenerator(forme, N)
+	
+	#----création d'une image auxiliaire img1, avec bordure et bruit----
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+
+	for(k in 1:n){ #n visites de pixels
+	  
+	  T <- 1/log(n) #T tend lentement vers 0
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage----
+		v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+	
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----probabilité conditionnelle locale, "recuite" à chaque itération----
+		dU = U2-U1
+		p <- exp(-dU/T)
+		
+		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#changement
+		else{img2[i,j] <- img1[i,j]} #inchangé
+	}#for
+	
+	#----affichage----
+	img3 <- img3[2:(N+1),2:(N+1)] #retire le contour
+	img1 <- img1[2:(N+1),2:(N+1)]
+	
+	par(mfrow=c(1,3))
+	image(1:N,1:N,img0)#image initiale
+	image(1:N+2,1:N+2,img3)#image  bruitée
+	image(1:N+2,1:N+2,img1)#image restaurée
+	return(c("pourcentage de restauration", correspondance(img0,img1,N)))
+  
+}#func
+```
+
+
+> **Comparaison de performance** entre l'algorithme de recuit et celui de Metropolis. On ajoute la fonction de correspondance au deux pour comparer numériquement.
+
+```{r include=FALSE}
+
 ```
 
 
 ```{r, echo=FALSE}
-#recuitMetro("rectangle", 64, 1, 0, 0.6, 1, 2*10^4, 0.3)
+recuitSimule("rectangle", 64, 0.25, 0, 0.66, 0.33, 5*10^4)
+metropolisIsing("rectangle", 64, 0.25, 0, 0.66, 0.33, 5*10^4)
 ```
+
 
 On peut comparer les performances entre le recuit simulé et l'algorithme de Metropolis en comparant le pourcentage de restauration des deux algorithmes, à paramètres et image bruitée identique.
 
