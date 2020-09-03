@@ -535,6 +535,10 @@ Vstar=function(img, N, i, j, L){
 }#func
 ```
 
+
+
+
+
 ```{r recuitSimule_Vstar}
 recuitSimule_Vstar=function(forme, N, p, B, beta, alpha, n, L){
 	#fonction qui réalise l'algorithme de recuit, mais dont le calcul de voisinage se faite selon le modèle en étoile variable.
@@ -589,31 +593,148 @@ recuitSimule_Vstar=function(forme, N, p, B, beta, alpha, n, L){
 
 ```
 
-```{r, test_recuitSimule_Vstar}
-recuitSimule_Vstar("bande", 64, 0.25, 0, 0.66,0.33,10^5,5)
-```
-
-
 
 # Amélioration de la rapidité des algorithmes
 
-Depuis le début, on fixe le nombre d'itérations de l'algorithme (souvent à $10^4$ ou $10^5$). Cependant, on peut supposer que parfois il ne soit pas nécessaire de faire autant d'itération pour arriver à un résultat correct. De plus, le bruitage est réalisé aléatoirement, et donc d'une exécution de d'algorithme à une autre, le nombre d'itérations nécessaires pour restaurer l'image ne sera pas forcément le même.  
+Depuis le début, on fixe le nombre d'itérations de l'algorithme (souvent à $10^4$ ou $10^5$). Cependant, il est très probable, de part l'avancé hasardeuse de l'algorithme de recuit ou de métropolis, et d'autant du fait que les images à restaurer sont toutes différentes, que ce ne soit pas nécessaire de faire toujours le même nombre d'itération pour arriver à restaurer comme on le souhaite.    
+Une manière de rendre le nombre d'itérations variable est de le conditionner au nombre de parcours de site successifs sans changement de valeurs. En effet, si on ne change pas de valeur, c'est normalement parce que cette valeur était le bonne. Donc si on ne change plus de valeur plusieurs fois de suite, on peut supposer que l'image entière n'a plus à être modifié. On pourra ainsi déclarer arbitrairement que, dès que l'algorithme réalise dix itérations successives sans changement de valeur, il s'arrête. C'est ce que l'on fait dans l'algorithme de recuit simulé suivant:
 
-Une manière de rendre le nombre d'itérations variable serait de le conditionner au nombre de parcours de site successifs sans changement de valeurs. On pourra ainsi déclarer arbitrairement que, dès que l'algorithme réalise dix itérations successives sans changement de valeur, il s'arrête. Le mieux serait de déterminer a priori, étant donnée l'image bruitée, le nombre minimal d'itérations successives sans modification à réaliser pour la restaurer à un certain pourcentage.  
 
-C'est ce que l'on fait dans l'algorithme de recuit simulé suivant:
+```{r smartStop}
+smartStop=function(forme, N, p, B, beta, alpha, S){
+	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
+	
+	#----création de l'image parfaite img0----
+	img0 = imageGenerator(forme, N)
+	
+	#----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+	
+  X<-0 #nombre d'itérations consécutives sans changement de spin
+  it<-0 #compteur
+  
+  while(X<=S) { 
+	  
+    it <- it+1
+	  T <- 1/log(it) #T tend vers 0
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage----
+	  v = Vstar(img1, N+2, i, j, 5) # L arbitrairement fixé à 5
+		
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----test----
+		dU = U2-U1
+		p <- exp(-dU/T)
+		
+		if(runif(1)<=p){#on change la valeur du pixel
+		  img1[i,j]= -img1[i,j]
+		  X <- 0} #on a changé un pixel, retour à la case départ
+		  
+		else{
+		  img2[i,j] <- img1[i,j]
+		  X <- X+1} #on garde la valeur du pixel
+	}#for
+	
+	#----affichage----
+	img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
+	img1 <- img1[2:(N+1),2:(N+1)]
+	
+	par(mfrow=c(1,3))
+	image(1:N,1:N,img0)#image initiale
+	image(1:N+2,1:N+2,img3)#image  bruitée
+	image(1:N+2,1:N+2,img1)#image restaurée
+  
+}#func
 
-```{r nconsécutif}
-#algo qui va bien
+#recuitSimule_smartStop("rectangle", 64, 1, 0, 0.6, 200, 0.3)
 ```
 
 Pour aller encore plus vite, au lieu d'attendre dix itérations successives sans aucune modification, on pourrait arrêter l'algorithme dès que, au cours des dix dernières itérations, il y a eu plus 1 modification. On peut jouer sur ces deux paramètres (taille de la "fenêtre coulissante", ici 10, et nombre maximum de changements, 0 dans votre exemple, et ici 1).
 
-```{r nminimum}
-#algo modifié
+```{r smartStopLight}
+smartStopLight=function(forme, N, p, B, beta, alpha, S, m){
+	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
+	
+	#----création de l'image parfaite img0----
+	img0 = imageGenerator(forme, N)
+	
+	#----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+	
+  X<-0 #nombre d'itérations consécutives sans changement de spin
+  Y <- 0 #nombre de changements de spin, remis à 0 dès que Y==m.
+  it<-0 #compteur d'itération général
+  
+  while(X<=S) { 
+	  
+    it <- it+1
+	  T <- 1/log(it) #T tend vers 0
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage----
+	  v = Vstar(img1, N+2, i, j, 5) # L arbitrairement fixé à 5
+		
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----test----
+		dU = U2-U1
+		p <- exp(-dU/T)
+		
+		if(runif(1)<=p){#on change la valeur du pixel
+		  img1[i,j]= -img1[i,j]
+		  Y <- Y+1
+		  if(Y==m+1){ #dépassement du cota de changement de valeur m
+		    X <- 0
+		    Y <- 0}
+		  else{X <- X+1}
+		}#if 
+		  
+		else{ #on garde la valeur du pixel
+		  img2[i,j] <- img1[i,j]
+		  X <- X+1} 
+	}#for
+	
+	#----affichage----
+	img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
+	img1 <- img1[2:(N+1),2:(N+1)]
+	
+	par(mfrow=c(1,3))
+	image(1:N,1:N,img0)#image initiale
+	image(1:N+2,1:N+2,img3)#image  bruitée
+	image(1:N+2,1:N+2,img1)#image restaurée
+  
+	print(it)
+}#func
+
+#smartStopLight("rectangle", 64,0.25, 0, 2/3, 1/3, 500, 15)
 ```
 
-  
+A terme ou aimerait pouvoir déterminer a priori, étant donnée l'image bruitée, le nombre minimal d'itérations successives sans modification à réaliser pour une restauration à un certain pourcentage.
+
 # Evolution de la restauration en fonction d'un nombre d'itérations
 
 Avec des algorithmes dont le nombre d'itération varie, on peut se demander quelle est la probabilité d'avoir une image restaurée à un H%, après n itérations consécutives sans changements.
