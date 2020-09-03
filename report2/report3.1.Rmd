@@ -372,11 +372,7 @@ recuitSimule=function(forme, N, p, B, beta, alpha, n){
 ```
 
 
-> **Comparaison de performance** entre l'algorithme de recuit et celui de Metropolis. On ajoute la fonction de correspondance au deux pour comparer numériquement. On constate que la difference est quasiment nulle.
-
-```{r include=FALSE}
-
-```
+> **Comparaison de performance** On constate que la différence de performance de restauration est quasiment nulle entre les deux algorithmes.
 
 
 ```{r, echo=FALSE}
@@ -403,22 +399,23 @@ recuitSimule("bande", 64, 0.25, 0, -0.66, 0.33, 5*10^4)
 Une idée que l'on peut avoir pour palier au problème est de séparer les calcules de potentiels entre la verticale et l'horizontale, en appliquant à chaque terme un facteur $\beta$ dédié à une orientation. On modifie l'algorithme de recuit pour essayer, en changeant le chose comme suit:     
 
 - le calcule de voisinage est divisé en deux termes, les voisins sur l'horizontale Vh et ceux sur la verticale Vv.
-- Le terme concernant le voisinage dans le calcul de U est maintenant cindé en deux, avec deux $\beta$ différents, $\betah$ pour l'horizontale et $\betav$ pour la verticale. On a ainsi: $U(x_s)= -x_s[\beta_h(x_d+x_g)+\beta_v(x_h+x_b)+\alpha x_s^0]$ avec $x_d,x_g,x_h,x_b$ les valeurs des pixels voisins du site s respectivement à droite, gauche, haut, bas.
+- Le terme concernant le voisinage dans le calcul de U est maintenant cindé en deux, avec deux $\beta$ différents, $\beta_h$ pour l'horizontale et $\beta_v$ pour la verticale. On a ainsi: $U(x_s)= -x_s[\beta_h(x_d+x_g)+\beta_v(x_h+x_b)+\alpha x_s^0]$ avec $x_d,x_g,x_h,x_b$ les valeurs des pixels voisins du site s respectivement à droite, gauche, haut, bas.
 - Les signes respectifs des deux $\beta$ sont calculés en faisant une analyse du signe globale de l'image sur l'orizontale et la verticale. Pour se faire on utilise la fonction ernergiehv(), qui réalise les somme des doubles produit des couple de pixels voisins, sur la verticale pour une somme et sur l'horizontale pour l'autre. Dans le cas des bandes horizontales par exemple, on voudrait avoir un $\beta_h>0$ et un $\beta_v<0$. En effet une ligne horizontale de l'image est constituée de pixel identiques, on veut donc que soit privilégié l'égalité de valeur entre $x_s$ et $x_t,\ t\in V_s$. Sur une ligne verticale, c'est l'inverse.
 
 
-```{r}
-energiehv=function(img){
-  #fonction qui renvoie, dans un tuple, les sommes des doubles produits sur les lignes, et sur les colonnes. Le résultats sert au calcul des betah et betav
-  eligne=0
-  ecolonne=0
-  for (i in 1:N) {for (j in 1:(N-1)){eligne=eligne+img[i,j]*img[i,j+1]}}  #somme des doubles produits de ligne
-  for (j in 1:N) {for (i in 1:(N-1)){ecolonne=ecolonne+img[i,j]*img[i+1,j]}}  #somme des doubles produits de colonne
-  return(c(eligne,ecolonne))
-}#func
-
+```{r, restoreStripe}
 restorStripe=function(forme, N, p, B, beta, alpha, n){
   #fonction de recuit simulé modifiée pour restaurer une image en bandes horizontales noir et blanche alternées, grâce à une disjonction de cas entre l'horizontale et la verticale pour les calculs de potentiel.
+  
+  energiehv=function(img){
+    #fonction qui renvoie, dans un tuple, les sommes des doubles produits sur les lignes, et sur les colonnes. Le résultats sert au calcul des betah et betav
+    eligne=0
+    ecolonne=0
+    for (i in 1:N) {for (j in 1:(N-1)){eligne=eligne+img[i,j]*img[i,j+1]}}  #somme des doubles produits de ligne
+    for (j in 1:N) {for (i in 1:(N-1)){ecolonne=ecolonne+img[i,j]*img[i+1,j]}}  #somme des doubles produits de colonne
+    return(c(eligne,ecolonne))
+  }#func
+  
   
   #----img0, initiale----
   img0 = imageGenerator(forme, N)
@@ -474,10 +471,6 @@ restorStripe=function(forme, N, p, B, beta, alpha, n){
 }#func
 ```
 
-```{r}
-abc = imageGenerator("bande",64)
-energiehv(abc)
-```
 
 ```{r}
 restorStripe("bande",64,0.25,0,0.66,0.33,5*10^4)
@@ -486,18 +479,121 @@ restorStripe("bande",64,0.25,0,0.66,0.33,5*10^4)
 
 ## Voisinage de taille variable
 
-Une autre manière de résoudre ce problème de restoration de bandes pourrait aussi se trouver dans l'étendue du voisinage. 
+Une autre piste à creuser pour répondre au problème de restauration des bandes, ce serait de changer la définition du voisinage. L'idée est la suivante: la taille et la forme du voisinage change d'un pixel à l'autre. Seul les pixels sur les lignes verticales et horizontales où se trouve s peuvent faire partie de $V_s$, comme pour le voisinage habituel haut bas gauche droite. 
 
-```{r}
-#algo vbranche vstart
+On définit le voisinage comme une étoile à quatres branches, deux sur l'horizontale (une à gauche de s, l'autre à droite), et deux sur la verticale (l'une en haut de s et l'autre en bas). On peut donc voir ce voisinage en étoile comme une extension du voisinage classique.  
+La longueur de chaque branche (et donc son poid dans le calcul de U) dépend de la continuité des valeurs des pixels depuis s et de proche en proche sur la direction de la branche. Autrement dis, la longueur d'une branche est égale au nombre de pixels côte à côte suivant l'orientation de la branche, de même valeur (pour une image en noir et blanc), partant de s.  
+Ainsi d'un pixel à l'autre on n'aura pas forcément un voisinage de même ampleur.  
+
+Le poid d'une branche de voisinage est alors proportionel à sa longeur. On aurait:
+$U_s=\beta x_s\sum_{i=1}^{4}{a_il_i} +\alpha x_s x_s^0$
+avec $(l_i)$ les 8 lead et $(a_i)$ leur longueur.
+
+On peut choisir une longueur maximale pour les branches, une majoration certaine étant la largeur de l'image. C'est d'ailleurs préférable d'un point de vue pratique car plus les branches sont longues plus les calcules le sont aussi.
+
+L'algorithme de Vstar est simple: pour chaqun des voisins habituels de s (haut bas gauche droite), on regade son voisin opposé à s et sur la même direction (le "voisin du voisin"); s'il a la même valeur que le premier voisin, on l'intègre à la branche. Sinon la branche est terminée.
+
+```{r Vstar}
+
+Vstar=function(img, N, i, j, L){
+  #fonction qui calcule le voisinage du pixel (i,j), selon le modèle de voisinage en étoile variable.
+  
+  vbranch=function(img, N, is, js, iv, jv, L){
+	  #L détermine la longueur maximale d'une branche
+	  #(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)], c'est ce qui donne le sens de la branche à partir de s
+
+	  v = c() #branche finale
+	  vl = c() #branche brute
+	  if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
+
+	  #----récupération des L sites de la branche potentielles sans condition----
+	  for(k in(1:L)){
+		  i <- is+k*iv
+		  j <- js+k*jv
+		  if(i>=1 && i<=N){ if(j>=1 && j<=N){ #teste si les coordonnées du candidat sont dans l'image
+			  vl <- c(vl,img[i,j])
+		  }}#if&if
+	  }#for
+	  if(is.null(vl[1])){return(0)} #si on est sur le bord
+	
+	  #----épuration selon la condition de valeur de site----
+	  lead <- vl[1] #base de la branche, à côté du site
+	  for(k in 1:length(vl)){ #parcours les L sites
+		  if(vl[k]==lead){ v <- c(v,vl[k]) }#condition pour faire partie de la branche.
+	  }#for
+	
+	  return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
+  }#func
+  
+  #somme des quatre branches
+	s <- 0
+	s <- s + vbranch(img, N, i, j, -1, 0, L)
+	s <- s + vbranch(img, N, i, j, 1, 0, L)
+	s <- s + vbranch(img, N, i, j, 0, -1, L)
+	s <- s + vbranch(img, N, i, j, 0, 1, L)
+	return(s)
+}#func
 ```
 
-```{r}
-#algo de recuit avec calcul de voisinage étendu et donc parametre L
+```{r recuitSimule_Vstar}
+recuitSimule_Vstar=function(forme, N, p, B, beta, alpha, n, L){
+	#fonction qui réalise l'algorithme de recuit, mais dont le calcul de voisinage se faite selon le modèle en étoile variable.
+	
+	#----image parfaite img0----
+	img0 = imageGenerator(forme, N)
+	
+	#----image auxiliaire img1, avec bordure et bruitage----
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #tampon
+	img3 = img1 #bruit initiale
+
+	for(k in 1:n){
+	  
+	  T <- 1/log(n)
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1))
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage selon le modèle en étoile----
+	  v = Vstar(img1, N+2, i, j, L)
+		
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----test----
+		dU = U2-U1
+		p <- exp(-dU/T)
+		
+		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#changé
+		else{img2[i,j] <- img1[i,j]} #inchangé
+	}#for
+	
+	#----affichage----
+	img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
+	img1 <- img1[2:(N+1),2:(N+1)]
+	
+	par(mfrow=c(1,3))
+	image(1:N,1:N,img0)#image initiale
+	image(1:N+2,1:N+2,img3)#image  bruitée
+	image(1:N+2,1:N+2,img1)#image restaurée
+	
+	return(correspondance(img0, img1, N))
+  
+}#func
+
+```
+
+```{r, test_recuitSimule_Vstar}
+recuitSimule_Vstar("bande", 64, 0.25, 0, 0.66,0.33,10^5,5)
 ```
 
 
-REMARQUE A FAIRE QUAND MEME: en augmentant l'amplitude du voisinage comme on le fait là, on constate que la restauration des images est plus propre (confère au graphique que l'on avait fait, essayer de les remettre)
 
 # Amélioration de la rapidité des algorithmes
 

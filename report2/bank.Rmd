@@ -186,6 +186,48 @@ GibbsIsing = function(forme, N, p, B, beta, alpha, n){
 ===============================================================================================================
 ## L'algorithme de metropolis
 
+```{r, Vstar, include=FALSE}
+
+Vstar=function(img, N, i, j, L){
+  #fonction qui calcule le voisinage du pixel (i,j), selon le modèle de voisinage en étoile variable.
+  
+  vbranch=function(img, N, is, js, iv, jv, L){
+	  #L détermine la longueur maximale d'une branche
+	  #(iv, jv) appartient à [(0,1),(0,-1),(1,0),(-1,0)], c'est ce qui donne le sens de la branche à partir de s
+
+	  v = c() #branche finale
+	  vl = c() #branche brute
+	  if(is<1 | is>N | js<1 | js>N){return("les coordonnées données sont en dehors de l'image")}
+
+	  #----récupération des L sites de la branche potentielles sans condition----
+	  for(k in(1:L)){
+		  i <- is+k*iv
+		  j <- js+k*jv
+		  if(i>=1 && i<=N){ if(j>=1 && j<=N){ #teste si les coordonnées du candidat sont dans l'image
+			  vl <- c(vl,img[i,j])
+		  }}#if&if
+	  }#for
+	  if(is.null(vl[1])){return(0)} #si on est sur le bord
+	
+	  #----épuration selon la condition de valeur de site----
+	  lead <- vl[1] #base de la branche, à côté du site
+	  for(k in 1:length(vl)){ #parcours les L sites
+		  if(vl[k]==lead){ v <- c(v,vl[k]) }#condition pour faire partie de la branche.
+	  }#for
+	
+	  return(length(v)*lead) #"poid" de la branche. length(v) fait office de facteur, comme beta classiquement
+  }#func
+  
+  #somme des quatre branches
+	s <- 0
+	s <- s + vbranch(img, N, i, j, -1, 0, L)
+	s <- s + vbranch(img, N, i, j, 1, 0, L)
+	s <- s + vbranch(img, N, i, j, 0, -1, L)
+	s <- s + vbranch(img, N, i, j, 0, 1, L)
+	return(s)
+}#func
+```
+
 référence pour tous les algo de métropolis
 ```{r metropolisIsing-REFERENCE}
 
@@ -797,7 +839,7 @@ smartStopLight=function(forme, N, p, B, beta, alpha, S, m){
 ```
 
 
-```{r include=FALSE smartStop_RETURN}
+```{r, smartStop_RETURN, include=FALSE}
 smartStop=function(forme, N, p, B, beta, alpha, S){
 	#fonction qui réalise l'algorithme de Gibbs sur une image bruitée img1 (à partir de img0),pour restaurer cette image.
 	
@@ -853,7 +895,7 @@ smartStop=function(forme, N, p, B, beta, alpha, S){
 }#func
 ```
 
-```{r include=FALSE smartStopLight_RETURN}
+```{r, smartStopLight_RETURN, include=FALSE}
 smartStopLight=function(forme, N, p, B, beta, alpha, S, m){
 
 	img0 = imageGenerator(forme, N)
@@ -974,12 +1016,7 @@ MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
 
 
 
-
-
-
-
-
-```{r include=FALSE recuit_smartStop_corresp}
+```{r, recuit_smartStop_corresp, include=FALSE}
 recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, pct){
 	
 	img0 = imageGenerator(forme, N)
@@ -1037,9 +1074,6 @@ recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, pct){
 
 #recuitSimule_smartStop("rectangle", 64, 0.25, 0, 0.66, 0.33, 90)
 ```
-
-
-
 
 ```{r}
 recuitSimuleFixe = function(n, beta, N, p, alpha, stop){
@@ -1137,5 +1171,5 @@ MCdeMC_revo=function(n, beta, N, p, alpha, stop){
     # + geom_smooth()  
 }#func
 
-MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
+#MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
 ```
