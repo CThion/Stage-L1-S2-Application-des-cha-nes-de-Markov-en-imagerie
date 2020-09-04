@@ -285,7 +285,7 @@ metropolisIsing=function(forme, N, beta, B, alpha, L, n, p){
 	return(corresp) 
 }#func
 
-metropolisIsing("rectangle", 64, 1, 1, 0.6, 1, 10^4, 0.3)
+#metropolisIsing("rectangle", 64, 1, 1, 0.6, 1, 10^4, 0.3)
 ```
 
 
@@ -940,8 +940,8 @@ smartStopLight=function(forme, N, p, B, beta, alpha, S, m){
 
 
 
-```{r disp_smartStop}
-disp_smartStop=function(forme, N, p, B, beta, alpha, S, pas){
+```{r disp_smartStopLight}
+disp_smartStopLight=function(forme, N, p, B, beta, alpha, S, pas, prcm){
   
   plage = seq(pas,S,pas) #plage S des tirages successifs sans changement
   l = length(plage)
@@ -950,8 +950,8 @@ disp_smartStop=function(forme, N, p, B, beta, alpha, S, pas){
   iter = c(1:l) #stock des quantités d'itérations
   
   for( ss in plage){
-    m = 0.01*ss
-    result = smartStopLight(forme, N, p, B, beta, alpha, ss, m)
+    m = prcm*ss
+    result = smartStopLight_RETURN(forme, N, p, B, beta, alpha, ss, m)
     error[ss/pas] <- m
     corresp[ss/pas] <- result[1]
     iter[ss/pas] <- result[2]
@@ -965,9 +965,33 @@ disp_smartStop=function(forme, N, p, B, beta, alpha, S, pas){
   print(rev)
 }#func
 
-disp_smartStop("rectangle", 64, 0.25, 0, 0.66, 0.33, 2000, 200)
+disp_smartStopLight("rectangle", 64, 0.25, 0, 0.66, 0.33, 1000, 200, 0.01)
 ```
 
+```{r, disp_smartStop}
+disp_smartStop=function(forme, N, p, B, beta, alpha, S, pas){
+  
+  plage = seq(pas,S,pas) #plage S des tirages successifs sans changement
+  l = length(plage)
+  corresp = c(1:l) #stock des pourcentages de restauration
+  iter = c(1:l) #stock des quantités d'itérations
+  
+  for( ss in plage){
+    result = smartStop_RETURN(forme, N, p, B, beta, alpha, ss)
+    corresp[ss/pas] <- result[1]
+    iter[ss/pas] <- result[2]
+
+  }#for
+  
+  rev <- data.frame(plage_evaluation=plage, correspondance=corresp, nombre_iteration=iter )
+
+  ggplot(data = rev, aes(x="largeur de la plage",y="nombre d'itération"))+geom_line()+geom_point() 
+    # + geom_smooth()  
+  print(rev)
+}#func
+
+disp_smartStop("rectangle", 64, 0.25, 0, 0.66, 0.33, 1000, 200)
+```
 
 
 ##comparaison des différents algorithmes vus jusqu'ici (A FAIRE)
