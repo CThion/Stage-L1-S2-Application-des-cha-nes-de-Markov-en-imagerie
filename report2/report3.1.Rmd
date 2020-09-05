@@ -8,7 +8,7 @@ output:
   pdf_document: default
 ---
 
-```{r}
+```{r, include=FALSE}
 library(stats)
 library(survival)
 library(ggplot2)
@@ -338,7 +338,7 @@ recuitSimule=function(forme, N, p, B, beta, alpha, n){
 
 	for(k in 1:n){ #n visites de pixels
 	  
-	  T <- 1/log(n) #T tend lentement vers 0
+	  T <- 1/log(k+1) #T tend lentement vers 0
 	  
 		#----choix d'un pixel au hasard----
 		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
@@ -540,9 +540,6 @@ Vstar=function(img, N, i, j, L){
 ```
 
 
-
-
-
 ```{r recuitSimule_Vstar}
 recuitSimule_Vstar=function(forme, N, p, B, beta, alpha, n, L){
 	#fonction qui réalise l'algorithme de recuit, mais dont le calcul de voisinage se faite selon le modèle en étoile variable.
@@ -558,7 +555,7 @@ recuitSimule_Vstar=function(forme, N, p, B, beta, alpha, n, L){
 
 	for(k in 1:n){
 	  
-	  T <- 1/log(n)
+	  T <- 1/log(k+1)
 	  
 		#----choix d'un pixel au hasard----
 		i <- 1+ceiling(N*runif(1))
@@ -625,7 +622,7 @@ smartStop=function(forme, N, p, B, beta, alpha, S){
   while(X<=S) { 
 	  
     it <- it+1
-	  T <- 1/log(it) #T tend vers 0
+	  T <- 1/log(it+1) #T tend vers 0
 	  
 		#----choix d'un pixel au hasard----
 		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
@@ -663,7 +660,6 @@ smartStop=function(forme, N, p, B, beta, alpha, S){
 ```
 
 
-
 Pour le test on va lancer plusieurs fois la fonction smartStop() avec des valeurs de S de plus en plus grandes et observer le pourcentage de restauration (grâce à correspondance()) associé. On utilise pour cela la fonction suivante:
 
 ```{r, disp_smartStop}
@@ -690,6 +686,7 @@ disp_smartStop=function(forme, N, p, B, beta, alpha, S, pas){
 ```
 
 On fait le test en partant d'une condition à 200 itérations successive, jusqu'à 2000 itérations successives, par pas de 200:
+
 ```{r, test_disp_smartStop}
 disp_smartStop("rectangle", 64, 0.25, 0, 0.66, 0.33, 2000, 200)
 ```
@@ -714,7 +711,7 @@ smartStopLight=function(forme, N, p, B, beta, alpha, S, prcm){
   it<-0 #compteur d'itération général
   while(X<=S) { 
     it <- it+1
-	  T <- 1/log(it) #T tend vers 0
+	  T <- 1/log(it+1) #T tend vers 0
 		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
 		j <- 1+ceiling(N*runif(1))
 		img2[i,j] = -img1[i,j]
@@ -746,6 +743,7 @@ smartStopLight=function(forme, N, p, B, beta, alpha, S, prcm){
 ```
 
 On réalise le test du code de la même manière que pour smartStop(), avec les même valeurs, en choisissant $prcm=1\%$.
+
 ```{r disp_smartStopLight}
 disp_smartStopLight=function(forme, N, p, B, beta, alpha, S, pas, prcm){
   
@@ -778,10 +776,190 @@ disp_smartStopLight("rectangle", 64, 0.25, 0, 0.66, 0.33, 2000, 200, 0.01)
 ```
 
 On peut déjà dire que le nombre total d'itérations a bien chuté par rapport au test précédent (qui revenait finalement à choisir prcm=0). On ne dépasse pas la barre des 15000, alors que pour prcm=0 on était monté jusqu'à 30000!    
-Au niveau des performances on ne perd presque pas, ce qui valide l'introduction d'un parametre d'erreur. Par contre on observe qu'il faut davantage augmenter S pour atteindre les 99% de restauration (1200 ici).
+Au niveau des performances on ne perd presque pas, ce qui valide l'introduction d'un parametre d'erreur. Par contre on observe qu'il faut davantage augmenter S pour atteindre les 99% de restauration (1200 ici contre 600 à prcm=0).
 
 
 A terme on aimerait pouvoir déterminer a priori, étant donnée l'image bruitée, le nombre minimal d'itérations successives sans modification à réaliser pour une restauration à un certain pourcentage.
+
+## Algorithme d'ICM
+
+Un algorithme de restauration plus rapide que celui d'Ising, Metroppolis ou de recuit simulé, est l'algorithme d'ICM. Il est très similaire à l'algorithme de Metropolis, si ce n'est que l'on n'autorise pas de remonté d'énergie. Concrètement à chaque itération, on choisira systématiquement dans E la valeur pour $X_s$ la plus probable, soit la valeur amenant s à la plus faible énergie entre les deux valeurs (avec Metropolis, on autorisait quand même un changement pour un $x_s$ de plus haute énergie, avec pour probabilité l'esponetiel de la variation d'énergie).
+
+
+On reprend l'algorithme de Metropolis en modifiant la partie de test:
+
+```{r, ICM}
+ICM=function(forme, N, p, B, beta, alpha, n){
+	#fonction qui réalise l'algorithme d'ICM, pour restaurer img1
+	
+	#----création de l'image parfaite img0----
+	img0 = imageGenerator(forme, N)
+	
+	#----création d'une image auxiliaire img1, avec bordure et bruit----
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+
+	for(k in 1:n){ #n visites de pixels
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage----
+		v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+	
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----probabilité conditionnelle locale, "recuite" à chaque itération----
+		
+		if(U1>U2){img1[i,j]= -img1[i,j]}#le changement proposé fait diminuer le potentiel local, on l'accept
+		else{img2[i,j] <- img1[i,j]} #le changement proposé fait augmenter le potentiel local, on le refuse
+	}#for
+	
+	#----affichage----
+	img3 <- img3[2:(N+1),2:(N+1)] #retire le contour
+	img1 <- img1[2:(N+1),2:(N+1)]
+	
+	return(correspondance(img0,img1,N))
+  
+}#func
+```
+
+
+```{r, RETURN_metropolisIsing, include=FALSE}
+metropolisIsing_return=function(forme, N, p, B, beta, alpha, n){
+	#MEtropolisIsing sans affichage d'image, pour le test de vitesse
+	
+	#----création de l'image parfaite img0----
+	img0 = imageGenerator(forme, N)
+	
+	#----création d'une image auxiliaire img1, avec bord plus long et bruitage----
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+
+	for(k in 1:n){ #n visites de pixels
+	
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage----
+		v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+	
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----proba conditionnelle locale----
+		dU = U2-U1
+		p <- exp(-dU)
+		
+		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#on change la valeur du pixel
+		else{img2[i,j] <- img1[i,j]} #on garde la valeur du pixel
+	}#for
+	
+	#----affichage----
+	img3 <- img3[2:(N+1),2:(N+1)] #on retire le contour
+	img1 <- img1[2:(N+1),2:(N+1)]
+	
+	return(correspondance(img0,img1,N))
+  
+}#func
+```
+
+```{r, RETURN_recuiSimule, include=FALSE}
+recuitSimule_return=function(forme, N, p, B, beta, alpha, n){
+	#fonction qui réalise l'algorithme de recuit simulé, pour restaurer img1
+	
+	#----création de l'image parfaite img0----
+	img0 = imageGenerator(forme, N)
+	
+	#----création d'une image auxiliaire img1, avec bordure et bruit----
+	img1 = matrix(0, nrow=N+2, ncol=N+2)
+	img1[2:(N+1),2:(N+1)] = bruiteur(img0, "rbinom", p)
+	img2 = img1 #image tampon
+	img3 = img1 #mémoire du bruit initiale
+
+	for(k in 1:n){ #n visites de pixels
+	  
+	  T <- 1/log(k+1) #T tend lentement vers 0
+	  
+		#----choix d'un pixel au hasard----
+		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
+		j <- 1+ceiling(N*runif(1))
+		
+		#----tirage nouvelle valeure candidate----
+		img2[i,j] = -img1[i,j]
+	
+		#----voisinage----
+		v = img1[i+1,j] + img1[i-1,j] + img1[i,j+1] + img1[i,j-1]
+	
+		#----potentiels----
+		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+	
+		#----probabilité conditionnelle locale, "recuite" à chaque itération----
+		dU = U2-U1
+		p <- exp(-dU/T)
+		
+		if(runif(1)<=p){img1[i,j]= -img1[i,j]}#changement
+		else{img2[i,j] <- img1[i,j]} #inchangé
+	}#for
+	
+	#----affichage----
+	img3 <- img3[2:(N+1),2:(N+1)] #retire le contour
+	img1 <- img1[2:(N+1),2:(N+1)]
+	
+	return(correspondance(img0,img1,N))
+  
+}#func
+```
+
+
+
+
+```{r, disp_GeneralspeedTest}
+disp_generalSpeedTest=function(forme, N, p, B, beta, alpha, nn, pas){
+  
+  iteration = seq(pas,nn,pas) #plage S des tirages successifs sans changement
+  l = length(iteration) #nombre de test que l'on va réaliser
+  corresp_metro = c(1:l) #stock des pourcentages de restauration pour Metropolis
+  corresp_ICM = c(1:l) #stock des pourcentages de restauration pour ICM
+  corresp_recuit = c(1:l) #// pour le recuit simulé
+  
+  for( n in iteration){
+    corresp_metro[n/pas] <- metropolisIsing_return(forme, N, p, B, beta, alpha, n)
+    corresp_recuit[n/pas] <- recuitSimule_return(forme, N, p, B, beta, alpha, n)
+    corresp_ICM[n/pas] <- ICM(forme, N, p, B, beta, alpha, n)
+  }#for
+  
+  rev <- data.frame(nombre_iteration=iteration, restauration_Metropolis=corresp_metro, restauration_recuit=corresp_recuit, restauration_ICM=corresp_ICM)
+
+  ggplot(data = rev, aes(x="largeur de la plage",y="nombre d'itération"))+geom_line()+geom_point() 
+    # + geom_smooth()  
+  print(rev)
+}#func
+```
+
+
+```{r}
+disp_generalSpeedTest("rectangle",64,0.25,0,0.66,0.33,10^5,10^4)
+```
+
+Les résultats montrent bien que l'algorithme d'ICM converge plus vite vers la configuration de plus faible énergie, donc restaure plus rapidement, que ses deux homologues.
+
 
 # Evolution de la restauration en fonction d'un nombre d'itérations
 

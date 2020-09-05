@@ -1041,7 +1041,7 @@ MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
 
 
 ```{r, recuit_smartStop_corresp, include=FALSE}
-recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, pct){
+ICM_corresp=function(forme, N, p, B, beta, alpha, pct){
 	
 	img0 = imageGenerator(forme, N)
 	
@@ -1059,45 +1059,53 @@ recuitSimule_smartStop=function(forme, N, p, B, beta, alpha, pct){
   
   while(corresp<pct) { #tant que le pourcentage de restoration est inférieure à celui demandé
 	  
-    it <- it+1
-	  T <- 1/log(it) 
+    for (k in (1:(N*N*n))){ #parcours de l'image en entier
+  
+      it <- it+1
+	    T <- 1/log(it) 
 	  
-		#----choix d'un pixel au hasard----
-		i <- 1+ceiling(N*runif(1)) # indice entre 2 et N+1
-		j <- 1+ceiling(N*runif(1))
+		  #----choix d'un pixel, avancée ligne par ligne----
+      i <- 2 + k%%N #de 2 ? N+1
+      j <- 2 + k%/%(N-1)%%N #de 2 ? N+1
 		
-		#----tirage nouvelle valeure candidate----
-		img2[i,j] = -img1[i,j]
+		  #----tirage nouvelle valeure candidate----
+		  img2[i,j] = -img1[i,j]
 	
-		#----voisinage----
-	  v = Vstar(img1, N+2, i, j, 5) # L arbitrairement fixé à 5
+		  #----voisinage----
+	    v = Vstar(img1, N+2, i, j, 5) # L arbitrairement fixé à 5
 		
-		#----potentiels----
-		U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
-		U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
+		  #----potentiels----
+		  U1 = -B*img1[i,j]-img1[i,j]*(beta*v + alpha*img3[i,j])#potentiel actuel
+		  U2 = -B*img2[i,j]-img2[i,j]*(beta*v + alpha*img3[i,j])#potentiel candidat
 	
-		#----test----
-		dU = U2-U1
-		p <- exp(-dU/T)
+		  #----test----
+		  dU = U2-U1
+		  p <- exp(-dU/T)
 		
-		if(runif(1)<=p){#on change la valeur du pixel
-		  img1[i,j]= -img1[i,j]
-		  X <- 0} #on a changé un pixel, retour à la case départ
+		  if(runif(1)<=p){#on change la valeur du pixel
+		    img1[i,j]= -img1[i,j]
+		    X <- 0} #on a changé un pixel, retour à la case départ
 		  
-		else{
-		  img2[i,j] <- img1[i,j]
-		  X <- X+1} #on garde la valeur du pixel
+		  else{
+		    img2[i,j] <- img1[i,j]
+		    X <- X+1} #on garde la valeur du pixel
+      }#for
 		
-		#----actualisation corresp----
+    #----actualisation corresp----
 		corresp <- correspondance(img0, img1, N)
 		#print(corresp)
 	}#while
 	
 	return(it)
 }#func
-
-#recuitSimule_smartStop("rectangle", 64, 0.25, 0, 0.66, 0.33, 90)
 ```
+
+```{r, ICM_corresp}
+#ICM_corresp("rectangle", 64, 0.25, 0, 0.66, 0.33, 90)
+
+```
+
+
 
 ```{r}
 recuitSimuleFixe = function(n, beta, N, p, alpha, stop){
@@ -1197,3 +1205,6 @@ MCdeMC_revo=function(n, beta, N, p, alpha, stop){
 
 #MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
 ```
+
+
+
