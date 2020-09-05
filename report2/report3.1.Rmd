@@ -16,49 +16,73 @@ library(ggplot2)
 
 # Introduction
 
-L'objectif final de ce stage est de restaurer algorithmiquement des images binaires (assez simples) en noir et blanc ayant subi un bruitage. Pour cela on utilise les chaînes de Markov et des modèles énergétiques sur les images, principalement le modèle d'Ising et la mesure de Gibbs, afin de pouvoir estimer de manière probabiliste les meilleures configurations pour la restauration. Les algorithmes ainsi constitués sont ensuite codés en R pour être testés.    
+L'objectif final de ce stage est de restaurer algorithmiquement des images binaires (assez simples) en noir et blanc ayant subi un bruitage. Pour
+cela on utilise les chaînes de Markov et des modèles énergétiques sur les images, principalement le modèle d'Ising et la mesure de Gibbs, afin de
+pouvoir estimer de manière probabiliste les meilleures configurations pour la restauration. Les algorithmes ainsi constitués sont ensuite codés 
+en R pour être testés.    
 
-Dans dans son état actuel, ce rapport abborde plusieurs question en lien avec le sujet mais est très loin d'être complet. Une grande part des observations sont encore d'ordre empirique et nécessiteraient d'être approfondies sur le plan théorique. Pour autant on dispose déjà de plusieurs algorithmes fonctionnels permettant une restauration satisfaisante d'images simples.
+Dans dans son état actuel, ce rapport abborde plusieurs question en lien avec le sujet mais est très loin d'être complet. Une grande part des 
+observations sont encore d'ordre empirique et nécessiteraient d'être approfondies sur le plan théorique. Pour autant on dispose déjà de plusieurs algorithmes fonctionnels permettant une restauration satisfaisante d'images simples.
 
 ## Modélisation d'une image
 
 Afin de pouvoir manipuler des images, on utilise les notations et appellations suivantes:  
-- x : une configuration d'une grille de pixels donnée (une image donc), parmis l'ensemble des configurations possibles $\Omega$. On note X la variable aléatoire décrivant x.   
-- s : un pixel de l'image (on appelle aussi les pixels des "sites"), avec $x_s$ sa valeur. $x_s\in E$ l'ensemble des valeurs possibles possibles d'un pixel. E varie selon le type d'image (couleur, noir et blanc). Pour faciliter le travail, on ne manipule ici que des images en noir et blanc, donc $E=\{-1,1\}$.On note $X_s$ la variable aléatoire décrivant les différents états de $x_s$.  
-- $X^s$ :la variable aléatoire décrivant la configuration de l'image privée du pixel $s$. $x^s$ est donc une fonfiguration x donnée, privée de s.  
+- x : une configuration d'une grille de pixels donnée (une image donc), parmis l'ensemble des configurations possibles $\Omega$. On note X la 
+variable aléatoire décrivant x.   
+- s : un pixel de l'image (on appelle aussi les pixels des "sites"), avec $x_s$ sa valeur. $x_s\in E$ l'ensemble des valeurs possibles 
+possibles d'un pixel. E varie selon le type d'image (couleur, noir et blanc). Pour faciliter le travail, on ne manipule ici que des images 
+en noir et blanc, donc $E=\{-1,1\}$.On note $X_s$ la variable aléatoire décrivant les différents états de $x_s$.  
+- $X^s$ :la variable aléatoire décrivant la configuration de l'image privée de $s$. $x^s$ est donc une fonfiguration x donnée, privée de s.  
 - $V_s$ : le voisinage de s, que l'on définira plus tard.
 - $U$ : le potentiel d'un pixel ou d'une image dans une configuration donnée, appelé aussi énergie.
 
 ## Le modèle d'Ising
 
-Afin de calculer des probabilités sur les configurations possibles, on introduit la notion de potentiel U. Le potentiel d'une configuration de pixels, que ce soit l'image en entier ou localement un pixel de l'image et son voisinage, c'est une valeur numérique qui dépend des valeurs des pixels de la configuration.
+Afin de calculer des probabilités sur les configurations possibles, on introduit la notion de potentiel U. Le potentiel d'une configuration 
+de pixels, que ce soit l'image en entier ou localement un pixel de l'image et son voisinage, c'est une valeur numérique qui dépend des valeurs
+des pixels de la configuration.
 
 Il existe plusieurs modèle pour le calculer, et celui que l'on utilisera est le modèle d'Ising.
 
 \[U(x_s) = -\beta x_s \sum_{t\in V_s}{x_t} -B\sum_{s\in S}{x_s}\]
 
-Littéralement, le potentiel de s quand $X=x_s$ est la somme de la valeur des états de ses voisins multiplié par un facteur $-\beta$, plus la somme des valeurs de tous les sites de l'image multiplié par un facteur $-B$.
+Littéralement, le potentiel de s quand $X=x_s$ est la somme de la valeur des états de ses voisins multiplié par un facteur $-\beta$, plus la
+somme des valeurs de tous les sites de l'image multiplié par un facteur $-B$.
 
-On remarquera par la suite que le plus important ce sont les signes des facteurs, et non leur valeur absolue. En effet, un $\beta < 0$ donnera $U(x_s)$ positif pour le cas où $x_s$ est globalement opposé à $V_s$, et vice versa pour $\beta > 0$.  
-Le terme $-B\sum_{s\in S}{x_s}$ quant à lui n'a pas parru nécessaire pour le cas particulier de la restauration d'image, au vu de nos propre test et de la littérature sur le sujet. C'est pourquoi dans la majorité des algorithmes qui suivront, il est mis à zero.
+On remarquera par la suite que le plus important ce sont les signes des facteurs, et non leur valeur absolue. En effet, un $\beta < 0$ 
+donnera $U(x_s)$ positif pour le cas où $x_s$ est globalement opposé à $V_s$, et vice versa pour $\beta > 0$.  
+Le terme $-B\sum_{s\in S}{x_s}$ quant à lui n'a pas parru nécessaire pour le cas particulier de la restauration d'image, au vu de nos propre 
+test et de la littérature sur le sujet. C'est pourquoi dans la majorité des algorithmes qui suivront, il est mis à zero.
 
 ## La mesure de Gibbs 
 
-Maintenant, comment utiliser ce calcul de potentiel local pour calculer les probabilités qui nous interessent ? Considérons une image bruitée; la première idée qu'il vient pour retrouver la bonne image est d'essayer une par une toutes les configurations de $\Omega$, mais ce n'est pas envisageable devant son cardinal. Rien que pour une image en noir et blanc on part déjà sur des puissances de deux, une petite image de sept cent vingt pixels aura $2^720$ configurations différentes...
+Maintenant, comment utiliser ce calcul de potentiel local pour calculer les probabilités qui nous interessent ? Considérons une image bruitée; 
+la première idée qu'il vient pour retrouver la bonne image est d'essayer une par une toutes les configurations de $\Omega$, mais ce n'est pas 
+envisageable devant son cardinal. Rien que pour une image en noir et blanc on part déjà sur des puissances de deux, une petite image de sept 
+cent vingt pixels aura $2^720$ configurations différentes...
 
 Pour autant, si on voulait essayer, il existe un  outil, la mesure de Gibbs, qui permet justement de calculer la probabilité $P(X=x)$.
 
 \[P(X=x)=\frac{1}{Z}e^{-U(x)}\].  
 
-Cependant $Z=\sum_{x\in \Omega}e^{-U(x)}$ représente une somme beaucoup trop grande pour être calculer en pratique, justement à cause de la taille de $\Omega$.
+Cependant $Z=\sum_{x\in \Omega}e^{-U(x)}$ représente une somme beaucoup trop grande pour être calculer en pratique, justement à cause de la 
+taille de $\Omega$.
 
 ## L'hypothèse markovienne
 
-Pour pallier au problème, une autre approche aussi intuitive pour restaurer cette image consiste à restaurer chaque pixel de l'image un par un, plutôt que considérer l'image dans son ensemble directement.  
+Pour pallier au problème, une autre approche aussi intuitive pour restaurer cette image consiste à restaurer chaque pixel de l'image un par 
+un, plutôt que considérer l'image dans son ensemble directement.  
 
-A priori pour "deviner" quelle est la bonne valeur pour un pixel s, le mieux à faire est de regarder tous le reste de l'image $x^s$, et à partir de $x^s$ essayer d'exprimer $X_s$ pour trouver quelle valeur $x_s$ est la plus probable sachant $x^s$. Cependant, on fait l'hypothèse que connaître $V_s$ le voisinage proche de s est équivalent à connaître $x^s$, soit $P(X_s=x_s| X^s) = P(X_s=x_s|V_s)$. C'est l'hypothèse de Markov, et elle est assez naturelle quand on observe une image; un pixel blanc isolé avec autour de lui seulement des pixels rouges est une situation assez rare, les différentes parties de couleur uniforme d'une images étant souvent grande de plusieurs pixels, d'autant plus pour une image en noir et blanc dépourvue de dégradé. Faire l'hypothèse de Markov ne semble donc pas à priori ridicul. Et c'est grâce à cette hypothèse que l'on va pouvoir utiliser le modèle d'Ising pour le calcul de potentiel local.
+A priori pour "deviner" quelle est la bonne valeur pour un pixel s, le mieux à faire est de regarder tous le reste de l'image $x^s$, et à 
+partir de $x^s$ essayer d'exprimer $X_s$ pour trouver quelle valeur $x_s$ est la plus probable sachant $x^s$. Cependant, on fait l'hypothèse 
+que connaître $V_s$ le voisinage proche de s est équivalent à connaître $x^s$, soit $P(X_s=x_s| X^s) = P(X_s=x_s|V_s)$. C'est l'hypothèse de 
+Markov, et elle est assez naturelle quand on observe une image; un pixel blanc isolé avec autour de lui seulement des pixels rouges est une 
+situation assez rare, les différentes parties de couleur uniforme d'une images étant souvent grande de plusieurs pixels, d'autant plus pour 
+une image en noir et blanc dépourvue de dégradé. Faire l'hypothèse de Markov ne semble donc pas à priori ridicul. Et c'est grâce à cette
+hypothèse que l'on va pouvoir utiliser le modèle d'Ising pour le calcul de potentiel local.
 
-La définition du voisinage de s peut varier, par son étendu et sa forme; le voisinage que nous utiliserons presque toujours est simplement l'ensemble des quatre plus proches voisins de s sur la verticale et l'horizontale. On essaira par la suite de modifier ce voisinage.
+La définition du voisinage de s peut varier, par son étendu et sa forme; le voisinage que nous utiliserons presque toujours est simplement 
+l'ensemble des quatre plus proches voisins de s sur la verticale et l'horizontale. On essaira par la suite de modifier ce voisinage.
 
 
 
@@ -82,7 +106,11 @@ OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 
 ## Adapation à la restauration d'image
 
-Pour la restaurer une image, on comprend qu'il manque quelque chose au modèle d'Ising. Tel qu'il est, l'image bruitée initiale n'entre pas en ligne de compte pour le calcul du pententiel locale. Et étant donnée que c'est la configuration de plus basse énergie qui est la plus probable, avec ce modèle toute image bruitée devrait logiquement être restaurée en une l'image blanche ou un damier de pixel, qui sont bien les configurations de plus basse énergie selon le signe de $\beta$. Il faut donc ajouter un terme au modèle d'Ising pour que l'image bruitée initiale entre en ligne de compte. On pose: $U(x_s) = -\beta\  x_s\sum_{t\in V_s}{x_t}-B\ \sum_{s\in S}{x_s}-\alpha\ x_s^0$ avec $x_s^0$ la valeur du site s de l'image bruitée initiale, et $\alpha$ le facteur qui déterminera le poid que l'on accord à la configuration initiale.
+Pour la restaurer une image, on comprend qu'il manque quelque chose au modèle d'Ising. Tel qu'il est, l'image bruitée initiale n'entre pas 
+en ligne de compte pour le calcul du pententiel locale. Et étant donnée que c'est la configuration de plus basse énergie qui est la plus 
+probable, avec ce modèle toute image bruitée devrait logiquement être restaurée en une l'image blanche ou un damier de pixel, qui sont bien les configurations de plus basse énergie selon le signe de $\beta$. Il faut donc ajouter un terme au modèle d'Ising pour que l'image bruitée initiale 
+entre en ligne de compte. On pose: $U(x_s) = -\beta\  x_s\sum_{t\in V_s}{x_t}-B\ \sum_{s\in S}{x_s}-\alpha\ x_s^0$ avec $x_s^0$ la valeur du site 
+s de l'image bruitée initiale, et $\alpha$ le facteur qui déterminera le poid que l'on accord à la configuration initiale.
 
 # Des algorithmes pour la restauration d'image: Gibbs et Metropolis
 
@@ -94,7 +122,8 @@ Pour restaurer des images à l'aide des outils que l'on a vu, on peut utiliser l
 **étape 2** On tire au hasard une nouvelle valeur $\lambda$ dans $E$ privé de $x_s^0$   
 **étape 3** On calcule les potentiels $U(x_s)$ et $U(\lambda)$  
 **étape 4** On calcule le rapport $P(X_s=x_s)/P(X_s=\lambda)=exp(U(x_s)-U(\lambda))$  
-**étape 5** On tire un nombre entre zero et un pour simuler la loi $exp(U(x_s)-U(\lambda))$. S'il est inférieur au rapport de Metropolis, on refuse le changement; s'il est supérieur ou égale on l'accept.  
+**étape 5** On tire un nombre entre zero et un pour simuler la loi $exp(U(x_s)-U(\lambda))$. S'il est inférieur au rapport de Metropolis, on 
+refuse le changement; s'il est supérieur ou égale on l'accept.  
 
 ### L'algorithme de Gibbs
 **étape 1** Tirage d'un site comme pour Metropolis  
@@ -106,11 +135,19 @@ Pour restaurer des images à l'aide des outils que l'on a vu, on peut utiliser l
 ## Codage en R
 ### Boite à outils
 
-Avant de commencer à coder ces algorithmes, on a décider de créer quelques fonctions utiles pour faciliter la manipulation du code, et son amélioration.
+Avant de commencer à coder ces algorithmes, on a décider de créer quelques fonctions utiles pour faciliter la manipulation du code, et son 
+amélioration.
 
-- **bruiteur()** prend une image en argument et la retourne bruitée de la manière souhaitée. Pour l'instant on n'a étudié qu'un bruit consistant en une inversion de valeur des pixels avec la probabilité d'inversion p donnée en argument (souvent $p=0.25$). À l'avenir on pourra tester les performances de nos algorithmes pour des bruits différents, il suffira d'ajouter quelques lignes de code à cette fonction.  
-- **imageGenerator()** regroupe les différentes images que l'on bruitera avec bruiteur() pour ensuite essayer de les restaurer. Logiquement un logiciel de restauration ne fait pas l'offre et la demande dans ses images, mais c'est beaucoup plus simple pour nous de fabriquer et bruiter les images que l'on veut restaurer, pour travailler les algorithmes. Comme image on a pour l'instant le rectangle, le losange, et une image constituée d'une alternance de bandes noire et blanche horizontales. Là encore de nouvelles formes peuvent être ajoutées plus tard à la fonction pour pouvoir les tester dans les différents algorithmes.  
-- **correspondance()** permet de calculer de pourcentage de correspondance entre deux image données en arguments, donc dans notre cas l'image bruitée et l'image restaurée. Cela permet d'évaluler numériquement l'efficacité des algorithmes et de faire des comparaisons. 
+- **bruiteur()** prend une image en argument et la retourne bruitée de la manière souhaitée. Pour l'instant on n'a étudié qu'un bruit consistant 
+en une inversion de valeur des pixels avec la probabilité d'inversion p donnée en argument (souvent $p=0.25$). À l'avenir on pourra tester les 
+performances de nos algorithmes pour des bruits différents, il suffira d'ajouter quelques lignes de code à cette fonction.  
+- **imageGenerator()** regroupe les différentes images que l'on bruitera avec bruiteur() pour ensuite essayer de les restaurer. Logiquement un 
+logiciel de restauration ne fait pas l'offre et la demande dans ses images, mais c'est beaucoup plus simple pour nous de fabriquer et bruiter les 
+images que l'on veut restaurer, pour travailler les algorithmes. Comme image on a pour l'instant le rectangle, le losange, et une image 
+constituée d'une alternance de bandes noire et blanche horizontales. Là encore de nouvelles formes peuvent être ajoutées plus tard à la fonction 
+pour pouvoir les tester dans les différents algorithmes.  
+- **correspondance()** permet de calculer de pourcentage de correspondance entre deux image données en arguments, donc dans notre cas
+l'image bruitée et l'image restaurée. Cela permet d'évaluler numériquement l'efficacité des algorithmes et de faire des comparaisons. 
   
 
 ```{r boiteOutils}
@@ -177,7 +214,8 @@ correspondance=function(img0, img1, N){
 
 ### L'algorithme de Gibbs
 
-On propose un code en R pour l'algorithme de Gibbs. Des racourcis ont étés possibles du fait que s ne puisse prendre que deux états en tout. Si on voulait aujour passre à des images en nuance de gris ou même en couleur, il faudrait faire des modifications.
+On propose un code en R pour l'algorithme de Gibbs. Des racourcis ont étés possibles du fait que s ne puisse prendre que deux états en tout. Si 
+on voulait aujour passre à des images en nuance de gris ou même en couleur, il faudrait faire des modifications.
 
 ```{r A_1_gibbsIsing}
 GibbsIsing = function(forme, N, p, B, beta, alpha, n){
@@ -284,14 +322,18 @@ metropolisIsing=function(forme, N, p, B, beta, alpha, n){
 ## Test du code et observation et résultats
 
 > **Le paramètre alpha** détermine l'importance donnée à l'image bruitée initiale dans la probabilité conditionnelle $P(X_s=x_s|V_s)$.  
-- Si alpha est trop grand devant $\beta$, les valeurs les plus probables seront toujours celles de l'image bruitée, et donc l'algorithme ne fera rien. Un exemple avec $\alpha = 5$ et $\beta = 1$, on voit en effet que l'image restaurée (à droite) n'est presque pas différente de celle bruitée:
+- Si alpha est trop grand devant $\beta$, les valeurs les plus probables seront toujours celles de l'image bruitée, et donc l'algorithme ne 
+fera rien. Un exemple avec $\alpha = 5$ et $\beta = 1$, on voit en effet que l'image restaurée (à droite) n'est presque pas différente de celle 
+bruitée:
 
 ```{r alpha_grand, echo=FALSE}
 metropolisIsing("rectangle", 64, 0.25, 0, 0.66, 5, 10^5)
 ```
 
 
-> Si $\alpha$ est trop petit voir nul, la configuration initiale va être oubliée itération après itération (on retombe sur le modèle d'Ising initial), et on va tendre vers l'image blanche, peu importe l'image de départ. Exemple avec $\alpha=0$, pour deux images différentes: on voit bien que les formes commencent à être détruites.
+> Si $\alpha$ est trop petit voir nul, la configuration initiale va être oubliée itération après itération (on retombe sur le modèle d'Ising 
+initial), et on va tendre vers l'image blanche, peu importe l'image de départ. Exemple avec $\alpha=0$, pour deux images différentes: on voit 
+bien que les formes commencent à être détruites.
 
 
 ```{r alpha_nul, echo=FALSE}
@@ -300,7 +342,9 @@ metropolisIsing("losange", 64, 0.25, 0, 0.66, 0, 5*10^5)
 ```
 
 
-> **Le paramètre $\beta$** quant à lui détermine quel motifs seront les plus probables, entre des pixels de mêmes valeurs ($\beta > 0$) ou bien une alternance de pixel banc et noir ($\beta < 0$). Par exemple pour restaurer le rectangle, on constate bien que le $\beta$ positif est nettement préférable au $\beta$ négatif, du fait que le rectangle est une image d'un seul bloc. Illustration avec $\beta=+-0.66$
+> **Le paramètre $\beta$** quant à lui détermine quel motifs seront les plus probables, entre des pixels de mêmes valeurs ($\beta > 0$) ou 
+bien une alternance de pixel banc et noir ($\beta < 0$). Par exemple pour restaurer le rectangle, on constate bien que le $\beta$ positif 
+est nettement préférable au $\beta$ négatif, du fait que le rectangle est une image d'un seul bloc. Illustration avec $\beta=+-0.66$
 
 ```{r, echo=FALSE}
 metropolisIsing("rectangle", 64, 0.25, 0, -0.66, 0.33, 10^5)
@@ -312,15 +356,22 @@ metropolisIsing("rectangle", 64, 0.25, 0, 0.66, 0.33, 10^5)
 ```
 
 
-> **Le calcul du voisinage** se fait assez facilement en R, on regarde la valeur des quatre pixels à gauche à droit en haut et en bas du pixel. Plus tard on utilise la fonction Vstar(), qui permet en plus d'étendre ce voisinage.
+> **Le calcul du voisinage** se fait assez facilement en R, on regarde la valeur des quatre pixels à gauche à droit en haut et en bas du pixel. 
+Plus tard on utilise la fonction Vstar(), qui permet en plus d'étendre ce voisinage.
 
 > **Le parcours des sites_** peut se faire soit aléatoirement, soit systématiquement (ligne par ligne par exemple).
 
 
 ## Le recuit simulé
 
-Il existe un autre algorithme sur la base de l'algorithme de métropolis, plus performant, et que l'on retrouve imanquablement dans la littérature sur le sujet, c'est l'algorithme de recuit simulé. Par rapport à Metropolis, on introduit une "température", c'est à dire un paramètre T qui va intervenir dans le calcul de la probabilité comme $P_T(X=x)=\frac{exp(\frac{-U(x)}{T})}{\sum_{\lambda \in S}exp(\frac{-U(\lambda)}{T})}$. Le rapport de métropolis devient alors $exp(\frac{U(x_s)-U(\lambda)}{T})$. Après chaque itération, on fait tendre T un peu plus vers 0. Le principe est que, en partant d'un T "grand" et en le faisant tendre "lentement" vers 0, on doit nécessairement tendre vers le minima global d'énergie.  
-Reste à déterminer quellle valeur de T choisir au départ comme grande, à quelle vitesse le faire tendre vers 0... Pour l'instant on fait ces choix arbitrairement et en s'inspirant de la littérature sur le sujet. Il reste aussi à démontrer dans ce rapport comment modifier les paramètres à chaque itération permet de converger presque surement vers le minimum global d'énergie.
+Il existe un autre algorithme sur la base de l'algorithme de métropolis, plus performant, et que l'on retrouve imanquablement dans la 
+littérature sur le sujet, c'est l'algorithme de recuit simulé. Par rapport à Metropolis, on introduit une "température", c'est à dire un 
+paramètre T qui va intervenir dans le calcul de la probabilité comme $P_T(X=x)=\frac{exp(\frac{-U(x)}{T})}{\sum_{\lambda \in S}exp(\frac{-U(\lambda)}{T})}$. Le rapport de métropolis devient alors $exp(\frac{U(x_s)-U(\lambda)}{T})$. Après chaque itération, on fait 
+tendre T un peu plus vers 0. Le principe est que, en partant d'un T "grand" et en le faisant tendre "lentement" vers 0, on doit nécessairement 
+tendre vers le minima global d'énergie.  
+Reste à déterminer quellle valeur de T choisir au départ comme grande, à quelle vitesse le faire tendre vers 0... Pour l'instant on fait ces 
+choix arbitrairement et en s'inspirant de la littérature sur le sujet. Il reste aussi à démontrer dans ce rapport comment modifier les 
+paramètres à chaque itération permet de converger presque surement vers le minimum global d'énergie.
 
 
 ```{r recuitMetro}
@@ -387,7 +438,8 @@ metropolisIsing("rectangle", 64, 0.25, 0, 0.66, 0.33, 5*10^4)
 
 # Estimation du paramètre $\beta$
 
-L'algorithme de recuit précédent marche plutôt bien pour des images pleines (rectangle, losange), mais si on éssaie de restaurer une image en plusieurs parties, une succession de bandes par exemple, ou un damier, l'algorithme ne fonctionne plus du tout, peu importe le signe de $\beta$ : 
+L'algorithme de recuit précédent marche plutôt bien pour des images pleines (rectangle, losange), mais si on éssaie de restaurer une image en 
+plusieurs parties, une succession de bandes par exemple, ou un damier, l'algorithme ne fonctionne plus du tout, peu importe le signe de $\beta$ : 
 
 ```{r}
 recuitSimule("bande", 64, 0.25, 0, 0.66, 0.33, 5*10^4)
@@ -400,19 +452,28 @@ recuitSimule("bande", 64, 0.25, 0, -0.66, 0.33, 5*10^4)
 
 ## Distinction des énergies verticales et horizontales
 
-Une idée que l'on peut avoir pour palier au problème est de séparer les calcules de potentiels entre la verticale et l'horizontale, en appliquant à chaque terme un facteur $\beta$ dédié à une orientation. On modifie l'algorithme de recuit pour essayer, en changeant le chose comme suit:     
+Une idée que l'on peut avoir pour palier au problème est de séparer les calcules de potentiels entre la verticale et l'horizontale, en appliquant 
+à chaque terme un facteur $\beta$ dédié à une orientation. On modifie l'algorithme de recuit pour essayer, en changeant le chose comme suit:     
 
 - le calcule de voisinage est divisé en deux termes, les voisins sur l'horizontale Vh et ceux sur la verticale Vv.
-- Le terme concernant le voisinage dans le calcul de U est maintenant cindé en deux, avec deux $\beta$ différents, $\beta_h$ pour l'horizontale et $\beta_v$ pour la verticale. On a ainsi: $U(x_s)= -x_s[\beta_h(x_d+x_g)+\beta_v(x_h+x_b)+\alpha x_s^0]$ avec $x_d,x_g,x_h,x_b$ les valeurs des pixels voisins du site s respectivement à droite, gauche, haut, bas.
-- Les signes respectifs des deux $\beta$ sont calculés en faisant une analyse du signe globale de l'image sur l'orizontale et la verticale. Pour se faire on utilise la fonction ernergiehv(), qui réalise les somme des doubles produit des couple de pixels voisins, sur la verticale pour une somme et sur l'horizontale pour l'autre. Dans le cas des bandes horizontales par exemple, on voudrait avoir un $\beta_h>0$ et un $\beta_v<0$. En effet une ligne horizontale de l'image est constituée de pixel identiques, on veut donc que soit privilégié l'égalité de valeur entre $x_s$ et $x_t,\ t\in V_s$. Sur une ligne verticale, c'est l'inverse.
+- Le terme concernant le voisinage dans le calcul de U est maintenant cindé en deux, avec deux $\beta$ différents, $\beta_h$ pour l'horizontale 
+et $\beta_v$ pour la verticale. On a ainsi: $U(x_s)= -x_s[\beta_h(x_d+x_g)+\beta_v(x_h+x_b)+\alpha x_s^0]$ avec $x_d,x_g,x_h,x_b$ les valeurs 
+des pixels voisins du site s respectivement à droite, gauche, haut, bas.
+- Les signes respectifs des deux $\beta$ sont calculés en faisant une analyse du signe globale de l'image sur l'orizontale et la verticale. 
+Pour se faire on utilise la fonction ernergiehv(), qui réalise les somme des doubles produit des couple de pixels voisins, sur la verticale 
+pour une somme et sur l'horizontale pour l'autre. Dans le cas des bandes horizontales par exemple, on voudrait avoir un $\beta_h>0$ et un 
+$\beta_v<0$. En effet une ligne horizontale de l'image est constituée de pixel identiques, on veut donc que soit privilégié l'égalité de valeur 
+entre $x_s$ et $x_t,\ t\in V_s$. Sur une ligne verticale, c'est l'inverse.
 
 
 ```{r, restoreStripe}
 restorStripe=function(forme, N, p, B, beta, alpha, n){
-  #fonction de recuit simulé modifiée pour restaurer une image en bandes horizontales noir et blanche alternées, grâce à une disjonction de cas entre l'horizontale et la verticale pour les calculs de potentiel.
+  #fonction de recuit simulé modifiée pour restaurer une image en bandes horizontales noir et blanche alternées, grâce à une 
+  #disjonction de cas entre l'horizontale et la verticale pour les calculs de potentiel.
   
   energiehv=function(img){
-    #fonction qui renvoie, dans un tuple, les sommes des doubles produits sur les lignes, et sur les colonnes. Le résultats sert au calcul des betah et betav
+    #fonction qui renvoie, dans un tuple, les sommes des doubles produits sur les lignes, et sur les colonnes. Le résultats sert 
+    #au calcul des betah et betav
     eligne=0
     ecolonne=0
     for (i in 1:N) {for (j in 1:(N-1)){eligne=eligne+img[i,j]*img[i,j+1]}}  #somme des doubles produits de ligne
@@ -483,19 +544,26 @@ restorStripe("bande",64,0.25,0,0.66,0.33,5*10^4)
 
 ## Voisinage de taille variable
 
-Une autre piste à creuser pour répondre au problème de restauration des bandes, ce serait de changer la définition du voisinage. L'idée est la suivante: la taille et la forme du voisinage change d'un pixel à l'autre. Seul les pixels sur les lignes verticales et horizontales où se trouve s peuvent faire partie de $V_s$, comme pour le voisinage habituel haut bas gauche droite. 
+Une autre piste à creuser pour répondre au problème de restauration des bandes, ce serait de changer la définition du voisinage. L'idée est la 
+suivante: la taille et la forme du voisinage change d'un pixel à l'autre. Seul les pixels sur les lignes verticales et horizontales où se trouve 
+s peuvent faire partie de $V_s$, comme pour le voisinage habituel haut bas gauche droite. 
 
-On définit le voisinage comme une étoile à quatres branches, deux sur l'horizontale (une à gauche de s, l'autre à droite), et deux sur la verticale (l'une en haut de s et l'autre en bas). On peut donc voir ce voisinage en étoile comme une extension du voisinage classique.  
-La longueur de chaque branche (et donc son poid dans le calcul de U) dépend de la continuité des valeurs des pixels depuis s et de proche en proche sur la direction de la branche. Autrement dis, la longueur d'une branche est égale au nombre de pixels côte à côte suivant l'orientation de la branche, de même valeur (pour une image en noir et blanc), partant de s.  
+On définit le voisinage comme une étoile à quatres branches, deux sur l'horizontale (une à gauche de s, l'autre à droite), et deux sur la 
+verticale (l'une en haut de s et l'autre en bas). On peut donc voir ce voisinage en étoile comme une extension du voisinage classique.  
+La longueur de chaque branche (et donc son poid dans le calcul de U) dépend de la continuité des valeurs des pixels depuis s et de proche en 
+proche sur la direction de la branche. Autrement dis, la longueur d'une branche est égale au nombre de pixels côte à côte suivant l'orientation 
+de la branche, de même valeur (pour une image en noir et blanc), partant de s.  
 Ainsi d'un pixel à l'autre on n'aura pas forcément un voisinage de même ampleur.  
 
 Le poid d'une branche de voisinage est alors proportionel à sa longeur. On aurait:
 $U_s=\beta x_s\sum_{i=1}^{4}{a_il_i} +\alpha x_s x_s^0$
 avec $(l_i)$ les 8 lead et $(a_i)$ leur longueur.
 
-On peut choisir une longueur maximale pour les branches, une majoration certaine étant la largeur de l'image. C'est d'ailleurs préférable d'un point de vue pratique car plus les branches sont longues plus les calcules le sont aussi.
+On peut choisir une longueur maximale pour les branches, une majoration certaine étant la largeur de l'image. C'est d'ailleurs préférable d'un 
+point de vue pratique car plus les branches sont longues plus les calcules le sont aussi.
 
-L'algorithme de Vstar est simple: pour chaqun des voisins habituels de s (haut bas gauche droite), on regade son voisin opposé à s et sur la même direction (le "voisin du voisin"); s'il a la même valeur que le premier voisin, on l'intègre à la branche. Sinon la branche est terminée.
+L'algorithme de Vstar est simple: pour chaqun des voisins habituels de s (haut bas gauche droite), on regade son voisin opposé à s et sur la 
+même direction (le "voisin du voisin"); s'il a la même valeur que le premier voisin, on l'intègre à la branche. Sinon la branche est terminée.
 
 ```{r Vstar}
 
@@ -597,11 +665,16 @@ recuitSimule_Vstar=function(forme, N, p, B, beta, alpha, n, L){
 
 # Amélioration de la rapidité des algorithmes
 
-Depuis le début, on fixe le nombre d'itérations de l'algorithme (souvent à $10^4$ ou $10^5$). Cependant, il est très probable, de part l'avancé aléatoire de l'algorithme de recuit ou de métropolis, et d'autant plus du fait que les images à restaurer sont toutes différentes, que ce ne soit pas nécessaire de faire toujours le même nombre d'itérations pour arriver à restaurer comme on le souhaite.    
-Une manière de rendre le nombre d'itérations variable est de le conditionner au nombre de parcours de site successifs sans changement de valeurs. En effet, si on ne change pas de valeur, c'est normalement parce que cette valeur était la bonne. Donc on introduit un paramètre S telle que, si on ne change plus de valeur S fois de suite, on supposera que l'image entière n'a plus à être modifié et on arrête l'algorithme.
+Depuis le début, on fixe le nombre d'itérations de l'algorithme (souvent à $10^4$ ou $10^5$). Cependant, il est très probable, de part l'avancé 
+aléatoire de l'algorithme de recuit ou de métropolis, et d'autant plus du fait que les images à restaurer sont toutes différentes, que ce ne 
+soit pas nécessaire de faire toujours le même nombre d'itérations pour arriver à restaurer comme on le souhaite.    
+Une manière de rendre le nombre d'itérations variable est de le conditionner au nombre de parcours de site successifs sans changement de valeurs. 
+En effet, si on ne change pas de valeur, c'est normalement parce que cette valeur était la bonne. Donc on introduit un paramètre S telle que, 
+si on ne change plus de valeur S fois de suite, on supposera que l'image entière n'a plus à être modifié et on arrête l'algorithme.
 
 
-Pour essayer la condition d'arrêt on modifie un petit peu recuitSimule() pour faire smartStop(). Etant donnée que c'est le nombre d'itérations qui nous interesse ici, on a retiré l'affichage des images.
+Pour essayer la condition d'arrêt on modifie un petit peu recuitSimule() pour faire smartStop(). Etant donnée que c'est le nombre d'itérations 
+qui nous interesse ici, on a retiré l'affichage des images.
 
 ```{r smartStop}
 smartStop=function(forme, N, p, B, beta, alpha, S){
@@ -660,7 +733,8 @@ smartStop=function(forme, N, p, B, beta, alpha, S){
 ```
 
 
-Pour le test on va lancer plusieurs fois la fonction smartStop() avec des valeurs de S de plus en plus grandes et observer le pourcentage de restauration (grâce à correspondance()) associé. On utilise pour cela la fonction suivante:
+Pour le test on va lancer plusieurs fois la fonction smartStop() avec des valeurs de S de plus en plus grandes et observer le 
+pourcentage de restauration (grâce à correspondance()) associé. On utilise pour cela la fonction suivante:
 
 ```{r, disp_smartStop}
 disp_smartStop=function(forme, N, p, B, beta, alpha, S, pas){
@@ -692,10 +766,15 @@ disp_smartStop("rectangle", 64, 0.25, 0, 0.66, 0.33, 2000, 200)
 ```
 
 On remarque deux choses:    
-- la première c'est que finalement on obtient un pourcentage de restauration déjà de 99% dès $S>=600$, et qu'en suite même avec S deux ou trois fois plus grand on ne parvient pas a beaucoup améliorer ce résultat, seulement au dixième.  
-- la seconde, et c'est elle qui nous indique la pertinence de cette condition d'arrêt, c'est qu'en augmentant la condition d'arrêt de 1200 à 1400 itérations successives sans changement, et aussi de 1600 à 2000, on a une diminution du nombre totale d'itération. Si on avait du choisir arbitrairement n pour S=1800 en connaissant les résultats à S=1600, on aurait logiquement choisis n plus grand puisque la condition est plus dure. Mais là on voit bien que parfois le hasard fait que la condition est remplie relativement plus rapidement que la tendence le suppose.    
+- la première c'est que finalement on obtient un pourcentage de restauration déjà de 99% dès $S>=600$, et qu'en suite même avec S deux ou 
+trois fois plus grand on ne parvient pas a beaucoup améliorer ce résultat, seulement au dixième.  
+- la seconde, et c'est elle qui nous indique la pertinence de cette condition d'arrêt, c'est qu'en augmentant la condition d'arrêt de 1200 
+à 1400 itérations successives sans changement, et aussi de 1600 à 2000, on a une diminution du nombre totale d'itération. Si on avait du choisir arbitrairement n pour S=1800 en connaissant les résultats à S=1600, on aurait logiquement choisis n plus grand puisque la condition est plus 
+dure. Mais là on voit bien que parfois le hasard fait que la condition est remplie relativement plus rapidement que la tendence le suppose.    
 
-Pour alléger encore davantage la condition d'arrêt et réduire le nombre d'itérations, on peut ajouter une variable de pourcentage d'erreur tolérée prcm; sur les S itérations successives, si on obtient entre 0 et prcm*S changements ($0<prcm<1$), la condition d'arrêt est quand même validée. S'il y a davantage de changements sur les S itérations, la condition n'est pas remplie et l'algorithme continue.
+Pour alléger encore davantage la condition d'arrêt et réduire le nombre d'itérations, on peut ajouter une variable de pourcentage d'erreur 
+tolérée prcm; sur les S itérations successives, si on obtient entre 0 et prcm*S changements ($0<prcm<1$), la condition d'arrêt est quand même 
+validée. S'il y a davantage de changements sur les S itérations, la condition n'est pas remplie et l'algorithme continue.
 
 ```{r smartStopLight}
 smartStopLight=function(forme, N, p, B, beta, alpha, S, prcm){
@@ -775,15 +854,21 @@ disp_smartStopLight=function(forme, N, p, B, beta, alpha, S, pas, prcm){
 disp_smartStopLight("rectangle", 64, 0.25, 0, 0.66, 0.33, 2000, 200, 0.01)
 ```
 
-On peut déjà dire que le nombre total d'itérations a bien chuté par rapport au test précédent (qui revenait finalement à choisir prcm=0). On ne dépasse pas la barre des 15000, alors que pour prcm=0 on était monté jusqu'à 30000!    
-Au niveau des performances on ne perd presque pas, ce qui valide l'introduction d'un parametre d'erreur. Par contre on observe qu'il faut davantage augmenter S pour atteindre les 99% de restauration (1200 ici contre 600 à prcm=0).
+On peut déjà dire que le nombre total d'itérations a bien chuté par rapport au test précédent (qui revenait finalement à choisir prcm=0). On ne 
+dépasse pas la barre des 15000, alors que pour prcm=0 on était monté jusqu'à 30000!    
+Au niveau des performances on ne perd presque pas, ce qui valide l'introduction d'un parametre d'erreur. Par contre on observe qu'il faut 
+davantage augmenter S pour atteindre les 99% de restauration (1200 ici contre 600 à prcm=0).
 
 
-A terme on aimerait pouvoir déterminer a priori, étant donnée l'image bruitée, le nombre minimal d'itérations successives sans modification à réaliser pour une restauration à un certain pourcentage.
+A terme on aimerait pouvoir déterminer a priori, étant donnée l'image bruitée, le nombre minimal d'itérations successives sans modification à 
+réaliser pour une restauration à un certain pourcentage.
 
 ## Algorithme d'ICM
 
-Un algorithme de restauration plus rapide que celui d'Ising, Metroppolis ou de recuit simulé, est l'algorithme d'ICM. Il est très similaire à l'algorithme de Metropolis, si ce n'est que l'on n'autorise pas de remonté d'énergie. Concrètement à chaque itération, on choisira systématiquement dans E la valeur pour $X_s$ la plus probable, soit la valeur amenant s à la plus faible énergie entre les deux valeurs (avec Metropolis, on autorisait quand même un changement pour un $x_s$ de plus haute énergie, avec pour probabilité l'esponetiel de la variation d'énergie).
+Un algorithme de restauration plus rapide que celui d'Ising, Metroppolis ou de recuit simulé, est l'algorithme d'ICM. Il est très similaire à 
+l'algorithme de Metropolis, si ce n'est que l'on n'autorise pas de remonté d'énergie. Concrètement à chaque itération, on choisira 
+systématiquement dans E la valeur pour $X_s$ la plus probable, soit la valeur amenant s à la plus faible énergie entre les deux valeurs 
+(avec Metropolis, on autorisait quand même un changement pour un $x_s$ de plus haute énergie, avec pour probabilité l'esponetiel de la variation d'énergie).
 
 
 On reprend l'algorithme de Metropolis en modifiant la partie de test:
@@ -962,7 +1047,7 @@ Les résultats montrent bien que l'algorithme d'ICM converge plus vite vers la c
 
 
 # Evolution de la restauration en fonction d'un nombre d'itérations
-
+=================================================================================================================================================
 Avec des algorithmes dont le nombre d'itération varie, on peut se demander quelle est la probabilité d'avoir une image restaurée à un H%, après n itérations consécutives sans changements.
 
 
