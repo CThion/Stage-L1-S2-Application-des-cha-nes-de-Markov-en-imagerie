@@ -150,7 +150,7 @@ pour pouvoir les tester dans les différents algorithmes.
 l'image bruitée et l'image restaurée. Cela permet d'évaluler numériquement l'efficacité des algorithmes et de faire des comparaisons. 
   
 
-```{r boiteOutils}
+```{r, boiteOutils}
 bruiteur=function(image, br, p){
   #fonction qui revoit l'image donnée en argument par la même image mais bruitée par la méthode demandée "br"
   imgBr <- image
@@ -214,11 +214,11 @@ correspondance=function(img0, img1, N){
 
 ### L'algorithme de Gibbs
 
-On propose un code en R pour l'algorithme de Gibbs. Des racourcis ont étés possibles du fait que s ne puisse prendre que deux états en tout. Si 
-on voulait aujour passre à des images en nuance de gris ou même en couleur, il faudrait faire des modifications.
+On propose un code en R pour l'algorithme de Gibbs. Des racourcis ont été possibles du fait que s ne puisse prendre que deux états en tout (-1 ou 1). Si 
+on voulait un jour passer à des images en nuance de gris ou même en couleur, il faudrait faire des modifications.
 
-```{r A_1_gibbsIsing}
-GibbsIsing = function(forme, N, p, B, beta, alpha, n){
+```{r gibbsIsing}
+gibbsIsing = function(forme, N, p, B, beta, alpha, n){
   # fonction qui réalise l'échantilloneur de Gibbs, sur le modèle d'Ising, avec une image img1 bruitée à partir de img0, afin de restaurer cette image.
   
   #----création de l'image parfaite img0----
@@ -266,9 +266,9 @@ GibbsIsing = function(forme, N, p, B, beta, alpha, n){
 
 ### L'algorithme de Metropolis
 
-En R voici une manière de coder cet algorithme :
+Assez similaire au code pour l'algorithme, voici un proposition de code pour l'algorithme de Metropolis. 
 
-```{r A_2_metropolisIsing_BASIQUE}
+```{r, metropolisIsing}
 metropolisIsing=function(forme, N, p, B, beta, alpha, n){
 	#fonction qui réalise l'algorithme de Metropolis sur une image bruitée img1 (à partir de img0), pour restaurer cette image.
 	
@@ -321,12 +321,14 @@ metropolisIsing=function(forme, N, p, B, beta, alpha, n){
 
 ## Test du code et observation et résultats
 
+Etant donné que les deux algorithmes sont assez similaires, dans la suite du rapport on utilisera uniquement le code de Metropolis pour les tests.
+
 > **Le paramètre alpha** détermine l'importance donnée à l'image bruitée initiale dans la probabilité conditionnelle $P(X_s=x_s|V_s)$.  
 - Si alpha est trop grand devant $\beta$, les valeurs les plus probables seront toujours celles de l'image bruitée, et donc l'algorithme ne 
 fera rien. Un exemple avec $\alpha = 5$ et $\beta = 1$, on voit en effet que l'image restaurée (à droite) n'est presque pas différente de celle 
 bruitée:
 
-```{r alpha_grand, echo=FALSE}
+```{r, alpha_grand, echo=FALSE}
 metropolisIsing("rectangle", 64, 0.25, 0, 0.66, 5, 10^5)
 ```
 
@@ -336,7 +338,7 @@ initial), et on va tendre vers l'image blanche, peu importe l'image de départ. 
 bien que les formes commencent à être détruites.
 
 
-```{r alpha_nul, echo=FALSE}
+```{r, alpha_nul, echo=FALSE}
 metropolisIsing("rectangle", 64, 0.25, 0, 0.66, 0, 5*10^5)
 metropolisIsing("losange", 64, 0.25, 0, 0.66, 0, 5*10^5)
 ```
@@ -374,7 +376,7 @@ choix arbitrairement et en s'inspirant de la littérature sur le sujet. Il reste
 paramètres à chaque itération permet de converger presque surement vers le minimum global d'énergie.
 
 
-```{r recuitMetro}
+```{r, recuitMetro}
 recuitSimule=function(forme, N, p, B, beta, alpha, n){
 	#fonction qui réalise l'algorithme de recuit simulé, pour restaurer img1
 	
@@ -441,11 +443,11 @@ metropolisIsing("rectangle", 64, 0.25, 0, 0.66, 0.33, 5*10^4)
 L'algorithme de recuit précédent marche plutôt bien pour des images pleines (rectangle, losange), mais si on éssaie de restaurer une image en 
 plusieurs parties, une succession de bandes par exemple, ou un damier, l'algorithme ne fonctionne plus du tout, peu importe le signe de $\beta$ : 
 
-```{r}
+```{r, demo_recuit_bande_marchepas_betaposi}
 recuitSimule("bande", 64, 0.25, 0, 0.66, 0.33, 5*10^4)
 ```
 
-```{r}
+```{r, demo_recuit_bande_marchepas_betanega}
 recuitSimule("bande", 64, 0.25, 0, -0.66, 0.33, 5*10^4)
 ```
 
@@ -565,7 +567,7 @@ point de vue pratique car plus les branches sont longues plus les calcules le so
 L'algorithme de Vstar est simple: pour chaqun des voisins habituels de s (haut bas gauche droite), on regade son voisin opposé à s et sur la 
 même direction (le "voisin du voisin"); s'il a la même valeur que le premier voisin, on l'intègre à la branche. Sinon la branche est terminée.
 
-```{r Vstar}
+```{r, Vstar}
 
 Vstar=function(img, N, i, j, L){
   #fonction qui calcule le voisinage du pixel (i,j), selon le modèle de voisinage en étoile variable.
@@ -608,7 +610,7 @@ Vstar=function(img, N, i, j, L){
 ```
 
 
-```{r recuitSimule_Vstar}
+```{r, recuitSimule_Vstar}
 recuitSimule_Vstar=function(forme, N, p, B, beta, alpha, n, L){
 	#fonction qui réalise l'algorithme de recuit, mais dont le calcul de voisinage se faite selon le modèle en étoile variable.
 	
@@ -676,7 +678,7 @@ si on ne change plus de valeur S fois de suite, on supposera que l'image entièr
 Pour essayer la condition d'arrêt on modifie un petit peu recuitSimule() pour faire smartStop(). Etant donnée que c'est le nombre d'itérations 
 qui nous interesse ici, on a retiré l'affichage des images.
 
-```{r smartStop}
+```{r, smartStop}
 smartStop=function(forme, N, p, B, beta, alpha, S){
 	#fonction qui réalise l'algorithme de recuit simulé avec pour condition d'arrêt faire S itérations successives sans changement de valeur.
 	
@@ -776,7 +778,7 @@ Pour alléger encore davantage la condition d'arrêt et réduire le nombre d'it�
 tolérée prcm; sur les S itérations successives, si on obtient entre 0 et prcm*S changements ($0<prcm<1$), la condition d'arrêt est quand même 
 validée. S'il y a davantage de changements sur les S itérations, la condition n'est pas remplie et l'algorithme continue.
 
-```{r smartStopLight}
+```{r, smartStopLight}
 smartStopLight=function(forme, N, p, B, beta, alpha, S, prcm){
 
 	img0 = imageGenerator(forme, N)
@@ -823,7 +825,7 @@ smartStopLight=function(forme, N, p, B, beta, alpha, S, prcm){
 
 On réalise le test du code de la même manière que pour smartStop(), avec les même valeurs, en choisissant $prcm=1\%$.
 
-```{r disp_smartStopLight}
+```{r, disp_smartStopLight}
 disp_smartStopLight=function(forme, N, p, B, beta, alpha, S, pas, prcm){
   
   plage = seq(pas,S,pas) #plage S des tirages successifs sans changement
@@ -916,7 +918,6 @@ ICM=function(forme, N, p, B, beta, alpha, n){
   
 }#func
 ```
-
 
 ```{r, RETURN_metropolisIsing, include=FALSE}
 metropolisIsing_return=function(forme, N, p, B, beta, alpha, n){
@@ -1012,9 +1013,6 @@ recuitSimule_return=function(forme, N, p, B, beta, alpha, n){
 }#func
 ```
 
-
-
-
 ```{r, disp_GeneralspeedTest}
 disp_generalSpeedTest=function(forme, N, p, B, beta, alpha, nn, pas){
   
@@ -1051,16 +1049,20 @@ Les résultats montrent bien que l'algorithme d'ICM converge plus vite vers la c
 Avec des algorithmes dont le nombre d'itération varie, on peut se demander quelle est la probabilité d'avoir une image restaurée à un H%, après n itérations consécutives sans changements.
 
 
-Une première majoration très grossière peut être de considérer l'ensemble des images de plus hautes énergie, et de déterminer combien d'itération il faut au minimum pour les ramener à l'image blanche. Ce nombre sera forcément supérieur ou égale au nombre d'itérations nécessaires pour n'importe quel image donnée de même taille. 
+Une première majoration très grossière peut être de considérer l'ensemble des images de plus hautes énergie, et de déterminer combien d'itération 
+il faut au minimum pour les ramener à l'image blanche. Ce nombre sera forcément supérieur ou égale au nombre d'itérations nécessaires pour 
+n'importe quel image donnée de même taille. 
 
 ## Probabilité d'avoir la configuration d'énergie minimale 
 
 ### Estimation du nombre de parcours minimum nécessaires à la restauration d'une image pour toute image donnée
-Une première majoration très grossière peut se faire en passant l'image de départ à restaurer comme variable, pour laquelle nous n'avons à priori aucune informations. Peut importe l'image à restaurer, combien de parcours de site l'algorithme doit-il réaliser ?  
+Une première majoration très grossière peut se faire en passant l'image de départ à restaurer comme variable, pour laquelle nous n'avons à priori 
+aucune informations. Peut importe l'image à restaurer, combien de parcours de site l'algorithme doit-il réaliser ?  
 
 Pour un voisinage classique avec 4 voisins prenna valeur dans $\{-1,1\}$, on a $2^4=16$ configurations de voisinages possibles.  
 
-L'avantage de notre approche, c'est qu'en l'absence d'information sur l'image à restaurer, on peut raisonnable considérer ces 16 configurations de voisinage comme équiprobables.
+L'avantage de notre approche, c'est qu'en l'absence d'information sur l'image à restaurer, on peut raisonnable considérer ces 16 configurations 
+de voisinage comme équiprobables.
 
 D'un point de vu énergétique, il n'y a que 5 cas possibles. $V_s\in\{-4,\ -2,\ 0,\ 2,\ 4\}$.
 
