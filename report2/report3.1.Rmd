@@ -33,7 +33,8 @@ variable aléatoire décrivant x.
 possibles d'un pixel. E varie selon le type d'image (couleur, noir et blanc). Pour faciliter le travail, on ne manipule ici que des images 
 en noir et blanc, donc $E=\{-1,1\}$.On note $X_s$ la variable aléatoire décrivant les différents états de $x_s$.  
 - $X^s$ :la variable aléatoire décrivant la configuration de l'image privée de $s$. $x^s$ est donc une fonfiguration x donnée, privée de s.  
-- $V_s$ : le voisinage de s, que l'on définira plus tard.
+- $V_s$ : le voisinage de s, que l'on définira plus tard. $V_s^h$ et $V_s^v$ sont respectivement les voisinages sur l'orizontale et la 
+verticale de s.  
 - $U$ : le potentiel d'un pixel ou d'une image dans une configuration donnée, appelé aussi énergie.
 
 ## Le modèle d'Ising
@@ -59,7 +60,7 @@ test et de la littérature sur le sujet. C'est pourquoi dans la majorité des al
 Maintenant, comment utiliser ce calcul de potentiel local pour calculer les probabilités qui nous interessent ? Considérons une image bruitée; 
 la première idée qu'il vient pour retrouver la bonne image est d'essayer une par une toutes les configurations de $\Omega$, mais ce n'est pas 
 envisageable devant son cardinal. Rien que pour une image en noir et blanc on part déjà sur des puissances de deux, une petite image de sept 
-cent vingt pixels aura $2^720$ configurations différentes...
+cent vingt pixels aura $2^{720}$ configurations différentes...
 
 Pour autant, si on voulait essayer, il existe un  outil, la mesure de Gibbs, qui permet justement de calculer la probabilité $P(X=x)$.
 
@@ -68,7 +69,7 @@ Pour autant, si on voulait essayer, il existe un  outil, la mesure de Gibbs, qui
 Cependant $Z=\sum_{x\in \Omega}e^{-U(x)}$ représente une somme beaucoup trop grande pour être calculer en pratique, justement à cause de la 
 taille de $\Omega$.
 
-## L'hypothèse markovienne
+## L'hypothèse markovienne et mesure de Gibbs locale
 
 Pour pallier au problème, une autre approche aussi intuitive pour restaurer cette image consiste à restaurer chaque pixel de l'image un par 
 un, plutôt que considérer l'image dans son ensemble directement.  
@@ -79,29 +80,18 @@ que connaître $V_s$ le voisinage proche de s est équivalent à connaître $x^s
 Markov, et elle est assez naturelle quand on observe une image; un pixel blanc isolé avec autour de lui seulement des pixels rouges est une 
 situation assez rare, les différentes parties de couleur uniforme d'une images étant souvent grande de plusieurs pixels, d'autant plus pour 
 une image en noir et blanc dépourvue de dégradé. Faire l'hypothèse de Markov ne semble donc pas à priori ridicul. Et c'est grâce à cette
-hypothèse que l'on va pouvoir utiliser le modèle d'Ising pour le calcul de potentiel local.
+hypothèse que l'on peut utiliser la mesure de Gibbs pour le calcul de potentiel local. 
 
-La définition du voisinage de s peut varier, par son étendu et sa forme; le voisinage que nous utiliserons presque toujours est simplement 
+En appliquant la formule de Bayes à $P(X_s=x_s|X^s=x^s)$, on obtient après démonstration:
+
+\[P(X_s=x_s|X^s=x^s) = \frac{exp(-U(x_s|x^s))}{\sum_{\lambda \in E}exp(-U(\lambda |x^s))}\]
+
+et avec l'hypothère markovienne:
+
+\[P(X_s=x_s|X^s=x^s) = P(X_s=x_s|V_s) = \frac{exp(-U(x_s|V_s))}{\sum_{\lambda \in E}exp(-U(\lambda |V_s))}\]
+
+La définition de $V_s$ peut varier, par son étendu et sa forme; le voisinage que nous utiliserons presque toujours est simplement 
 l'ensemble des quatre plus proches voisins de s sur la verticale et l'horizontale. On essaira par la suite de modifier ce voisinage.
-
-
-
-OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-
-## La mesure de Gibbs locale
-
-
-On sait la chose suivante:  
-\[P(X_s=x_s)=\frac{1}{Z}e^{-U(x_s)}\]
-\[P(X=x)=\frac{1}{Z}e^{-U(x)}\]  
-Avec \[Z=\sum_{x\in \Omega}e^{-U(x)}\] la fonction de partition.  
-
-
-OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
 
 
 ## Adapation à la restauration d'image

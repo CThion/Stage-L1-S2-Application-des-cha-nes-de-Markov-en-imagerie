@@ -73,9 +73,6 @@ imageGenerator=function(forme, N){
 }#func
 ```
 
-```{r}
-image(imageGenerator("bandeV",64))
-```
 
 
 ```{r bruiteur}
