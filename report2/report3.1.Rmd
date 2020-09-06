@@ -779,9 +779,6 @@ disp_smartStop=function(forme, N, p, B, beta, alpha, S, pas){
   }#for
   
   rev <- data.frame(plage_evaluation=plage, correspondance=corresp, nombre_iteration=iter )
-
-  ggplot(data = rev, aes(x="largeur de la plage S",y="nombre d'itération n"))+geom_line()+geom_point() 
-    # + geom_smooth()  
   print(rev)
 }#func
 ```
@@ -796,7 +793,7 @@ On remarque deux choses:
 - la première c'est que finalement on obtient un pourcentage de restauration déjà de 99% dès $S>=600$, et qu'en suite même avec S deux ou 
 trois fois plus grand on ne parvient pas à beaucoup améliorer ce résultat, seulement au dixième.  
 - la seconde, et c'est elle qui nous indique la pertinence de cette condition d'arrêt, c'est qu'en augmentant la condition d'arrêt de 1200 
-à 1400 itérations successives sans changement, et aussi de 1600 à 2000, on a une diminution du nombre total d'itérations. Si on avait du choisir arbitrairement n pour S=1800 en connaissant les résultats à S=1600, on aurait logiquement choisi n plus grand puisque la condition est plus 
+à 1400 itérations successives sans changement, et aussi de 1800 à 2000, on a une diminution du nombre total d'itérations. Si on avait du choisir arbitrairement n pour S=2000 en connaissant les résultats à S=1800, on aurait logiquement choisi n plus grand puisque la condition est plus 
 dure. Mais là on voit bien que parfois le hasard fait que la condition est remplie relativement plus rapidement que la tendance le suppose. SmartStop() permet de profiter de ce hasard.   
 
 Pour alléger encore davantage la condition d'arrêt et réduire le nombre d'itérations, on peut ajouter une variable de pourcentage d'erreur 
@@ -869,9 +866,6 @@ disp_smartStopLight=function(forme, N, p, B, beta, alpha, S, pas, prcm){
   }#for
   
   rev <- data.frame(plage_evaluation=plage, correspondance=corresp, nombre_iteration=iter, erreur_maximal=error)
-
-  ggplot(data = rev, aes(x="largeur de la plage",y="nombre d'itération"))+geom_line()+geom_point() 
-    # + geom_smooth()  
   print(rev)
 }#func
 ```
@@ -882,9 +876,9 @@ disp_smartStopLight("rectangle", 64, 0.25, 0, 0.66, 0.33, 2000, 200, 0.01)
 ```
 
 On peut déjà dire que le nombre total d'itérations a bien chuté par rapport au test précédent (qui revenait finalement à choisir prcm=0). On ne 
-dépasse pas la barre des 15000, alors que pour prcm=0 on était monté jusqu'à 30000!    
+dépasse pas la barre des 15000, alors que pour prcm=0 on dépassait les 20000.   
 Au niveau des performances on ne perd presque rien, ce qui valide l'introduction d'un paramètre d'erreur. Par contre on observe qu'il faut 
-davantage augmenter S pour atteindre les 99% de restauration (1200 ici contre 600 à prcm=0).
+davantage augmenter S pour atteindre les 99% de restauration (1800 ici contre 600 à prcm=0).
 
 
 A terme on aimerait pouvoir déterminer a priori, étant donnée l'image bruitée, le nombre minimal d'itérations successives sans modification à 
@@ -1067,7 +1061,7 @@ disp_generalSpeedTest("rectangle",64,0.25,0,0.66,0.33,10^5,10^4)
 ```
 
 Les résultats montrent bien que l'algorithme d'ICM converge plus vite vers la configuration de plus faible énergie, donc restaure plus 
-rapidement, que ses deux homologues.
+rapidement, que ses deux homologues. Son inconvénient est qu'il ne permet pas de remontée d'énergie, et donc probablement que pour des images plus complexes il risquerait de rester bloqué dans des minima locaux dénergie, sans pouvoir en sortir de part son déterminisme.
 
 # Conclusion
 Durant ce stage, on a étudié différentes méthodes de restaurations d'images par chaînes de Markov. On a pu voir des limites de l'algorithme 
