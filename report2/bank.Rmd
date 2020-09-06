@@ -112,6 +112,35 @@ correspondance=function(img0, img1, N){
 ```
 
 
+# Evolution de la restauration en fonction d'un nombre d'itérations
+=================================================================================================================================================
+Avec des algorithmes dont le nombre d'itération varie (smartStop et smartStopLight), on s'est demandé quelle était la probabilité d'avoir une image restaurée à un certain poucentage H, après n itérations consécutives sans changements.
+
+On n'a pour l'instant pas trouvé de réponse théorique satisfaisante à la question, mais seulement trouvé quelques pistes à explorer, et questions intermediaires au problème. On expose cela ici dans l'idée d'approfondire le sujet plus tard.
+
+Une première majoration très grossière peut être de considérer l'ensemble des images de plus hautes énergie, et de déterminer combien d'itération 
+il faut au minimum pour les ramener à l'image blanche. Ce nombre sera forcément supérieur ou égale au nombre d'itérations nécessaires pour 
+n'importe quel image donnée de même taille. 
+
+## Probabilité d'avoir la configuration d'énergie minimale 
+
+### Estimation du nombre de parcours minimum nécessaires à la restauration d'une image pour toute image donnée
+Une première majoration très grossière peut se faire en passant l'image de départ à restaurer comme variable, pour laquelle nous n'avons à priori 
+aucune informations. Peut importe l'image à restaurer, combien de parcours de site l'algorithme doit-il réaliser ?  
+
+Pour un voisinage classique avec 4 voisins prenna valeur dans $\{-1,1\}$, on a $2^4=16$ configurations de voisinages possibles.  
+
+L'avantage de notre approche, c'est qu'en l'absence d'information sur l'image à restaurer, on peut raisonnable considérer ces 16 configurations 
+de voisinage comme équiprobables.
+
+D'un point de vu énergétique, il n'y a que 5 cas possibles. $V_s\in\{-4,\ -2,\ 0,\ 2,\ 4\}$.
+
+
+
+La questions du nombre d'itérations nécessaires pour restaurer une image donné n'étant pas du tout trivial, on pourra déjà se demander quelle est la probabilité qu'un pixel soit correctement restitué après n itérations de l'algorithme de Metropolis, avant de passer à une iamge complète.
+
+## Probabilité d'avoir restauré l'image à H%
+
 
 ===============================================================================================================
 ===============================================================================================================
@@ -1208,6 +1237,7 @@ MCdeMC_revo=function(n, beta, N, p, alpha, stop){
 
 #MCdeMC_revo(20, 2/3, 64, 0.2, 0.3, 0 )
 ```
+
 
 
 

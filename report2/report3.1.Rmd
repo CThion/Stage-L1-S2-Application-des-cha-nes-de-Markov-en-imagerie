@@ -21,7 +21,7 @@ cela on utilise les chaînes de Markov et des modèles énergétiques sur les im
 pouvoir estimer de manière probabiliste les meilleures configurations pour la restauration. Les algorithmes ainsi constitués sont ensuite codés 
 en R pour être testés.    
 
-Dans dans son état actuel, ce rapport abborde plusieurs question en lien avec le sujet mais est très loin d'être complet. Une grande part des 
+Dans dans son état actuel, ce rapport abborde plusieurs questions en lien avec le sujet mais est très loin d'être complet. Une grande part des 
 observations sont encore d'ordre empirique et nécessiteraient d'être approfondies sur le plan théorique. Pour autant on dispose déjà de plusieurs algorithmes fonctionnels permettant une restauration satisfaisante d'images simples.
 
 ## Modélisation d'une image
@@ -1067,34 +1067,15 @@ disp_generalSpeedTest=function(forme, N, p, B, beta, alpha, nn, pas){
 disp_generalSpeedTest("rectangle",64,0.25,0,0.66,0.33,10^5,10^4)
 ```
 
-Les résultats montrent bien que l'algorithme d'ICM converge plus vite vers la configuration de plus faible énergie, donc restaure plus rapidement, 
+Les résultats montrent bien que l'algorithme d'ICM converge plus vite vers la configuration de plus faible énergie, donc restaure plus 
+rapidement, 
 que ses deux homologues.
 
+# Conclusion
+Durant ce stage on a étudié différentes méthodes de restaurations d'images par chaînes de Markov. On a pu voir des limites de l'algorithme 
+de Metropolis, et ensuite des améliorations pour y pallier, pour la vitesse d'execution ou la forme des images à restaurer. Il y a encore 
+beaucoup de chose que l'on n'a pas approfondie sur le sujet et de nombreuses questions qui restent en suspend, mais c'est déjà une bonne base 
+pour continuer à apprendre sur le sujet. Une question notament que l'on a commencé à creuser mais qui ne figure pas dans ce rapport car 
+manquant de matière encore, c'est l'évolution de la restauration en fonction du nombre d'itération; quelle est la probabilité qu'après 
+n itérations, mon image soit restauré à 99% ? Ce n'est pas une question simple...
 
-# Evolution de la restauration en fonction d'un nombre d'itérations
-=================================================================================================================================================
-Avec des algorithmes dont le nombre d'itération varie, on peut se demander quelle est la probabilité d'avoir une image restaurée à un H%, après n itérations consécutives sans changements.
-
-
-Une première majoration très grossière peut être de considérer l'ensemble des images de plus hautes énergie, et de déterminer combien d'itération 
-il faut au minimum pour les ramener à l'image blanche. Ce nombre sera forcément supérieur ou égale au nombre d'itérations nécessaires pour 
-n'importe quel image donnée de même taille. 
-
-## Probabilité d'avoir la configuration d'énergie minimale 
-
-### Estimation du nombre de parcours minimum nécessaires à la restauration d'une image pour toute image donnée
-Une première majoration très grossière peut se faire en passant l'image de départ à restaurer comme variable, pour laquelle nous n'avons à priori 
-aucune informations. Peut importe l'image à restaurer, combien de parcours de site l'algorithme doit-il réaliser ?  
-
-Pour un voisinage classique avec 4 voisins prenna valeur dans $\{-1,1\}$, on a $2^4=16$ configurations de voisinages possibles.  
-
-L'avantage de notre approche, c'est qu'en l'absence d'information sur l'image à restaurer, on peut raisonnable considérer ces 16 configurations 
-de voisinage comme équiprobables.
-
-D'un point de vu énergétique, il n'y a que 5 cas possibles. $V_s\in\{-4,\ -2,\ 0,\ 2,\ 4\}$.
-
-
-### Probabilité de succès pour un pixel
-### Probabilité de succès pour une configuration complète
-
-## Probabilité d'avoir restauré l'image à H%
