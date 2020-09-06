@@ -561,13 +561,20 @@ restorStripe("losange",64,0.25,0,0.66,0.33,5*10^4)
 ```
 
 
-On constate que cette fois la restauration se fait très bien tant pour les formes pleines que pour les bandes; l'utilisation de betas intermédiaires fonctionne, et on remarque bien $\beta_h>0$ et $\beta_v<0$ pour des lignes horizontales, et l'inverse pour des lignes verticales. Pour les formes pleines (losange et rectangle), les deux beta sont bien positifs, d'où le fait qu'un unique beta positif sufise pour ces images.
+On constate que cette fois la restauration se fait très bien tant pour les formes pleines que pour les bandes; l'utilisation de betas 
+intermédiaires fonctionne, et on remarque bien $\beta_h>0$ et $\beta_v<0$ pour des lignes horizontales, et l'inverse pour des lignes verticales. 
+Pour les formes pleines (losange et rectangle), les deux beta sont bien positifs, d'où le fait qu'un unique beta positif sufise pour ces images.
 
 ## Voisinage de taille variable
 
 Une autre piste à creuser pour répondre au problème de restauration des bandes, ce serait de changer la définition du voisinage. L'idée est la 
-suivante: la taille et la forme du voisinage change d'un pixel à l'autre. Seul les pixels sur les lignes verticales et horizontales où se trouve 
-s peuvent faire partie de $V_s$, comme pour le voisinage habituel haut bas gauche droite. 
+suivante: faire que la taille et la forme du voisinage change d'un pixel à l'autre. En effet imaginons un pixel de l'image "bande" bruitée. 
+Il y a de grande chance que la ligne horizontale sur laquelle il se trouve soit à majorité d'une valeur de E, tandis que que la ligne vertivale 
+de part l'alternance de ligne on aura à peu près moitié moitié. Ce qu'on aimerait c'est que le voisinage s'étende sur l'horizontale là où les 
+pixels deux à deux sont (souvent) de même valeur, mais qu'il reste petit sur l'horizontale. 
+
+Seul les pixels sur les lignes verticales et horizontales où se trouve s peuvent faire partie de $V_s$, comme pour le voisinage habituel haut 
+bas gauche droite. 
 
 On définit le voisinage comme une étoile à quatres branches, deux sur l'horizontale (une à gauche de s, l'autre à droite), et deux sur la 
 verticale (l'une en haut de s et l'autre en bas). On peut donc voir ce voisinage en étoile comme une extension du voisinage classique.  
@@ -581,9 +588,9 @@ $U_s=\beta x_s\sum_{i=1}^{4}{a_il_i} +\alpha x_s x_s^0$
 avec $(l_i)$ les 8 lead et $(a_i)$ leur longueur.
 
 On peut choisir une longueur maximale pour les branches, une majoration certaine étant la largeur de l'image. C'est d'ailleurs préférable d'un 
-point de vue pratique car plus les branches sont longues plus les calcules le sont aussi.
+point de vue pratique car plus les branches sont longues plus les calculs le sont aussi.
 
-L'algorithme de Vstar est simple: pour chaqun des voisins habituels de s (haut bas gauche droite), on regade son voisin opposé à s et sur la 
+L'algorithme de Vstar est simple: pour chacun des voisins habituels de s (haut bas gauche droite), on regade son voisin opposé à s et sur la 
 même direction (le "voisin du voisin"); s'il a la même valeur que le premier voisin, on l'intègre à la branche. Sinon la branche est terminée.
 
 ```{r, Vstar}
@@ -683,6 +690,16 @@ recuitSimule_Vstar=function(forme, N, p, B, beta, alpha, n, L){
 
 ```
 
+Le test de Vstar cependant dans le recuit simulé de foncitonne pas du tout (longeur de branche L=8 pixels):
+
+```{r, test_recuitSimule_Vstar}
+recuitSimule_Vstar("bande", 64, 0.25, 0, 0.66, 0.33, 5*10^4, 8)
+
+```
+
+Ce qui ne va pas, c'est que Vstar a été pensé comme condition unique du choix de $x_s$, c'est à dire que l'on voulait $V_s<0 \Rightarrow x_s=-1$ 
+et $V_s>0 \Rightarrow x_s=1$, dans une logique déterministe, sans tenir compte de $x_s^0$. Tel quel donc, dans l'algorithme de métropolis ou 
+de recuit, Vstar ne permet pas de répondre au problème des bandes. 
 
 # Amélioration de la rapidité des algorithmes
 
@@ -1060,7 +1077,8 @@ disp_generalSpeedTest=function(forme, N, p, B, beta, alpha, nn, pas){
 disp_generalSpeedTest("rectangle",64,0.25,0,0.66,0.33,10^5,10^4)
 ```
 
-Les résultats montrent bien que l'algorithme d'ICM converge plus vite vers la configuration de plus faible énergie, donc restaure plus rapidement, que ses deux homologues.
+Les résultats montrent bien que l'algorithme d'ICM converge plus vite vers la configuration de plus faible énergie, donc restaure plus rapidement, 
+que ses deux homologues.
 
 
 # Evolution de la restauration en fonction d'un nombre d'itérations

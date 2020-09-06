@@ -65,11 +65,17 @@ imageGenerator=function(forme, N){
   }#if
   
   #----bandes verticales----
+  if(forme=="bandeV"){
+    for (i in 1:(N/2)){ img[2*i,]=rep(1,N) }
+  }#if
   
   return(img)
 }#func
 ```
 
+```{r}
+image(imageGenerator("bandeV",64))
+```
 
 
 ```{r bruiteur}
