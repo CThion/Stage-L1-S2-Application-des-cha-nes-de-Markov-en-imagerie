@@ -186,9 +186,14 @@ imageGenerator=function(forme, N){
       }}#for#for
   }#if
   
-  #----bandes verticales----
+  #----bandes horizontales----
   if(forme=="bande"){
     for (j in 1:(N/2)){ img[,2*j]=rep(1,N) }
+  }#if
+  
+  #----bandes verticales----
+  if(forme=="bandeV"){
+    for (i in 1:(N/2)){ img[2*i,]=rep(1,N) }
   }#if
   
   return(img)
@@ -214,8 +219,8 @@ correspondance=function(img0, img1, N){
 
 ### L'algorithme de Gibbs
 
-On propose un code en R pour l'algorithme de Gibbs. Des racourcis ont été possibles du fait que s ne puisse prendre que deux états en tout (-1 ou 1). Si 
-on voulait un jour passer à des images en nuance de gris ou même en couleur, il faudrait faire des modifications.
+On propose un code en R pour l'algorithme de Gibbs. Des racourcis ont été possibles du fait que s ne puisse prendre que deux états en tout 
+(-1 ou 1). Si on voulait un jour passer à des images en nuance de gris ou même en couleur, il faudrait faire des modifications.
 
 ```{r gibbsIsing}
 gibbsIsing = function(forme, N, p, B, beta, alpha, n){
@@ -458,14 +463,16 @@ Une idée que l'on peut avoir pour palier au problème est de séparer les calcu
 à chaque terme un facteur $\beta$ dédié à une orientation. On modifie l'algorithme de recuit pour essayer, en changeant le chose comme suit:     
 
 - le calcule de voisinage est divisé en deux termes, les voisins sur l'horizontale Vh et ceux sur la verticale Vv.
+
 - Le terme concernant le voisinage dans le calcul de U est maintenant cindé en deux, avec deux $\beta$ différents, $\beta_h$ pour l'horizontale 
 et $\beta_v$ pour la verticale. On a ainsi: $U(x_s)= -x_s[\beta_h(x_d+x_g)+\beta_v(x_h+x_b)+\alpha x_s^0]$ avec $x_d,x_g,x_h,x_b$ les valeurs 
 des pixels voisins du site s respectivement à droite, gauche, haut, bas.
-- Les signes respectifs des deux $\beta$ sont calculés en faisant une analyse du signe globale de l'image sur l'orizontale et la verticale. 
-Pour se faire on utilise la fonction ernergiehv(), qui réalise les somme des doubles produit des couple de pixels voisins, sur la verticale 
-pour une somme et sur l'horizontale pour l'autre. Dans le cas des bandes horizontales par exemple, on voudrait avoir un $\beta_h>0$ et un 
-$\beta_v<0$. En effet une ligne horizontale de l'image est constituée de pixel identiques, on veut donc que soit privilégié l'égalité de valeur 
-entre $x_s$ et $x_t,\ t\in V_s$. Sur une ligne verticale, c'est l'inverse.
+
+- Les signes respectifs des deux $\beta$ sont calculés automatiquement en faisant une analyse du signe globale de l'image sur l'orizontale et 
+la verticale. Pour se faire on utilise la fonction ernergiehv(), qui réalise les somme des doubles produit des couple de pixels voisins, sur l
+a verticale pour une somme et sur l'horizontale pour l'autre. Dans le cas des bandes horizontales par exemple, on voudrait avoir un $\beta_h>0$ 
+et un $\beta_v<0$. En effet une ligne horizontale de l'image est constituée de pixel identiques, on veut donc que soit privilégié l'égalité de 
+valeur entre $x_s$ et $x_t,\ t\in V_s^h$, avec $V_s^h$ le voisinage de s sur l'horizontale. Sur une ligne verticale, c'est l'inverse.
 
 
 ```{r, restoreStripe}
@@ -493,7 +500,7 @@ restorStripe=function(forme, N, p, B, beta, alpha, n){
   img2 = img1 #tampon
   img3 = img1 #bruit initiale
   
-  #----calcul des deux beta, horizontal et vertical----
+  #----calcul des deux beta, horizontale et verticale----
   betah=2*energiehv(img1)[2]/(abs(energiehv(img1)[1])+abs(energiehv(img1)[2]))
   betav=2*energiehv(img1)[1]/(abs(energiehv(img1)[1])+abs(energiehv(img1)[2]))
 
@@ -539,10 +546,22 @@ restorStripe=function(forme, N, p, B, beta, alpha, n){
 ```
 
 
-```{r}
+```{r, test_restoreStripe_h}
 restorStripe("bande",64,0.25,0,0.66,0.33,5*10^4)
 ```
 
+
+```{r, test_restoreStripe_v}
+restorStripe("bandeV",64,0.25,0,0.66,0.33,5*10^4)
+```
+
+```{r}
+restorStripe("rectangle",64,0.25,0,0.66,0.33,5*10^4)
+restorStripe("losange",64,0.25,0,0.66,0.33,5*10^4)
+```
+
+
+On constate que cette fois la restauration se fait très bien tant pour les formes pleines que pour les bandes; l'utilisation de betas intermédiaires fonctionne, et on remarque bien $\beta_h>0$ et $\beta_v<0$ pour des lignes horizontales, et l'inverse pour des lignes verticales. Pour les formes pleines (losange et rectangle), les deux beta sont bien positifs, d'où le fait qu'un unique beta positif sufise pour ces images.
 
 ## Voisinage de taille variable
 
